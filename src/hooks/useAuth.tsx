@@ -88,6 +88,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return error?.message ?? null;
       },
       signOut: async () => {
+        // Чистим push-токен устройства, чтобы после выхода на общем устройстве
+        // следующий пользователь не получал чужие уведомления (тот же физический
+        // токен иначе остаётся привязан к профилю прошлого аккаунта).
+        if (profile) {
+          await supabase.from('profiles').update({ push_token: null }).eq('id', profile.id);
+        }
         await supabase.auth.signOut();
       },
       refreshProfile: async () => {

@@ -37,7 +37,7 @@
 2. Выполните SQL-миграции из `supabase/migrations` (SQL editor в Supabase
    Studio или `supabase db push`, если используете Supabase CLI), по порядку:
    `0001_init.sql`, `0002_storage.sql`, `0003_marketplace.sql`,
-   `0004_homework_attachments.sql`.
+   `0004_homework_attachments.sql`, `0005_security_fixes.sql`.
 3. Скопируйте `.env.example` в `.env` и укажите `EXPO_PUBLIC_SUPABASE_URL`
    и `EXPO_PUBLIC_SUPABASE_ANON_KEY` из настроек вашего проекта Supabase.
 4. Установите зависимости и запустите:
