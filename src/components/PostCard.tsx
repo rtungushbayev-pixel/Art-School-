@@ -2,7 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Avatar } from './Avatar';
-import { colors, radius, spacing } from '../theme/colors';
+import { colors, radius, shadow, spacing } from '../theme/colors';
 
 export interface PostCardData {
   id: string;
@@ -27,42 +27,47 @@ interface PostCardProps {
 export function PostCard({ post, onPress, onToggleLike, onAuthorPress, showModerationBadge }: PostCardProps) {
   const cover = post.images[0];
   return (
-    <Pressable onPress={onPress} style={styles.card}>
-      <Pressable onPress={onAuthorPress} style={styles.header}>
-        <Avatar uri={post.author?.avatar_url} name={post.author?.full_name} size={36} />
-        <Text style={styles.authorName}>{post.author?.full_name ?? 'Ученик'}</Text>
-        {showModerationBadge && post.status !== 'approved' ? (
-          <View style={[styles.badge, post.status === 'pending' ? styles.badgePending : styles.badgeRejected]}>
-            <Text style={styles.badgeText}>{post.status === 'pending' ? 'На модерации' : 'Отклонено'}</Text>
-          </View>
-        ) : null}
-      </Pressable>
-
-      {cover ? (
-        <Image source={{ uri: cover.image_url }} style={styles.image} contentFit="cover" />
-      ) : null}
-
-      {post.caption ? <Text style={styles.caption}>{post.caption}</Text> : null}
-
-      <View style={styles.footer}>
-        <Pressable onPress={onToggleLike} style={styles.footerItem}>
-          <Text style={[styles.footerText, post.likedByMe && styles.liked]}>
-            {post.likedByMe ? '♥' : '♡'} {post.likeCount}
-          </Text>
+    <View style={styles.shadowWrapper}>
+      <Pressable onPress={onPress} style={styles.card}>
+        <Pressable onPress={onAuthorPress} style={styles.header}>
+          <Avatar uri={post.author?.avatar_url} name={post.author?.full_name} size={36} />
+          <Text style={styles.authorName}>{post.author?.full_name ?? 'Ученик'}</Text>
+          {showModerationBadge && post.status !== 'approved' ? (
+            <View style={[styles.badge, post.status === 'pending' ? styles.badgePending : styles.badgeRejected]}>
+              <Text style={styles.badgeText}>{post.status === 'pending' ? 'На модерации' : 'Отклонено'}</Text>
+            </View>
+          ) : null}
         </Pressable>
-        <View style={styles.footerItem}>
-          <Text style={styles.footerText}>💬 {post.commentCount}</Text>
+
+        {cover ? <Image source={{ uri: cover.image_url }} style={styles.image} contentFit="cover" /> : null}
+
+        {post.caption ? <Text style={styles.caption}>{post.caption}</Text> : null}
+
+        <View style={styles.footer}>
+          <Pressable onPress={onToggleLike} style={styles.footerItem}>
+            <Text style={[styles.footerText, post.likedByMe && styles.liked]}>
+              {post.likedByMe ? '♥' : '♡'} {post.likeCount}
+            </Text>
+          </Pressable>
+          <View style={styles.footerItem}>
+            <Text style={styles.footerText}>💬 {post.commentCount}</Text>
+          </View>
         </View>
-      </View>
-    </Pressable>
+      </Pressable>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  shadowWrapper: {
+    borderRadius: radius.lg,
+    marginBottom: spacing.md,
+    backgroundColor: colors.surface,
+    ...shadow.card,
+  },
   card: {
     backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    marginBottom: spacing.md,
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
     overflow: 'hidden',

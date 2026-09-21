@@ -4,6 +4,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { TextField } from '../../components/TextField';
 import { Button } from '../../components/Button';
+import { PaintDots } from '../../components/PaintDots';
 import { useAuth } from '../../hooks/useAuth';
 import { colors, spacing } from '../../theme/colors';
 import type { AuthStackParamList } from '../../navigation/types';
@@ -32,6 +33,7 @@ export function LoginScreen({ navigation }: Props) {
   return (
     <Screen scroll>
       <View style={styles.header}>
+        <PaintDots />
         <Text style={styles.title}>Школа искусств и дизайна</Text>
         <Text style={styles.subtitle}>им. А. Кастеева</Text>
       </View>
@@ -67,7 +69,7 @@ export function LoginScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   header: { marginTop: spacing.xl, marginBottom: spacing.xl, alignItems: 'center' },
-  title: { fontSize: 22, fontWeight: '700', color: colors.primary, textAlign: 'center' },
+  title: { fontSize: 24, fontWeight: '800', color: colors.primary, textAlign: 'center', marginTop: spacing.md },
   subtitle: { fontSize: 15, color: colors.textMuted, marginTop: spacing.xs },
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: spacing.lg },
   footerText: { color: colors.textMuted },

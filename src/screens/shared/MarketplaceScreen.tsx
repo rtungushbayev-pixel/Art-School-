@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
+import { Button } from '../../components/Button';
 import { ListingCard } from '../../components/ListingCard';
 import { fetchApprovedListings, fetchMyListings, ListingCardData } from '../../lib/marketplace';
 import { useAuth } from '../../hooks/useAuth';
@@ -42,9 +43,8 @@ export function MarketplaceScreen() {
         <Text style={styles.link}>kasteyevshop.kz</Text>
       </Text>
 
-      <Pressable style={styles.createButton} onPress={() => navigation.navigate('CreateListing')}>
-        <Text style={styles.createButtonText}>+ Разместить работу</Text>
-      </Pressable>
+      <Button title="+ Разместить работу" onPress={() => navigation.navigate('CreateListing')} />
+      <View style={{ height: spacing.md }} />
 
       <View style={styles.scopeRow}>
         <Pressable
@@ -86,14 +86,6 @@ const styles = StyleSheet.create({
   header: { fontSize: 22, fontWeight: '700', color: colors.text, marginBottom: spacing.xs },
   subheader: { color: colors.textMuted, marginBottom: spacing.md, lineHeight: 18 },
   link: { color: colors.primary, fontWeight: '600' },
-  createButton: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-    paddingVertical: spacing.sm + 2,
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  createButtonText: { color: colors.white, fontWeight: '700' },
   scopeRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
   scopeOption: {
     paddingHorizontal: spacing.md,

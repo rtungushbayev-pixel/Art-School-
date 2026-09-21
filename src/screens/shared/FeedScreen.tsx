@@ -1,12 +1,13 @@
 import React, { useCallback, useState } from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
+import { Button } from '../../components/Button';
 import { PostCard, PostCardData } from '../../components/PostCard';
 import { fetchFeedPosts, toggleLike } from '../../lib/posts';
 import { useAuth } from '../../hooks/useAuth';
-import { colors, radius, spacing } from '../../theme/colors';
+import { colors, spacing } from '../../theme/colors';
 import type { StaffStackParamList, StudentStackParamList } from '../../navigation/types';
 
 type NavParamList = StudentStackParamList & StaffStackParamList;
@@ -48,9 +49,8 @@ export function FeedScreen() {
   return (
     <Screen scroll refreshing={loading} onRefresh={load}>
       <Text style={styles.header}>Лента достижений</Text>
-      <Pressable style={styles.createButton} onPress={() => navigation.navigate('CreatePost')}>
-        <Text style={styles.createButtonText}>+ Поделиться работой</Text>
-      </Pressable>
+      <Button title="+ Поделиться работой" onPress={() => navigation.navigate('CreatePost')} />
+      <View style={{ height: spacing.md }} />
 
       {posts.length === 0 && !loading ? (
         <Text style={styles.empty}>Пока нет публикаций. Будьте первым!</Text>
@@ -71,13 +71,5 @@ export function FeedScreen() {
 
 const styles = StyleSheet.create({
   header: { fontSize: 22, fontWeight: '700', color: colors.text, marginBottom: spacing.md },
-  createButton: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-    paddingVertical: spacing.sm + 2,
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  createButtonText: { color: colors.white, fontWeight: '700' },
   empty: { textAlign: 'center', color: colors.textMuted, marginTop: spacing.xl },
 });

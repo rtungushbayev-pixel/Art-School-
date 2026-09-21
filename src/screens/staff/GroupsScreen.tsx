@@ -1,11 +1,12 @@
 import React, { useCallback, useState } from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { Card } from '../../components/Card';
+import { Button } from '../../components/Button';
 import { supabase } from '../../lib/supabase';
-import { colors, radius, spacing } from '../../theme/colors';
+import { colors, spacing } from '../../theme/colors';
 import type { Group } from '../../types/database';
 import type { StaffStackParamList } from '../../navigation/types';
 
@@ -30,9 +31,8 @@ export function GroupsScreen() {
   return (
     <Screen scroll refreshing={loading} onRefresh={load}>
       <Text style={styles.header}>Группы</Text>
-      <Pressable style={styles.createButton} onPress={() => navigation.navigate('CreateGroup')}>
-        <Text style={styles.createButtonText}>+ Новая группа</Text>
-      </Pressable>
+      <Button title="+ Новая группа" onPress={() => navigation.navigate('CreateGroup')} />
+      <View style={{ height: spacing.md }} />
 
       {groups.length === 0 && !loading ? <Text style={styles.empty}>Группы ещё не созданы</Text> : null}
       {groups.map((g) => (
@@ -49,14 +49,6 @@ export function GroupsScreen() {
 
 const styles = StyleSheet.create({
   header: { fontSize: 22, fontWeight: '700', color: colors.text, marginBottom: spacing.md },
-  createButton: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-    paddingVertical: spacing.sm + 2,
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  createButtonText: { color: colors.white, fontWeight: '700' },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.xl },
   groupName: { fontSize: 16, fontWeight: '700', color: colors.text },
   groupDesc: { color: colors.textMuted, marginTop: spacing.xs },

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
-import { colors, radius, spacing } from '../theme/colors';
+import { colors, radius, shadow, spacing } from '../theme/colors';
 import { formatPrice, ListingCardData } from '../lib/marketplace';
 
 interface ListingCardProps {
@@ -13,40 +13,47 @@ interface ListingCardProps {
 export function ListingCard({ listing, onPress, showModerationBadge }: ListingCardProps) {
   const cover = listing.images[0];
   return (
-    <Pressable onPress={onPress} style={styles.card}>
-      {cover ? (
-        <Image source={{ uri: cover.image_url }} style={styles.image} contentFit="cover" />
-      ) : (
-        <View style={[styles.image, styles.imagePlaceholder]} />
-      )}
-      {listing.sold ? (
-        <View style={styles.soldBadge}>
-          <Text style={styles.soldBadgeText}>Продано</Text>
-        </View>
-      ) : showModerationBadge && listing.status !== 'approved' ? (
-        <View style={[styles.badge, listing.status === 'pending' ? styles.badgePending : styles.badgeRejected]}>
-          <Text style={styles.badgeText}>{listing.status === 'pending' ? 'На модерации' : 'Отклонено'}</Text>
-        </View>
-      ) : null}
+    <View style={styles.shadowWrapper}>
+      <Pressable onPress={onPress} style={styles.card}>
+        {cover ? (
+          <Image source={{ uri: cover.image_url }} style={styles.image} contentFit="cover" />
+        ) : (
+          <View style={[styles.image, styles.imagePlaceholder]} />
+        )}
+        {listing.sold ? (
+          <View style={styles.soldBadge}>
+            <Text style={styles.soldBadgeText}>Продано</Text>
+          </View>
+        ) : showModerationBadge && listing.status !== 'approved' ? (
+          <View style={[styles.badge, listing.status === 'pending' ? styles.badgePending : styles.badgeRejected]}>
+            <Text style={styles.badgeText}>{listing.status === 'pending' ? 'На модерации' : 'Отклонено'}</Text>
+          </View>
+        ) : null}
 
-      <View style={styles.body}>
-        <Text style={styles.title} numberOfLines={1}>
-          {listing.title}
-        </Text>
-        <Text style={styles.price}>{formatPrice(listing.price, listing.currency)}</Text>
-        <Text style={styles.seller} numberOfLines={1}>
-          {listing.seller?.full_name ?? 'Автор неизвестен'}
-        </Text>
-      </View>
-    </Pressable>
+        <View style={styles.body}>
+          <Text style={styles.title} numberOfLines={1}>
+            {listing.title}
+          </Text>
+          <Text style={styles.price}>{formatPrice(listing.price, listing.currency)}</Text>
+          <Text style={styles.seller} numberOfLines={1}>
+            {listing.seller?.full_name ?? 'Автор неизвестен'}
+          </Text>
+        </View>
+      </Pressable>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  shadowWrapper: {
+    borderRadius: radius.lg,
+    marginBottom: spacing.md,
+    backgroundColor: colors.surface,
+    ...shadow.card,
+  },
   card: {
     backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    marginBottom: spacing.md,
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
     overflow: 'hidden',

@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
-import { colors, radius, spacing } from '../theme/colors';
+import { colors, radius, shadow, spacing } from '../theme/colors';
 
 interface ButtonProps {
   title: string;
@@ -45,18 +45,18 @@ const styles = StyleSheet.create({
   base: {
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
-    borderRadius: radius.md,
+    borderRadius: radius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  primary: { backgroundColor: colors.primary },
+  primary: { backgroundColor: colors.primary, ...shadow.card },
   secondary: {
     backgroundColor: colors.surface,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.primary,
   },
-  danger: { backgroundColor: colors.danger },
-  disabled: { opacity: 0.5 },
+  danger: { backgroundColor: colors.danger, ...shadow.card },
+  disabled: { opacity: 0.5, shadowOpacity: 0 },
   pressed: { opacity: 0.85 },
   text: { color: colors.white, fontWeight: '600', fontSize: 16 },
   textSecondary: { color: colors.primary },
