@@ -7,6 +7,7 @@ import { Card } from '../../components/Card';
 import { TextField } from '../../components/TextField';
 import { Button } from '../../components/Button';
 import { supabase } from '../../lib/supabase';
+import { sendPushNotification } from '../../lib/notifications';
 import { colors, spacing } from '../../theme/colors';
 import type { HomeworkSubmission } from '../../types/database';
 import type { StaffStackParamList } from '../../navigation/types';
@@ -38,6 +39,7 @@ export function GradeSubmissionScreen() {
   );
 
   const onSave = async () => {
+    if (!submission) return;
     const gradeNumber = grade.trim() ? Number(grade.trim()) : null;
     if (grade.trim() && (Number.isNaN(gradeNumber) || gradeNumber! < 0 || gradeNumber! > 100)) {
       Alert.alert('Оценка должна быть числом от 0 до 100');
@@ -58,6 +60,12 @@ export function GradeSubmissionScreen() {
       Alert.alert('Не удалось сохранить', error.message);
       return;
     }
+    sendPushNotification({
+      userIds: [submission.student_id],
+      title: 'Работа проверена',
+      body: gradeNumber != null ? `Оценка за задание: ${gradeNumber}` : 'Преподаватель оставил отзыв на вашу работу',
+      data: { type: 'homework_graded', homeworkId: submission.homework_id },
+    });
     navigation.goBack();
   };
 

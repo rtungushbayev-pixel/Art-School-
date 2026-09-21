@@ -102,16 +102,19 @@ export function GroupDetailScreen({ route }: Props) {
       </View>
       {lessons.length === 0 ? <Text style={styles.empty}>Занятий пока нет</Text> : null}
       {lessons.map((l) => (
-        <Card key={l.id} style={styles.lessonRow}>
-          <Text style={styles.lessonDay}>{DAY_NAMES[l.day_of_week]}</Text>
-          <View style={styles.lessonInfo}>
-            <Text style={styles.lessonTitle}>{l.title}</Text>
-            <Text style={styles.lessonMeta}>
-              {l.start_time.slice(0, 5)}–{l.end_time.slice(0, 5)}
-              {l.room ? ` · каб. ${l.room}` : ''}
-            </Text>
-          </View>
-        </Card>
+        <Pressable key={l.id} onPress={() => navigation.navigate('CreateLesson', { groupId, lessonId: l.id })}>
+          <Card style={styles.lessonRow}>
+            <Text style={styles.lessonDay}>{DAY_NAMES[l.day_of_week]}</Text>
+            <View style={styles.lessonInfo}>
+              <Text style={styles.lessonTitle}>{l.title}</Text>
+              <Text style={styles.lessonMeta}>
+                {l.start_time.slice(0, 5)}–{l.end_time.slice(0, 5)}
+                {l.room ? ` · каб. ${l.room}` : ''}
+              </Text>
+            </View>
+            <Text style={styles.editIcon}>✏️</Text>
+          </Card>
+        </Pressable>
       ))}
 
       <View style={styles.sectionHeader}>
@@ -122,15 +125,18 @@ export function GroupDetailScreen({ route }: Props) {
       </View>
       {homework.length === 0 ? <Text style={styles.empty}>Заданий пока нет</Text> : null}
       {homework.map((h) => (
-        <Pressable
-          key={h.id}
-          onPress={() => navigation.navigate('HomeworkSubmissions', { homeworkId: h.id, homeworkTitle: h.title })}
-        >
-          <Card>
+        <Card key={h.id} style={styles.homeworkRow}>
+          <Pressable
+            style={styles.homeworkInfo}
+            onPress={() => navigation.navigate('HomeworkSubmissions', { homeworkId: h.id, homeworkTitle: h.title })}
+          >
             <Text style={styles.lessonTitle}>{h.title}</Text>
             {h.due_date ? <Text style={styles.lessonMeta}>Сдать до {h.due_date}</Text> : null}
-          </Card>
-        </Pressable>
+          </Pressable>
+          <Pressable onPress={() => navigation.navigate('CreateHomework', { groupId, homeworkId: h.id })}>
+            <Text style={styles.editIcon}>✏️</Text>
+          </Pressable>
+        </Card>
       ))}
     </Screen>
   );
@@ -157,4 +163,7 @@ const styles = StyleSheet.create({
   lessonInfo: { flex: 1 },
   lessonTitle: { fontSize: 15, fontWeight: '600', color: colors.text },
   lessonMeta: { color: colors.textMuted, marginTop: 2, fontSize: 13 },
+  editIcon: { fontSize: 16, marginLeft: spacing.sm },
+  homeworkRow: { flexDirection: 'row', alignItems: 'center' },
+  homeworkInfo: { flex: 1 },
 });

@@ -5,6 +5,8 @@ import { Screen } from '../../components/Screen';
 import { TextField } from '../../components/TextField';
 import { Button } from '../../components/Button';
 import { supabase } from '../../lib/supabase';
+import { resolveAudienceRecipientIds } from '../../lib/announcements';
+import { sendPushNotification } from '../../lib/notifications';
 import { useAuth } from '../../hooks/useAuth';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { AnnouncementAudience, Group } from '../../types/database';
@@ -54,11 +56,20 @@ export function ComposeAnnouncementScreen() {
       group_id: audience === 'group' ? groupId : null,
       pinned,
     });
-    setSaving(false);
     if (error) {
+      setSaving(false);
       Alert.alert('Не удалось отправить', error.message);
       return;
     }
+
+    try {
+      const recipientIds = (await resolveAudienceRecipientIds(audience, groupId)).filter((id) => id !== profile.id);
+      await sendPushNotification({ userIds: recipientIds, title: title.trim(), body: body.trim() });
+    } catch {
+      // объявление уже сохранено — сбой рассылки пушей не критичен
+    }
+
+    setSaving(false);
     navigation.goBack();
   };
 

@@ -8,6 +8,7 @@ import { ListingCard } from '../../components/ListingCard';
 import { fetchPendingPosts } from '../../lib/posts';
 import { fetchPendingListings, ListingCardData } from '../../lib/marketplace';
 import { supabase } from '../../lib/supabase';
+import { sendPushNotification } from '../../lib/notifications';
 import { useAuth } from '../../hooks/useAuth';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { StaffStackParamList } from '../../navigation/types';
@@ -41,22 +42,41 @@ export function ModerationScreen() {
     }, [load])
   );
 
-  const moderatePost = async (postId: string, status: 'approved' | 'rejected') => {
+  const moderatePost = async (post: PostCardData, status: 'approved' | 'rejected') => {
     if (!profile) return;
     await supabase
       .from('posts')
       .update({ status, moderated_by: profile.id, moderated_at: new Date().toISOString() })
-      .eq('id', postId);
-    setPosts((prev) => prev.filter((p) => p.id !== postId));
+      .eq('id', post.id);
+    setPosts((prev) => prev.filter((p) => p.id !== post.id));
+    if (post.author) {
+      sendPushNotification({
+        userIds: [post.author.id],
+        title: status === 'approved' ? 'Работа одобрена' : 'Работа отклонена',
+        body: status === 'approved' ? 'Ваша публикация появилась в общей ленте' : 'Публикацию не пропустили модераторы',
+        data: { type: 'post_moderated', postId: post.id },
+      });
+    }
   };
 
-  const moderateListing = async (listingId: string, status: 'approved' | 'rejected') => {
+  const moderateListing = async (listing: ListingCardData, status: 'approved' | 'rejected') => {
     if (!profile) return;
     await supabase
       .from('marketplace_listings')
       .update({ status, moderated_by: profile.id, moderated_at: new Date().toISOString() })
-      .eq('id', listingId);
-    setListings((prev) => prev.filter((l) => l.id !== listingId));
+      .eq('id', listing.id);
+    setListings((prev) => prev.filter((l) => l.id !== listing.id));
+    if (listing.seller) {
+      sendPushNotification({
+        userIds: [listing.seller.id],
+        title: status === 'approved' ? 'Объявление одобрено' : 'Объявление отклонено',
+        body:
+          status === 'approved'
+            ? `«${listing.title}» опубликовано в разделе «Продажа»`
+            : `«${listing.title}» не прошло проверку`,
+        data: { type: 'listing_moderated', listingId: listing.id },
+      });
+    }
   };
 
   return (
@@ -94,13 +114,13 @@ export function ModerationScreen() {
               <View style={styles.actions}>
                 <Pressable
                   style={[styles.actionButton, styles.approve]}
-                  onPress={() => moderatePost(post.id, 'approved')}
+                  onPress={() => moderatePost(post, 'approved')}
                 >
                   <Text style={styles.actionText}>Одобрить</Text>
                 </Pressable>
                 <Pressable
                   style={[styles.actionButton, styles.reject]}
-                  onPress={() => moderatePost(post.id, 'rejected')}
+                  onPress={() => moderatePost(post, 'rejected')}
                 >
                   <Text style={styles.actionText}>Отклонить</Text>
                 </Pressable>
@@ -123,13 +143,13 @@ export function ModerationScreen() {
               <View style={styles.actions}>
                 <Pressable
                   style={[styles.actionButton, styles.approve]}
-                  onPress={() => moderateListing(listing.id, 'approved')}
+                  onPress={() => moderateListing(listing, 'approved')}
                 >
                   <Text style={styles.actionText}>Одобрить</Text>
                 </Pressable>
                 <Pressable
                   style={[styles.actionButton, styles.reject]}
-                  onPress={() => moderateListing(listing.id, 'rejected')}
+                  onPress={() => moderateListing(listing, 'rejected')}
                 >
                   <Text style={styles.actionText}>Отклонить</Text>
                 </Pressable>

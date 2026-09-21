@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import { syncPushToken } from '../lib/notifications';
 import type { Profile, UserRole } from '../types/database';
 
 interface AuthContextValue {
@@ -62,6 +63,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       listener.subscription.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    if (profile) {
+      syncPushToken(profile.id, profile.push_token);
+    }
+  }, [profile?.id]);
 
   const value = useMemo<AuthContextValue>(
     () => ({

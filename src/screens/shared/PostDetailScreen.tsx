@@ -10,6 +10,7 @@ import { TextField } from '../../components/TextField';
 import { Button } from '../../components/Button';
 import { supabase } from '../../lib/supabase';
 import { toggleLike } from '../../lib/posts';
+import { sendPushNotification } from '../../lib/notifications';
 import { useAuth } from '../../hooks/useAuth';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { StaffStackParamList, StudentStackParamList } from '../../navigation/types';
@@ -94,8 +95,18 @@ export function PostDetailScreen() {
       Alert.alert('Не удалось отправить комментарий', error.message);
       return;
     }
+    const commentBody = commentText.trim();
     setCommentText('');
     load();
+
+    if (post && post.author_id !== profile.id) {
+      sendPushNotification({
+        userIds: [post.author_id],
+        title: `${profile.full_name} прокомментировал(а) вашу работу`,
+        body: commentBody,
+        data: { type: 'post_comment', postId },
+      });
+    }
   };
 
   const canDelete = profile && (profile.role === 'staff' || profile.id === post?.author_id);

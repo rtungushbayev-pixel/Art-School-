@@ -10,6 +10,7 @@ import { Avatar } from '../../components/Avatar';
 import { Button } from '../../components/Button';
 import { supabase } from '../../lib/supabase';
 import { formatPrice } from '../../lib/marketplace';
+import { sendPushNotification } from '../../lib/notifications';
 import { useAuth } from '../../hooks/useAuth';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { MarketplaceListing, MarketplaceListingImage, Profile } from '../../types/database';
@@ -53,7 +54,7 @@ export function ListingDetailScreen() {
   const isStaff = profile?.role === 'staff';
 
   const moderate = async (status: 'approved' | 'rejected') => {
-    if (!profile) return;
+    if (!profile || !listing) return;
     setBusy(true);
     await supabase
       .from('marketplace_listings')
@@ -61,6 +62,15 @@ export function ListingDetailScreen() {
       .eq('id', listingId);
     setBusy(false);
     load();
+    sendPushNotification({
+      userIds: [listing.seller_id],
+      title: status === 'approved' ? 'Объявление одобрено' : 'Объявление отклонено',
+      body:
+        status === 'approved'
+          ? `«${listing.title}» опубликовано в разделе «Продажа»`
+          : `«${listing.title}» не прошло проверку`,
+      data: { type: 'listing_moderated', listingId },
+    });
   };
 
   const toggleSold = async () => {

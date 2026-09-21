@@ -42,8 +42,8 @@ export type StaffStackParamList = {
   CreateGroup: undefined;
   GroupDetail: { groupId: string };
   AddStudentToGroup: { groupId: string };
-  CreateLesson: { groupId: string };
-  CreateHomework: { groupId: string };
+  CreateLesson: { groupId: string; lessonId?: string };
+  CreateHomework: { groupId: string; homeworkId?: string };
   HomeworkSubmissions: { homeworkId: string; homeworkTitle: string };
   GradeSubmission: { submissionId: string; studentName: string };
   ListingDetail: { listingId: string };

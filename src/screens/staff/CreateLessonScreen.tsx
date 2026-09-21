@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
 import { TextField } from '../../components/TextField';
@@ -8,6 +8,7 @@ import { Button } from '../../components/Button';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { colors, radius, spacing } from '../../theme/colors';
+import type { Lesson } from '../../types/database';
 import type { StaffStackParamList } from '../../navigation/types';
 
 const DAYS = [
@@ -25,7 +26,8 @@ const TIME_REGEX = /^([01]\d|2[0-3]):([0-5]\d)$/;
 export function CreateLessonScreen() {
   const navigation = useNavigation();
   const route = useRoute<RouteProp<StaffStackParamList, 'CreateLesson'>>();
-  const { groupId } = route.params;
+  const { groupId, lessonId } = route.params;
+  const isEditing = !!lessonId;
   const { profile } = useAuth();
 
   const [title, setTitle] = useState('');
@@ -35,7 +37,27 @@ export function CreateLessonScreen() {
   const [endTime, setEndTime] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const onCreate = async () => {
+  useFocusEffect(
+    useCallback(() => {
+      if (!lessonId) return;
+      supabase
+        .from('lessons')
+        .select('*')
+        .eq('id', lessonId)
+        .single()
+        .then(({ data }) => {
+          if (!data) return;
+          const lesson = data as Lesson;
+          setTitle(lesson.title);
+          setRoom(lesson.room ?? '');
+          setDayOfWeek(lesson.day_of_week);
+          setStartTime(lesson.start_time.slice(0, 5));
+          setEndTime(lesson.end_time.slice(0, 5));
+        });
+    }, [lessonId])
+  );
+
+  const onSave = async () => {
     if (!title.trim()) {
       Alert.alert('Укажите название занятия');
       return;
@@ -45,26 +67,42 @@ export function CreateLessonScreen() {
       return;
     }
     setSaving(true);
-    const { error } = await supabase.from('lessons').insert({
+    const payload = {
       group_id: groupId,
       title: title.trim(),
       room: room.trim() || null,
       day_of_week: dayOfWeek,
       start_time: startTime,
       end_time: endTime,
-      created_by: profile?.id ?? null,
-    });
+    };
+    const { error } = isEditing
+      ? await supabase.from('lessons').update(payload).eq('id', lessonId)
+      : await supabase.from('lessons').insert({ ...payload, created_by: profile?.id ?? null });
     setSaving(false);
     if (error) {
-      Alert.alert('Не удалось добавить занятие', error.message);
+      Alert.alert('Не удалось сохранить занятие', error.message);
       return;
     }
     navigation.goBack();
   };
 
+  const onDelete = () => {
+    Alert.alert('Удалить занятие?', title, [
+      { text: 'Отмена', style: 'cancel' },
+      {
+        text: 'Удалить',
+        style: 'destructive',
+        onPress: async () => {
+          await supabase.from('lessons').delete().eq('id', lessonId);
+          navigation.goBack();
+        },
+      },
+    ]);
+  };
+
   return (
     <Screen scroll>
-      <Text style={styles.title}>Новое занятие</Text>
+      <Text style={styles.title}>{isEditing ? 'Редактировать занятие' : 'Новое занятие'}</Text>
 
       <TextField label="Название" value={title} onChangeText={setTitle} placeholder="Например: Рисунок" />
 
@@ -92,7 +130,14 @@ export function CreateLessonScreen() {
 
       <TextField label="Кабинет" value={room} onChangeText={setRoom} placeholder="Например: 204" />
 
-      <Button title="Добавить" onPress={onCreate} loading={saving} />
+      <Button title={isEditing ? 'Сохранить' : 'Добавить'} onPress={onSave} loading={saving} />
+
+      {isEditing ? (
+        <>
+          <View style={{ height: spacing.sm }} />
+          <Button title="Удалить занятие" variant="danger" onPress={onDelete} />
+        </>
+      ) : null}
     </Screen>
   );
 }
