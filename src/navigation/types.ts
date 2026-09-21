@@ -22,6 +22,7 @@ export type StudentStackParamList = {
 
 export type StaffTabParamList = {
   AnnouncementsTab: undefined;
+  GroupsTab: undefined;
   AttendanceTab: undefined;
   ModerationTab: undefined;
   ProfileTab: undefined;
@@ -34,4 +35,11 @@ export type StaffStackParamList = {
   PostDetail: { postId: string };
   EditProfile: undefined;
   UserProfile: { userId: string };
+  CreateGroup: undefined;
+  GroupDetail: { groupId: string };
+  AddStudentToGroup: { groupId: string };
+  CreateLesson: { groupId: string };
+  CreateHomework: { groupId: string };
+  HomeworkSubmissions: { homeworkId: string; homeworkTitle: string };
+  GradeSubmission: { submissionId: string; studentName: string };
 };

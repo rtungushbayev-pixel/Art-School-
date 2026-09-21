@@ -4,6 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { colors } from '../theme/colors';
 import type { StaffTabParamList } from './types';
 import { StaffAnnouncementsScreen } from '../screens/staff/AnnouncementsScreen';
+import { GroupsScreen } from '../screens/staff/GroupsScreen';
 import { AttendanceScreen } from '../screens/staff/AttendanceScreen';
 import { ModerationScreen } from '../screens/staff/ModerationScreen';
 import { ProfileScreen } from '../screens/shared/ProfileScreen';
@@ -12,6 +13,7 @@ const Tab = createBottomTabNavigator<StaffTabParamList>();
 
 const ICONS: Record<keyof StaffTabParamList, string> = {
   AnnouncementsTab: '📣',
+  GroupsTab: '🎓',
   AttendanceTab: '✅',
   ModerationTab: '🛡️',
   ProfileTab: '👤',
@@ -28,6 +30,7 @@ export function StaffTabs() {
       })}
     >
       <Tab.Screen name="AnnouncementsTab" component={StaffAnnouncementsScreen} options={{ title: 'Объявления' }} />
+      <Tab.Screen name="GroupsTab" component={GroupsScreen} options={{ title: 'Группы' }} />
       <Tab.Screen name="AttendanceTab" component={AttendanceScreen} options={{ title: 'Посещаемость' }} />
       <Tab.Screen name="ModerationTab" component={ModerationScreen} options={{ title: 'Модерация' }} />
       <Tab.Screen name="ProfileTab" component={ProfileScreen} options={{ title: 'Профиль' }} />
