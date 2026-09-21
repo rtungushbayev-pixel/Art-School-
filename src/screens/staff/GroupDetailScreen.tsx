@@ -7,8 +7,8 @@ import { Card } from '../../components/Card';
 import { Avatar } from '../../components/Avatar';
 import { supabase } from '../../lib/supabase';
 import { fetchGroupMembers, removeStudentFromGroup } from '../../lib/groups';
-import { colors, radius, spacing } from '../../theme/colors';
-import type { Group, Homework, Lesson, Profile } from '../../types/database';
+import { colors, spacing } from '../../theme/colors';
+import type { Group, Lesson, Profile } from '../../types/database';
 import type { StaffStackParamList } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<StaffStackParamList, 'GroupDetail'>;
@@ -22,13 +22,12 @@ export function GroupDetailScreen({ route }: Props) {
   const [group, setGroup] = useState<Group | null>(null);
   const [members, setMembers] = useState<Profile[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
-  const [homework, setHomework] = useState<Homework[]>([]);
 
   const load = useCallback(async () => {
     const { data: groupData } = await supabase.from('groups').select('*').eq('id', groupId).single();
     setGroup(groupData as Group);
 
-    const [membersList, { data: lessonRows }, { data: homeworkRows }] = await Promise.all([
+    const [membersList, { data: lessonRows }] = await Promise.all([
       fetchGroupMembers(groupId),
       supabase
         .from('lessons')
@@ -36,12 +35,10 @@ export function GroupDetailScreen({ route }: Props) {
         .eq('group_id', groupId)
         .order('day_of_week')
         .order('start_time'),
-      supabase.from('homework').select('*').eq('group_id', groupId).order('due_date', { ascending: true }),
     ]);
 
     setMembers(membersList);
     setLessons((lessonRows as Lesson[]) ?? []);
-    setHomework((homeworkRows as Homework[]) ?? []);
   }, [groupId]);
 
   useFocusEffect(
@@ -116,28 +113,6 @@ export function GroupDetailScreen({ route }: Props) {
           </Card>
         </Pressable>
       ))}
-
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Домашние задания</Text>
-        <Pressable onPress={() => navigation.navigate('CreateHomework', { groupId })}>
-          <Text style={styles.addLink}>+ Добавить</Text>
-        </Pressable>
-      </View>
-      {homework.length === 0 ? <Text style={styles.empty}>Заданий пока нет</Text> : null}
-      {homework.map((h) => (
-        <Card key={h.id} style={styles.homeworkRow}>
-          <Pressable
-            style={styles.homeworkInfo}
-            onPress={() => navigation.navigate('HomeworkSubmissions', { homeworkId: h.id, homeworkTitle: h.title })}
-          >
-            <Text style={styles.lessonTitle}>{h.title}</Text>
-            {h.due_date ? <Text style={styles.lessonMeta}>Сдать до {h.due_date}</Text> : null}
-          </Pressable>
-          <Pressable onPress={() => navigation.navigate('CreateHomework', { groupId, homeworkId: h.id })}>
-            <Text style={styles.editIcon}>✏️</Text>
-          </Pressable>
-        </Card>
-      ))}
     </Screen>
   );
 }
@@ -164,6 +139,4 @@ const styles = StyleSheet.create({
   lessonTitle: { fontSize: 15, fontWeight: '600', color: colors.text },
   lessonMeta: { color: colors.textMuted, marginTop: 2, fontSize: 13 },
   editIcon: { fontSize: 16, marginLeft: spacing.sm },
-  homeworkRow: { flexDirection: 'row', alignItems: 'center' },
-  homeworkInfo: { flex: 1 },
 });

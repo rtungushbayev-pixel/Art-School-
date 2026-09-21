@@ -4,7 +4,6 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { colors } from '../theme/colors';
 import type { StudentTabParamList } from './types';
 import { ScheduleScreen } from '../screens/student/ScheduleScreen';
-import { HomeworkScreen } from '../screens/student/HomeworkScreen';
 import { FeedScreen } from '../screens/student/FeedScreen';
 import { AnnouncementsScreen } from '../screens/student/AnnouncementsScreen';
 import { MarketplaceScreen } from '../screens/shared/MarketplaceScreen';
@@ -14,7 +13,6 @@ const Tab = createBottomTabNavigator<StudentTabParamList>();
 
 const ICONS: Record<keyof StudentTabParamList, string> = {
   ScheduleTab: '📅',
-  HomeworkTab: '📝',
   FeedTab: '🖼️',
   MarketTab: '🛒',
   AnnouncementsTab: '📣',
@@ -32,7 +30,6 @@ export function StudentTabs() {
       })}
     >
       <Tab.Screen name="ScheduleTab" component={ScheduleScreen} options={{ title: 'Расписание' }} />
-      <Tab.Screen name="HomeworkTab" component={HomeworkScreen} options={{ title: 'Задания' }} />
       <Tab.Screen name="FeedTab" component={FeedScreen} options={{ title: 'Лента' }} />
       <Tab.Screen name="MarketTab" component={MarketplaceScreen} options={{ title: 'Продажа' }} />
       <Tab.Screen name="AnnouncementsTab" component={AnnouncementsScreen} options={{ title: 'Объявления' }} />

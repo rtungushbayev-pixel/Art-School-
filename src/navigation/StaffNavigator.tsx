@@ -11,9 +11,6 @@ import { CreateGroupScreen } from '../screens/staff/CreateGroupScreen';
 import { GroupDetailScreen } from '../screens/staff/GroupDetailScreen';
 import { AddStudentToGroupScreen } from '../screens/staff/AddStudentToGroupScreen';
 import { CreateLessonScreen } from '../screens/staff/CreateLessonScreen';
-import { CreateHomeworkScreen } from '../screens/staff/CreateHomeworkScreen';
-import { HomeworkSubmissionsScreen } from '../screens/staff/HomeworkSubmissionsScreen';
-import { GradeSubmissionScreen } from '../screens/staff/GradeSubmissionScreen';
 import { ListingDetailScreen } from '../screens/shared/ListingDetailScreen';
 import { CreateListingScreen } from '../screens/shared/CreateListingScreen';
 import { colors } from '../theme/colors';
@@ -47,13 +44,6 @@ export function StaffNavigator() {
         options={{ title: 'Добавить ученика' }}
       />
       <Stack.Screen name="CreateLesson" component={CreateLessonScreen} options={{ title: 'Новое занятие' }} />
-      <Stack.Screen name="CreateHomework" component={CreateHomeworkScreen} options={{ title: 'Новое задание' }} />
-      <Stack.Screen
-        name="HomeworkSubmissions"
-        component={HomeworkSubmissionsScreen}
-        options={{ title: 'Сдачи задания' }}
-      />
-      <Stack.Screen name="GradeSubmission" component={GradeSubmissionScreen} options={{ title: 'Оценка работы' }} />
       <Stack.Screen name="ListingDetail" component={ListingDetailScreen} options={{ title: 'Объявление' }} />
       <Stack.Screen name="CreateListing" component={CreateListingScreen} options={{ title: 'Продажа работы' }} />
     </Stack.Navigator>

@@ -2,7 +2,6 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { StudentStackParamList } from './types';
 import { StudentTabs } from './StudentTabs';
-import { HomeworkDetailScreen } from '../screens/student/HomeworkDetailScreen';
 import { PostDetailScreen } from '../screens/shared/PostDetailScreen';
 import { CreatePostScreen } from '../screens/student/CreatePostScreen';
 import { EditProfileScreen } from '../screens/shared/EditProfileScreen';
@@ -23,7 +22,6 @@ export function StudentNavigator() {
       }}
     >
       <Stack.Screen name="StudentTabs" component={StudentTabs} options={{ headerShown: false }} />
-      <Stack.Screen name="HomeworkDetail" component={HomeworkDetailScreen} options={{ title: 'Задание' }} />
       <Stack.Screen name="PostDetail" component={PostDetailScreen} options={{ title: 'Публикация' }} />
       <Stack.Screen name="CreatePost" component={CreatePostScreen} options={{ title: 'Новая работа' }} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Редактирование профиля' }} />

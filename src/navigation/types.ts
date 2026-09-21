@@ -5,7 +5,6 @@ export type AuthStackParamList = {
 
 export type StudentTabParamList = {
   ScheduleTab: undefined;
-  HomeworkTab: undefined;
   FeedTab: undefined;
   MarketTab: undefined;
   AnnouncementsTab: undefined;
@@ -14,7 +13,6 @@ export type StudentTabParamList = {
 
 export type StudentStackParamList = {
   StudentTabs: undefined;
-  HomeworkDetail: { homeworkId: string };
   PostDetail: { postId: string };
   CreatePost: undefined;
   EditProfile: undefined;
@@ -43,9 +41,6 @@ export type StaffStackParamList = {
   GroupDetail: { groupId: string };
   AddStudentToGroup: { groupId: string };
   CreateLesson: { groupId: string; lessonId?: string };
-  CreateHomework: { groupId: string; homeworkId?: string };
-  HomeworkSubmissions: { homeworkId: string; homeworkTitle: string };
-  GradeSubmission: { submissionId: string; studentName: string };
   ListingDetail: { listingId: string };
   CreateListing: undefined;
 };
