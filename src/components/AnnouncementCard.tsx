@@ -11,12 +11,18 @@ const AUDIENCE_LABELS: Record<string, string> = {
   group: 'Группе',
 };
 
-export function AnnouncementCard({ announcement }: { announcement: AnnouncementWithAuthor }) {
+interface AnnouncementCardProps {
+  announcement: AnnouncementWithAuthor;
+  editable?: boolean;
+}
+
+export function AnnouncementCard({ announcement, editable }: AnnouncementCardProps) {
   return (
     <Card>
       <View style={styles.row}>
         {announcement.pinned ? <Text style={styles.pin}>📌</Text> : null}
         <Text style={styles.title}>{announcement.title}</Text>
+        {editable ? <Text style={styles.editIcon}>✏️</Text> : null}
       </View>
       <Text style={styles.body}>{announcement.body}</Text>
       <View style={styles.metaRow}>
@@ -31,6 +37,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginBottom: spacing.xs },
   pin: { fontSize: 14 },
   title: { fontSize: 16, fontWeight: '700', color: colors.text, flex: 1 },
+  editIcon: { fontSize: 14, marginLeft: spacing.xs },
   body: { color: colors.text, lineHeight: 20, marginBottom: spacing.sm },
   metaRow: { flexDirection: 'row', justifyContent: 'space-between' },
   meta: { color: colors.textMuted, fontSize: 12 },

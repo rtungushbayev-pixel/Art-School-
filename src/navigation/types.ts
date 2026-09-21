@@ -33,7 +33,7 @@ export type StaffTabParamList = {
 
 export type StaffStackParamList = {
   StaffTabs: undefined;
-  ComposeAnnouncement: undefined;
+  ComposeAnnouncement: { announcementId?: string } | undefined;
   AttendanceGroup: { groupId: string; groupName: string };
   PostDetail: { postId: string };
   CreatePost: undefined;

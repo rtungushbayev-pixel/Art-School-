@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
 import { TextField } from '../../components/TextField';
 import { Button } from '../../components/Button';
@@ -9,7 +10,8 @@ import { resolveAudienceRecipientIds } from '../../lib/announcements';
 import { sendPushNotification } from '../../lib/notifications';
 import { useAuth } from '../../hooks/useAuth';
 import { colors, radius, spacing } from '../../theme/colors';
-import type { AnnouncementAudience, Group } from '../../types/database';
+import type { Announcement, AnnouncementAudience, Group } from '../../types/database';
+import type { StaffStackParamList } from '../../navigation/types';
 
 const AUDIENCES: { value: AnnouncementAudience; label: string }[] = [
   { value: 'all', label: 'Всем' },
@@ -20,6 +22,9 @@ const AUDIENCES: { value: AnnouncementAudience; label: string }[] = [
 
 export function ComposeAnnouncementScreen() {
   const navigation = useNavigation();
+  const route = useRoute<RouteProp<StaffStackParamList, 'ComposeAnnouncement'>>();
+  const announcementId = route.params?.announcementId;
+  const isEditing = !!announcementId;
   const { profile } = useAuth();
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
@@ -37,6 +42,26 @@ export function ComposeAnnouncementScreen() {
       .then(({ data }) => setGroups((data as Group[]) ?? []));
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      if (!announcementId) return;
+      supabase
+        .from('announcements')
+        .select('*')
+        .eq('id', announcementId)
+        .single()
+        .then(({ data }) => {
+          if (!data) return;
+          const a = data as Announcement;
+          setTitle(a.title);
+          setBody(a.body);
+          setAudience(a.audience);
+          setGroupId(a.group_id);
+          setPinned(a.pinned);
+        });
+    }, [announcementId])
+  );
+
   const onSend = async () => {
     if (!profile) return;
     if (!title.trim() || !body.trim()) {
@@ -48,34 +73,52 @@ export function ComposeAnnouncementScreen() {
       return;
     }
     setSaving(true);
-    const { error } = await supabase.from('announcements').insert({
+    const payload = {
       title: title.trim(),
       body: body.trim(),
-      author_id: profile.id,
       audience,
       group_id: audience === 'group' ? groupId : null,
       pinned,
-    });
+    };
+    const { error } = isEditing
+      ? await supabase.from('announcements').update(payload).eq('id', announcementId)
+      : await supabase.from('announcements').insert({ ...payload, author_id: profile.id });
     if (error) {
       setSaving(false);
-      Alert.alert('Не удалось отправить', error.message);
+      Alert.alert('Не удалось сохранить', error.message);
       return;
     }
 
-    try {
-      const recipientIds = (await resolveAudienceRecipientIds(audience, groupId)).filter((id) => id !== profile.id);
-      await sendPushNotification({ userIds: recipientIds, title: title.trim(), body: body.trim() });
-    } catch {
-      // объявление уже сохранено — сбой рассылки пушей не критичен
+    if (!isEditing) {
+      try {
+        const recipientIds = (await resolveAudienceRecipientIds(audience, groupId)).filter((id) => id !== profile.id);
+        await sendPushNotification({ userIds: recipientIds, title: title.trim(), body: body.trim() });
+      } catch {
+        // объявление уже сохранено — сбой рассылки пушей не критичен
+      }
     }
 
     setSaving(false);
     navigation.goBack();
   };
 
+  const onDelete = () => {
+    Alert.alert('Удалить объявление?', title, [
+      { text: 'Отмена', style: 'cancel' },
+      {
+        text: 'Удалить',
+        style: 'destructive',
+        onPress: async () => {
+          await supabase.from('announcements').delete().eq('id', announcementId);
+          navigation.goBack();
+        },
+      },
+    ]);
+  };
+
   return (
     <Screen scroll>
-      <Text style={styles.title}>Новое объявление</Text>
+      <Text style={styles.title}>{isEditing ? 'Редактировать объявление' : 'Новое объявление'}</Text>
 
       <TextField label="Заголовок" value={title} onChangeText={setTitle} />
       <TextField label="Текст" value={body} onChangeText={setBody} multiline numberOfLines={5} style={styles.textarea} />
@@ -114,7 +157,14 @@ export function ComposeAnnouncementScreen() {
         <Switch value={pinned} onValueChange={setPinned} trackColor={{ true: colors.primary }} />
       </View>
 
-      <Button title="Отправить" onPress={onSend} loading={saving} />
+      <Button title={isEditing ? 'Сохранить' : 'Отправить'} onPress={onSend} loading={saving} />
+
+      {isEditing ? (
+        <>
+          <View style={{ height: spacing.sm }} />
+          <Button title="Удалить объявление" variant="danger" onPress={onDelete} />
+        </>
+      ) : null}
     </Screen>
   );
 }
