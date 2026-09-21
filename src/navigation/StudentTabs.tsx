@@ -7,6 +7,7 @@ import { ScheduleScreen } from '../screens/student/ScheduleScreen';
 import { HomeworkScreen } from '../screens/student/HomeworkScreen';
 import { FeedScreen } from '../screens/student/FeedScreen';
 import { AnnouncementsScreen } from '../screens/student/AnnouncementsScreen';
+import { MarketplaceScreen } from '../screens/shared/MarketplaceScreen';
 import { ProfileScreen } from '../screens/shared/ProfileScreen';
 
 const Tab = createBottomTabNavigator<StudentTabParamList>();
@@ -15,6 +16,7 @@ const ICONS: Record<keyof StudentTabParamList, string> = {
   ScheduleTab: '📅',
   HomeworkTab: '📝',
   FeedTab: '🖼️',
+  MarketTab: '🛒',
   AnnouncementsTab: '📣',
   ProfileTab: '👤',
 };
@@ -32,6 +34,7 @@ export function StudentTabs() {
       <Tab.Screen name="ScheduleTab" component={ScheduleScreen} options={{ title: 'Расписание' }} />
       <Tab.Screen name="HomeworkTab" component={HomeworkScreen} options={{ title: 'Задания' }} />
       <Tab.Screen name="FeedTab" component={FeedScreen} options={{ title: 'Лента' }} />
+      <Tab.Screen name="MarketTab" component={MarketplaceScreen} options={{ title: 'Продажа' }} />
       <Tab.Screen name="AnnouncementsTab" component={AnnouncementsScreen} options={{ title: 'Объявления' }} />
       <Tab.Screen name="ProfileTab" component={ProfileScreen} options={{ title: 'Профиль' }} />
     </Tab.Navigator>

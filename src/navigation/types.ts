@@ -7,6 +7,7 @@ export type StudentTabParamList = {
   ScheduleTab: undefined;
   HomeworkTab: undefined;
   FeedTab: undefined;
+  MarketTab: undefined;
   AnnouncementsTab: undefined;
   ProfileTab: undefined;
 };
@@ -18,11 +19,14 @@ export type StudentStackParamList = {
   CreatePost: undefined;
   EditProfile: undefined;
   UserProfile: { userId: string };
+  ListingDetail: { listingId: string };
+  CreateListing: undefined;
 };
 
 export type StaffTabParamList = {
   AnnouncementsTab: undefined;
   GroupsTab: undefined;
+  MarketTab: undefined;
   AttendanceTab: undefined;
   ModerationTab: undefined;
   ProfileTab: undefined;
@@ -42,4 +46,6 @@ export type StaffStackParamList = {
   CreateHomework: { groupId: string };
   HomeworkSubmissions: { homeworkId: string; homeworkTitle: string };
   GradeSubmission: { submissionId: string; studentName: string };
+  ListingDetail: { listingId: string };
+  CreateListing: undefined;
 };

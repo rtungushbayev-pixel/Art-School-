@@ -4,6 +4,7 @@ export type SubmissionStatus = 'submitted' | 'reviewed';
 export type PostStatus = 'pending' | 'approved' | 'rejected';
 export type AnnouncementAudience = 'all' | 'students' | 'staff' | 'group';
 export type AttendanceStatus = 'present' | 'absent' | 'late' | 'excused';
+export type ListingStatus = 'pending' | 'approved' | 'rejected';
 
 export interface Profile {
   id: string;
@@ -122,6 +123,28 @@ export interface Attendance {
   created_at: string;
 }
 
+export interface MarketplaceListing {
+  id: string;
+  seller_id: string;
+  title: string;
+  description: string | null;
+  price: number;
+  currency: string;
+  contact_info: string | null;
+  status: ListingStatus;
+  sold: boolean;
+  moderated_by: string | null;
+  moderated_at: string | null;
+  created_at: string;
+}
+
+export interface MarketplaceListingImage {
+  id: string;
+  listing_id: string;
+  image_url: string;
+  position: number;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -141,6 +164,16 @@ export interface Database {
       post_comments: { Row: PostComment; Insert: Partial<PostComment>; Update: Partial<PostComment> };
       announcements: { Row: Announcement; Insert: Partial<Announcement>; Update: Partial<Announcement> };
       attendance: { Row: Attendance; Insert: Partial<Attendance>; Update: Partial<Attendance> };
+      marketplace_listings: {
+        Row: MarketplaceListing;
+        Insert: Partial<MarketplaceListing>;
+        Update: Partial<MarketplaceListing>;
+      };
+      marketplace_listing_images: {
+        Row: MarketplaceListingImage;
+        Insert: Partial<MarketplaceListingImage>;
+        Update: Partial<MarketplaceListingImage>;
+      };
     };
   };
 }

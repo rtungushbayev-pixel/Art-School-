@@ -7,6 +7,8 @@ import { PostDetailScreen } from '../screens/shared/PostDetailScreen';
 import { CreatePostScreen } from '../screens/student/CreatePostScreen';
 import { EditProfileScreen } from '../screens/shared/EditProfileScreen';
 import { UserProfileScreen } from '../screens/shared/UserProfileScreen';
+import { ListingDetailScreen } from '../screens/shared/ListingDetailScreen';
+import { CreateListingScreen } from '../screens/shared/CreateListingScreen';
 import { colors } from '../theme/colors';
 
 const Stack = createNativeStackNavigator<StudentStackParamList>();
@@ -26,6 +28,8 @@ export function StudentNavigator() {
       <Stack.Screen name="CreatePost" component={CreatePostScreen} options={{ title: 'Новая работа' }} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Редактирование профиля' }} />
       <Stack.Screen name="UserProfile" component={UserProfileScreen} options={{ title: 'Профиль' }} />
+      <Stack.Screen name="ListingDetail" component={ListingDetailScreen} options={{ title: 'Объявление' }} />
+      <Stack.Screen name="CreateListing" component={CreateListingScreen} options={{ title: 'Продажа работы' }} />
     </Stack.Navigator>
   );
 }
