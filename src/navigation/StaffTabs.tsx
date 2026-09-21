@@ -44,6 +44,9 @@ export function StaffTabs() {
               color={focused ? config.color : colors.textMuted}
             />
           ),
+          tabBarLabelStyle: { fontSize: 9 },
+          tabBarItemStyle: { paddingHorizontal: 0 },
+          tabBarIconStyle: { marginTop: 2 },
         };
       }}
     >
@@ -51,7 +54,7 @@ export function StaffTabs() {
       <Tab.Screen name="GroupsTab" component={GroupsScreen} options={{ title: 'Группы' }} />
       <Tab.Screen name="FeedTab" component={FeedScreen} options={{ title: 'Лента' }} />
       <Tab.Screen name="MarketTab" component={MarketplaceScreen} options={{ title: 'Продажа' }} />
-      <Tab.Screen name="AttendanceTab" component={AttendanceScreen} options={{ title: 'Посещаемость' }} />
+      <Tab.Screen name="AttendanceTab" component={AttendanceScreen} options={{ title: 'Явка' }} />
       <Tab.Screen name="ModerationTab" component={ModerationScreen} options={{ title: 'Модерация' }} />
       <Tab.Screen name="ProfileTab" component={ProfileScreen} options={{ title: 'Профиль' }} />
     </Tab.Navigator>

@@ -40,6 +40,8 @@ export function StudentTabs() {
               color={focused ? config.color : colors.textMuted}
             />
           ),
+          tabBarLabelStyle: { fontSize: 10 },
+          tabBarIconStyle: { marginTop: 2 },
         };
       }}
     >
