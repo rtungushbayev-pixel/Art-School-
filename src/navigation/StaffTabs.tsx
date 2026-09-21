@@ -50,12 +50,12 @@ export function StaffTabs() {
         };
       }}
     >
-      <Tab.Screen name="AnnouncementsTab" component={StaffAnnouncementsScreen} options={{ title: 'Объявления' }} />
+      <Tab.Screen name="AnnouncementsTab" component={StaffAnnouncementsScreen} options={{ title: 'Новости' }} />
       <Tab.Screen name="GroupsTab" component={GroupsScreen} options={{ title: 'Группы' }} />
       <Tab.Screen name="FeedTab" component={FeedScreen} options={{ title: 'Лента' }} />
       <Tab.Screen name="MarketTab" component={MarketplaceScreen} options={{ title: 'Продажа' }} />
       <Tab.Screen name="AttendanceTab" component={AttendanceScreen} options={{ title: 'Явка' }} />
-      <Tab.Screen name="ModerationTab" component={ModerationScreen} options={{ title: 'Модерация' }} />
+      <Tab.Screen name="ModerationTab" component={ModerationScreen} options={{ title: 'Проверка' }} />
       <Tab.Screen name="ProfileTab" component={ProfileScreen} options={{ title: 'Профиль' }} />
     </Tab.Navigator>
   );

@@ -48,7 +48,7 @@ export function StudentTabs() {
       <Tab.Screen name="ScheduleTab" component={ScheduleScreen} options={{ title: 'Расписание' }} />
       <Tab.Screen name="FeedTab" component={FeedScreen} options={{ title: 'Лента' }} />
       <Tab.Screen name="MarketTab" component={MarketplaceScreen} options={{ title: 'Продажа' }} />
-      <Tab.Screen name="AnnouncementsTab" component={AnnouncementsScreen} options={{ title: 'Объявления' }} />
+      <Tab.Screen name="AnnouncementsTab" component={AnnouncementsScreen} options={{ title: 'Новости' }} />
       <Tab.Screen name="ProfileTab" component={ProfileScreen} options={{ title: 'Профиль' }} />
     </Tab.Navigator>
   );
