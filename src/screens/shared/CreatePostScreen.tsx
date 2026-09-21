@@ -9,10 +9,12 @@ import { TextField } from '../../components/TextField';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { colors, radius, spacing } from '../../theme/colors';
-import type { StudentStackParamList } from '../../navigation/types';
+import type { StaffStackParamList, StudentStackParamList } from '../../navigation/types';
+
+type NavParamList = StudentStackParamList & StaffStackParamList;
 
 export function CreatePostScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<StudentStackParamList>>();
+  const navigation = useNavigation<NativeStackNavigationProp<NavParamList>>();
   const { profile } = useAuth();
   const [asset, setAsset] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [caption, setCaption] = useState('');

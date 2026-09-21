@@ -4,7 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { colors } from '../theme/colors';
 import type { StudentTabParamList } from './types';
 import { ScheduleScreen } from '../screens/student/ScheduleScreen';
-import { FeedScreen } from '../screens/student/FeedScreen';
+import { FeedScreen } from '../screens/shared/FeedScreen';
 import { AnnouncementsScreen } from '../screens/student/AnnouncementsScreen';
 import { MarketplaceScreen } from '../screens/shared/MarketplaceScreen';
 import { ProfileScreen } from '../screens/shared/ProfileScreen';

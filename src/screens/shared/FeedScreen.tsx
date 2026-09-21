@@ -7,10 +7,12 @@ import { PostCard, PostCardData } from '../../components/PostCard';
 import { fetchFeedPosts, toggleLike } from '../../lib/posts';
 import { useAuth } from '../../hooks/useAuth';
 import { colors, radius, spacing } from '../../theme/colors';
-import type { StudentStackParamList } from '../../navigation/types';
+import type { StaffStackParamList, StudentStackParamList } from '../../navigation/types';
+
+type NavParamList = StudentStackParamList & StaffStackParamList;
 
 export function FeedScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<StudentStackParamList>>();
+  const navigation = useNavigation<NativeStackNavigationProp<NavParamList>>();
   const { profile } = useAuth();
   const [posts, setPosts] = useState<PostCardData[]>([]);
   const [loading, setLoading] = useState(true);

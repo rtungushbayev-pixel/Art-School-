@@ -3,7 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { StudentStackParamList } from './types';
 import { StudentTabs } from './StudentTabs';
 import { PostDetailScreen } from '../screens/shared/PostDetailScreen';
-import { CreatePostScreen } from '../screens/student/CreatePostScreen';
+import { CreatePostScreen } from '../screens/shared/CreatePostScreen';
 import { EditProfileScreen } from '../screens/shared/EditProfileScreen';
 import { UserProfileScreen } from '../screens/shared/UserProfileScreen';
 import { ListingDetailScreen } from '../screens/shared/ListingDetailScreen';

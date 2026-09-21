@@ -24,6 +24,7 @@ export type StudentStackParamList = {
 export type StaffTabParamList = {
   AnnouncementsTab: undefined;
   GroupsTab: undefined;
+  FeedTab: undefined;
   MarketTab: undefined;
   AttendanceTab: undefined;
   ModerationTab: undefined;
@@ -35,6 +36,7 @@ export type StaffStackParamList = {
   ComposeAnnouncement: undefined;
   AttendanceGroup: { groupId: string; groupName: string };
   PostDetail: { postId: string };
+  CreatePost: undefined;
   EditProfile: undefined;
   UserProfile: { userId: string };
   CreateGroup: undefined;
