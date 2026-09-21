@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { Alert, StyleSheet, Text } from 'react-native';
+import { Alert, Image, StyleSheet, Text } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
@@ -8,7 +8,7 @@ import { TextField } from '../../components/TextField';
 import { Button } from '../../components/Button';
 import { supabase } from '../../lib/supabase';
 import { sendPushNotification } from '../../lib/notifications';
-import { colors, spacing } from '../../theme/colors';
+import { colors, radius, spacing } from '../../theme/colors';
 import type { HomeworkSubmission } from '../../types/database';
 import type { StaffStackParamList } from '../../navigation/types';
 
@@ -84,6 +84,9 @@ export function GradeSubmissionScreen() {
       <Text style={styles.sectionTitle}>Ответ ученика</Text>
       <Card>
         <Text style={styles.content}>{submission.content || 'Без текста'}</Text>
+        {submission.attachment_url ? (
+          <Image source={{ uri: submission.attachment_url }} style={styles.attachmentImage} />
+        ) : null}
       </Card>
 
       <TextField label="Оценка (0–100)" value={grade} onChangeText={setGrade} keyboardType="number-pad" />
@@ -106,5 +109,6 @@ const styles = StyleSheet.create({
   title: { fontSize: 20, fontWeight: '700', color: colors.text, marginBottom: spacing.md },
   sectionTitle: { fontSize: 15, fontWeight: '700', color: colors.primary, marginBottom: spacing.sm },
   content: { color: colors.text, lineHeight: 21 },
+  attachmentImage: { width: '100%', aspectRatio: 1.4, borderRadius: radius.md, marginTop: spacing.sm, backgroundColor: colors.border },
   textarea: { minHeight: 90, textAlignVertical: 'top' },
 });

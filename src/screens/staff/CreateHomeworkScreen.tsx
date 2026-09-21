@@ -1,13 +1,15 @@
 import React, { useCallback, useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, StyleSheet, Text, View } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
 import { TextField } from '../../components/TextField';
 import { Button } from '../../components/Button';
 import { supabase } from '../../lib/supabase';
+import { uploadImageAsset } from '../../lib/storage';
 import { useAuth } from '../../hooks/useAuth';
-import { colors, spacing } from '../../theme/colors';
+import { colors, radius, spacing } from '../../theme/colors';
 import type { Homework } from '../../types/database';
 import type { StaffStackParamList } from '../../navigation/types';
 
@@ -23,7 +25,10 @@ export function CreateHomeworkScreen() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState('');
+  const [attachmentUrl, setAttachmentUrl] = useState<string | null>(null);
+  const [newAsset, setNewAsset] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -39,11 +44,30 @@ export function CreateHomeworkScreen() {
           setTitle(hw.title);
           setDescription(hw.description ?? '');
           setDueDate(hw.due_date ?? '');
+          setAttachmentUrl(hw.attachment_url);
         });
     }, [homeworkId])
   );
 
+  const pickImage = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Нужен доступ к галерее, чтобы выбрать фото');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
+    if (!result.canceled && result.assets[0]) {
+      setNewAsset(result.assets[0]);
+    }
+  };
+
+  const removeAttachment = () => {
+    setNewAsset(null);
+    setAttachmentUrl(null);
+  };
+
   const onSave = async () => {
+    if (!profile) return;
     if (!title.trim()) {
       Alert.alert('Укажите название задания');
       return;
@@ -52,22 +76,35 @@ export function CreateHomeworkScreen() {
       Alert.alert('Дату укажите в формате ГГГГ-ММ-ДД, например 2026-10-01');
       return;
     }
+
     setSaving(true);
-    const payload = {
-      group_id: groupId,
-      title: title.trim(),
-      description: description.trim() || null,
-      due_date: dueDate.trim() || null,
-    };
-    const { error } = isEditing
-      ? await supabase.from('homework').update(payload).eq('id', homeworkId)
-      : await supabase.from('homework').insert({ ...payload, created_by: profile?.id ?? null });
-    setSaving(false);
-    if (error) {
-      Alert.alert('Не удалось сохранить задание', error.message);
-      return;
+    try {
+      let finalAttachmentUrl = attachmentUrl;
+      if (newAsset) {
+        setUploading(true);
+        finalAttachmentUrl = await uploadImageAsset('homework', profile.id, newAsset.uri, newAsset.mimeType);
+        setUploading(false);
+      }
+
+      const payload = {
+        group_id: groupId,
+        title: title.trim(),
+        description: description.trim() || null,
+        due_date: dueDate.trim() || null,
+        attachment_url: finalAttachmentUrl,
+      };
+      const { error } = isEditing
+        ? await supabase.from('homework').update(payload).eq('id', homeworkId)
+        : await supabase.from('homework').insert({ ...payload, created_by: profile.id });
+      if (error) throw error;
+
+      navigation.goBack();
+    } catch (e) {
+      Alert.alert('Не удалось сохранить задание', e instanceof Error ? e.message : undefined);
+    } finally {
+      setSaving(false);
+      setUploading(false);
     }
-    navigation.goBack();
   };
 
   const onDelete = () => {
@@ -84,6 +121,8 @@ export function CreateHomeworkScreen() {
     ]);
   };
 
+  const previewUri = newAsset?.uri ?? attachmentUrl;
+
   return (
     <Screen scroll>
       <Text style={styles.title}>{isEditing ? 'Редактировать задание' : 'Новое домашнее задание'}</Text>
@@ -99,7 +138,28 @@ export function CreateHomeworkScreen() {
       />
       <TextField label="Срок сдачи (ГГГГ-ММ-ДД)" value={dueDate} onChangeText={setDueDate} placeholder="2026-10-01" />
 
-      <Button title={isEditing ? 'Сохранить' : 'Создать'} onPress={onSave} loading={saving} />
+      <Text style={styles.label}>Фото к заданию (необязательно)</Text>
+      {previewUri ? (
+        <View style={styles.attachmentWrapper}>
+          <Image source={{ uri: previewUri }} style={styles.attachmentImage} />
+          <View style={styles.attachmentActions}>
+            <Text onPress={pickImage} style={styles.attachmentLink}>
+              Заменить
+            </Text>
+            <Text onPress={removeAttachment} style={[styles.attachmentLink, styles.attachmentRemove]}>
+              Удалить
+            </Text>
+          </View>
+        </View>
+      ) : (
+        <Text onPress={pickImage} style={styles.pickText}>
+          + Прикрепить фото
+        </Text>
+      )}
+
+      <View style={{ height: spacing.md }} />
+
+      <Button title={isEditing ? 'Сохранить' : 'Создать'} onPress={onSave} loading={saving || uploading} />
 
       {isEditing ? (
         <>
@@ -114,4 +174,25 @@ export function CreateHomeworkScreen() {
 const styles = StyleSheet.create({
   title: { fontSize: 20, fontWeight: '700', color: colors.text, marginBottom: spacing.md },
   textarea: { minHeight: 100, textAlignVertical: 'top' },
+  label: { marginBottom: spacing.xs, color: colors.textMuted, fontSize: 13, fontWeight: '600' },
+  pickText: {
+    color: colors.primary,
+    fontWeight: '600',
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderStyle: 'dashed',
+    borderRadius: radius.md,
+    paddingVertical: spacing.md,
+    textAlign: 'center',
+  },
+  attachmentWrapper: { borderRadius: radius.md, overflow: 'hidden', borderWidth: 1, borderColor: colors.border },
+  attachmentImage: { width: '100%', aspectRatio: 1.4, backgroundColor: colors.border },
+  attachmentActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: spacing.sm,
+    backgroundColor: colors.surface,
+  },
+  attachmentLink: { color: colors.primary, fontWeight: '600' },
+  attachmentRemove: { color: colors.danger },
 });
