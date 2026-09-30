@@ -5,14 +5,13 @@
 --    школы. Телефон переезжает в profile_private, где его видит только
 --    владелец и сотрудники.
 --
--- 2) Ученик мог сдать работу (или перенести сдачу) к заданию чужой группы:
---    политики homework_submissions проверяли только student_id.
---
--- 3) Бакет homework был публичным: файлы домашних работ открывались по
---    прямой ссылке без входа. Приложение этот бакет пока не использует,
---    поэтому делаем его приватным сразу. Файл может читать его владелец и
---    сотрудники; файлы, загруженные сотрудниками (вложения к заданиям), —
---    любой авторизованный пользователь. Ссылки — через createSignedUrl.
+-- 2) Домашние задания и сдача работ убраны из приложения ещё раньше, и
+--    школа не будет проверять работы учеников в приложении. Таблицы
+--    homework / homework_submissions оставались в базе с RLS-политиками,
+--    через которые ученик мог писать в них напрямую через API, а бакет
+--    homework был публичным. Удаляем таблицы целиком (вместе с данными)
+--    и закрываем бакет: все политики сняты, доступ есть только у service
+--    role. Сам бакет удаляется вручную в Dashboard → Storage.
 
 -- =========================================================
 -- PROFILE_PRIVATE: личные контакты
@@ -41,53 +40,17 @@ select id, phone from public.profiles where phone is not null;
 alter table public.profiles drop column phone;
 
 -- =========================================================
--- HOMEWORK_SUBMISSIONS: только к заданиям своей группы
+-- ДОМАШНИЕ ЗАДАНИЯ И СДАЧА РАБОТ: удаление
 -- =========================================================
 
-drop policy "submissions_insert_own" on public.homework_submissions;
-drop policy "submissions_update_own_or_staff" on public.homework_submissions;
-
-create policy "submissions_insert_own" on public.homework_submissions
-  for insert with check (
-    auth.uid() = student_id
-    and exists (
-      select 1 from public.homework h
-      where h.id = homework_id and public.is_group_member(h.group_id)
-    )
-  );
-
-create policy "submissions_update_own_or_staff" on public.homework_submissions
-  for update
-  using (auth.uid() = student_id or public.is_staff())
-  with check (
-    public.is_staff()
-    or (
-      auth.uid() = student_id
-      and exists (
-        select 1 from public.homework h
-        where h.id = homework_id and public.is_group_member(h.group_id)
-      )
-    )
-  );
-
--- =========================================================
--- STORAGE: приватный бакет homework
--- =========================================================
+drop table public.homework_submissions;
+drop function public.enforce_submission_review_fields();
+drop type public.submission_status;
+drop table public.homework;
 
 update storage.buckets set public = false where id = 'homework';
 
 drop policy "homework_bucket_public_read" on storage.objects;
-
-create policy "homework_bucket_owner_or_staff_read" on storage.objects
-  for select using (
-    bucket_id = 'homework'
-    and auth.role() = 'authenticated'
-    and (
-      (storage.foldername(name))[1] = auth.uid()::text
-      or public.is_staff()
-      or exists (
-        select 1 from public.profiles p
-        where p.id::text = (storage.foldername(name))[1] and p.role = 'staff'
-      )
-    )
-  );
+drop policy "homework_bucket_owner_write" on storage.objects;
+drop policy "homework_bucket_owner_update" on storage.objects;
+drop policy "homework_bucket_owner_delete" on storage.objects;

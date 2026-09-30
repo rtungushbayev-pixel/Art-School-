@@ -1,6 +1,5 @@
 export type UserRole = 'student' | 'staff';
 export type EnrollmentStatus = 'planning' | 'applied' | 'enrolled';
-export type SubmissionStatus = 'submitted' | 'reviewed';
 export type PostStatus = 'pending' | 'approved' | 'rejected';
 export type AnnouncementAudience = 'all' | 'students' | 'staff' | 'group';
 export type AttendanceStatus = 'present' | 'absent' | 'late' | 'excused';
@@ -52,30 +51,6 @@ export interface Lesson {
   end_time: string;
   created_by: string | null;
   created_at: string;
-}
-
-export interface Homework {
-  id: string;
-  group_id: string;
-  title: string;
-  description: string | null;
-  attachment_url: string | null;
-  due_date: string | null;
-  created_by: string | null;
-  created_at: string;
-}
-
-export interface HomeworkSubmission {
-  id: string;
-  homework_id: string;
-  student_id: string;
-  content: string | null;
-  attachment_url: string | null;
-  status: SubmissionStatus;
-  feedback: string | null;
-  grade: number | null;
-  submitted_at: string;
-  reviewed_at: string | null;
 }
 
 export interface Post {
@@ -165,12 +140,6 @@ export interface Database {
       groups: { Row: Group; Insert: Partial<Group>; Update: Partial<Group> };
       group_members: { Row: GroupMember; Insert: GroupMember; Update: Partial<GroupMember> };
       lessons: { Row: Lesson; Insert: Partial<Lesson>; Update: Partial<Lesson> };
-      homework: { Row: Homework; Insert: Partial<Homework>; Update: Partial<Homework> };
-      homework_submissions: {
-        Row: HomeworkSubmission;
-        Insert: Partial<HomeworkSubmission>;
-        Update: Partial<HomeworkSubmission>;
-      };
       posts: { Row: Post; Insert: Partial<Post>; Update: Partial<Post> };
       post_images: { Row: PostImage; Insert: Partial<PostImage>; Update: Partial<PostImage> };
       post_likes: { Row: PostLike; Insert: PostLike; Update: Partial<PostLike> };
