@@ -39,7 +39,7 @@
    `0001_init.sql`, `0002_storage.sql`, `0003_marketplace.sql`,
    `0004_homework_attachments.sql`, `0005_security_fixes.sql`,
    `0006_notification_settings.sql`, `0007_push_security.sql`,
-   `0008_staff_role_assignment.sql`.
+   `0008_staff_role_assignment.sql`, `0009_private_data.sql`.
 3. Скопируйте `.env.example` в `.env` и укажите `EXPO_PUBLIC_SUPABASE_URL`
    и `EXPO_PUBLIC_SUPABASE_ANON_KEY` из настроек вашего проекта Supabase.
 4. Установите зависимости и запустите:
@@ -161,11 +161,10 @@ update public.profiles set role = 'staff' where id = '<uuid пользовате
 
 ## Дальнейшие шаги
 
-- Функционал домашних заданий убран из приложения. Таблицы `homework` /
-  `homework_submissions`, их RLS-политики и storage-бакет `homework` в
-  миграциях (`0001_init.sql`, `0004_homework_attachments.sql`) намеренно
-  не удалены — чтобы не терять данные, если они уже есть в проекте.
-  Захотите вернуть функцию или почистить схему — дайте знать.
+- Домашние задания и сдача работ убраны полностью: школа не проверяет
+  работы учеников в приложении. Миграция `0009_private_data.sql` удаляет
+  таблицы `homework` / `homework_submissions` и снимает все политики с
+  бакета `homework`, так что клиент к нему доступа не имеет.
 - Если у школы появится API/доступ к личному кабинету kasteyevshop.kz —
   можно автоматизировать перенос одобренных объявлений на сайт вместо
   ручного переноса администрацией.

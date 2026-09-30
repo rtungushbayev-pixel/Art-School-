@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, Image, StyleSheet, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
@@ -20,8 +20,21 @@ export function CreateListingScreen() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
-  const [contactInfo, setContactInfo] = useState(profile?.phone ?? '');
+  const [contactInfo, setContactInfo] = useState('');
   const [uploading, setUploading] = useState(false);
+
+  // Подставляем свой телефон как контакт по умолчанию (profile_private виден только владельцу).
+  useEffect(() => {
+    if (!profile) return;
+    supabase
+      .from('profile_private')
+      .select('phone')
+      .eq('user_id', profile.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.phone) setContactInfo((current) => current || data.phone);
+      });
+  }, [profile?.id]);
 
   const pickImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
