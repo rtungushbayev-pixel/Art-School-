@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { TextField } from '../../components/TextField';
 import { Button } from '../../components/Button';
 import { useAuth } from '../../hooks/useAuth';
-import { colors, radius, spacing } from '../../theme/colors';
+import { colors, spacing } from '../../theme/colors';
 import type { AuthStackParamList } from '../../navigation/types';
-import type { UserRole } from '../../types/database';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'SignUp'>;
 
@@ -16,7 +15,6 @@ export function SignUpScreen({ navigation }: Props) {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<UserRole>('student');
   const [loading, setLoading] = useState(false);
 
   const onSubmit = async () => {
@@ -29,7 +27,7 @@ export function SignUpScreen({ navigation }: Props) {
       return;
     }
     setLoading(true);
-    const error = await signUp({ email: email.trim(), password, fullName: fullName.trim(), role });
+    const error = await signUp({ email: email.trim(), password, fullName: fullName.trim() });
     setLoading(false);
     if (error) {
       Alert.alert('Не удалось зарегистрироваться', error);
@@ -57,21 +55,9 @@ export function SignUpScreen({ navigation }: Props) {
       />
       <TextField label="Пароль" value={password} onChangeText={setPassword} secureTextEntry placeholder="••••••••" />
 
-      <Text style={styles.label}>Я являюсь</Text>
-      <View style={styles.roleRow}>
-        <Pressable
-          onPress={() => setRole('student')}
-          style={[styles.roleOption, role === 'student' && styles.roleOptionActive]}
-        >
-          <Text style={[styles.roleText, role === 'student' && styles.roleTextActive]}>Учеником</Text>
-        </Pressable>
-        <Pressable
-          onPress={() => setRole('staff')}
-          style={[styles.roleOption, role === 'staff' && styles.roleOptionActive]}
-        >
-          <Text style={[styles.roleText, role === 'staff' && styles.roleTextActive]}>Сотрудником</Text>
-        </Pressable>
-      </View>
+      <Text style={styles.hint}>
+        Все регистрируются как ученики. Преподавателям и сотрудникам роль назначает администрация школы.
+      </Text>
 
       <Button title="Зарегистрироваться" onPress={onSubmit} loading={loading} />
 
@@ -88,20 +74,7 @@ export function SignUpScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   title: { fontSize: 22, fontWeight: '700', color: colors.primary, marginTop: spacing.lg, marginBottom: spacing.lg },
-  label: { marginBottom: spacing.xs, color: colors.textMuted, fontSize: 13, fontWeight: '600' },
-  roleRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.lg },
-  roleOption: {
-    flex: 1,
-    paddingVertical: spacing.sm + 4,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-  },
-  roleOptionActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  roleText: { color: colors.text, fontWeight: '600' },
-  roleTextActive: { color: colors.white },
+  hint: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.lg },
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: spacing.lg, marginBottom: spacing.xl },
   footerText: { color: colors.textMuted },
   link: { color: colors.primary, fontWeight: '700' },
