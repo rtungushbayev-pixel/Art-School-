@@ -66,16 +66,7 @@ export function ListingDetailScreen() {
       .eq('id', listingId);
     setBusy(false);
     load();
-    sendPushNotification({
-      userIds: [listing.seller_id],
-      category: 'moderation',
-      title: status === 'approved' ? 'Объявление одобрено' : 'Объявление отклонено',
-      body:
-        status === 'approved'
-          ? `«${listing.title}» опубликовано в разделе «Продажа»`
-          : `«${listing.title}» не прошло проверку`,
-      data: { type: 'listing_moderated', listingId },
-    });
+    sendPushNotification({ event: 'listing_moderated', id: listingId });
   };
 
   const toggleSold = async () => {

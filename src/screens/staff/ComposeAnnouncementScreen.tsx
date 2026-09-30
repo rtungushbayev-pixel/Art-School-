@@ -6,7 +6,6 @@ import { Screen } from '../../components/Screen';
 import { TextField } from '../../components/TextField';
 import { Button } from '../../components/Button';
 import { supabase } from '../../lib/supabase';
-import { resolveAudienceRecipientIds } from '../../lib/announcements';
 import { sendPushNotification } from '../../lib/notifications';
 import { useAuth } from '../../hooks/useAuth';
 import { colors, radius, spacing } from '../../theme/colors';
@@ -80,9 +79,13 @@ export function ComposeAnnouncementScreen() {
       group_id: audience === 'group' ? groupId : null,
       pinned,
     };
-    const { error } = isEditing
-      ? await supabase.from('announcements').update(payload).eq('id', announcementId)
-      : await supabase.from('announcements').insert({ ...payload, author_id: profile.id });
+    const { data: saved, error } = isEditing
+      ? await supabase.from('announcements').update(payload).eq('id', announcementId).select('id').single()
+      : await supabase
+          .from('announcements')
+          .insert({ ...payload, author_id: profile.id })
+          .select('id')
+          .single();
     if (error) {
       setSaving(false);
       Alert.alert('Не удалось сохранить', error.message);
@@ -90,18 +93,8 @@ export function ComposeAnnouncementScreen() {
     }
 
     if (!isEditing) {
-      try {
-        const recipientIds = (await resolveAudienceRecipientIds(audience, groupId)).filter((id) => id !== profile.id);
-        await sendPushNotification({
-          userIds: recipientIds,
-          category: 'announcements',
-          title: title.trim(),
-          body: body.trim(),
-          data: { type: 'announcement' },
-        });
-      } catch {
-        // объявление уже сохранено — сбой рассылки пушей не критичен
-      }
+      // Сбой рассылки не критичен: объявление уже сохранено.
+      await sendPushNotification({ event: 'announcement', id: saved.id });
     }
 
     setSaving(false);

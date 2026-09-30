@@ -15,7 +15,6 @@ export interface Profile {
   phone: string | null;
   target_institution: string | null;
   target_institution_status: EnrollmentStatus | null;
-  push_token: string | null;
   notify_announcements: boolean;
   notify_comments: boolean;
   notify_moderation: boolean;

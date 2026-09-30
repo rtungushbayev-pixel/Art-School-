@@ -49,15 +49,7 @@ export function ModerationScreen() {
       .update({ status, moderated_by: profile.id, moderated_at: new Date().toISOString() })
       .eq('id', post.id);
     setPosts((prev) => prev.filter((p) => p.id !== post.id));
-    if (post.author) {
-      sendPushNotification({
-        userIds: [post.author.id],
-        category: 'moderation',
-        title: status === 'approved' ? 'Работа одобрена' : 'Работа отклонена',
-        body: status === 'approved' ? 'Ваша публикация появилась в общей ленте' : 'Публикацию не пропустили модераторы',
-        data: { type: 'post_moderated', postId: post.id },
-      });
-    }
+    sendPushNotification({ event: 'post_moderated', id: post.id });
   };
 
   const moderateListing = async (listing: ListingCardData, status: 'approved' | 'rejected') => {
@@ -67,18 +59,7 @@ export function ModerationScreen() {
       .update({ status, moderated_by: profile.id, moderated_at: new Date().toISOString() })
       .eq('id', listing.id);
     setListings((prev) => prev.filter((l) => l.id !== listing.id));
-    if (listing.seller) {
-      sendPushNotification({
-        userIds: [listing.seller.id],
-        category: 'moderation',
-        title: status === 'approved' ? 'Объявление одобрено' : 'Объявление отклонено',
-        body:
-          status === 'approved'
-            ? `«${listing.title}» опубликовано в разделе «Продажа»`
-            : `«${listing.title}» не прошло проверку`,
-        data: { type: 'listing_moderated', listingId: listing.id },
-      });
-    }
+    sendPushNotification({ event: 'listing_moderated', id: listing.id });
   };
 
   return (

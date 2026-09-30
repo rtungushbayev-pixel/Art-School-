@@ -91,27 +91,20 @@ export function PostDetailScreen() {
   const onAddComment = async () => {
     if (!profile || !commentText.trim()) return;
     setPosting(true);
-    const { error } = await supabase
+    const { data: comment, error } = await supabase
       .from('post_comments')
-      .insert({ post_id: postId, author_id: profile.id, content: commentText.trim() });
+      .insert({ post_id: postId, author_id: profile.id, content: commentText.trim() })
+      .select('id')
+      .single();
     setPosting(false);
     if (error) {
       Alert.alert('Не удалось отправить комментарий', error.message);
       return;
     }
-    const commentBody = commentText.trim();
     setCommentText('');
     load();
 
-    if (post && post.author_id !== profile.id) {
-      sendPushNotification({
-        userIds: [post.author_id],
-        category: 'comments',
-        title: `${profile.full_name} прокомментировал(а) вашу работу`,
-        body: commentBody,
-        data: { type: 'post_comment', postId },
-      });
-    }
+    sendPushNotification({ event: 'post_comment', id: comment.id });
   };
 
   const canDelete = profile && (profile.role === 'staff' || profile.id === post?.author_id);

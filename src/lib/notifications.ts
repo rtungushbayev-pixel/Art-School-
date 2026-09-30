@@ -40,32 +40,32 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
   }
 }
 
-export async function syncPushToken(userId: string, currentToken: string | null) {
+// Push-токен хранится в закрытой таблице push_tokens: клиент не может её
+// читать, а записывает свой токен только через RPC register_push_token.
+export async function syncPushToken() {
   const token = await registerForPushNotificationsAsync();
-  if (token && token !== currentToken) {
-    await supabase.from('profiles').update({ push_token: token }).eq('id', userId);
+  if (!token) return;
+  const { error } = await supabase.rpc('register_push_token', { p_token: token });
+  if (error) {
+    console.warn('Не удалось сохранить push-токен:', error.message);
   }
 }
 
-// Категория определяет, какая настройка получателя (profiles.notify_*)
-// разрешает ему это уведомление. Фильтрует Edge Function send-push.
-export type NotificationCategory = 'announcements' | 'comments' | 'moderation';
-
-interface SendPushParams {
-  userIds: string[];
-  category: NotificationCategory;
-  title: string;
-  body: string;
-  data?: Record<string, unknown>;
+export async function clearPushToken() {
+  await supabase.rpc('clear_push_token');
 }
 
-export async function sendPushNotification({ userIds, category, title, body, data }: SendPushParams) {
-  const recipients = userIds.filter(Boolean);
-  if (recipients.length === 0) return;
+// Клиент сообщает только о событии — получателей, текст и право на отправку
+// определяет Edge Function send-push по данным в базе.
+export type PushEvent =
+  | { event: 'post_comment'; id: string } // id комментария
+  | { event: 'post_moderated'; id: string } // id публикации
+  | { event: 'listing_moderated'; id: string } // id объявления о продаже
+  | { event: 'announcement'; id: string }; // id объявления
+
+export async function sendPushNotification(pushEvent: PushEvent) {
   try {
-    await supabase.functions.invoke('send-push', {
-      body: { userIds: recipients, category, title, body, data },
-    });
+    await supabase.functions.invoke('send-push', { body: pushEvent });
   } catch (e) {
     // Отправка пушей не должна ломать основное действие пользователя (создание
     // объявления, комментария и т.д.), поэтому ошибку только логируем.
