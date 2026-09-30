@@ -16,6 +16,7 @@ export type StudentStackParamList = {
   PostDetail: { postId: string };
   CreatePost: undefined;
   EditProfile: undefined;
+  NotificationSettings: undefined;
   UserProfile: { userId: string };
   ListingDetail: { listingId: string };
   CreateListing: undefined;
@@ -38,6 +39,7 @@ export type StaffStackParamList = {
   PostDetail: { postId: string };
   CreatePost: undefined;
   EditProfile: undefined;
+  NotificationSettings: undefined;
   UserProfile: { userId: string };
   CreateGroup: undefined;
   GroupDetail: { groupId: string };

@@ -64,6 +64,7 @@ export function ListingDetailScreen() {
     load();
     sendPushNotification({
       userIds: [listing.seller_id],
+      category: 'moderation',
       title: status === 'approved' ? 'Объявление одобрено' : 'Объявление отклонено',
       body:
         status === 'approved'

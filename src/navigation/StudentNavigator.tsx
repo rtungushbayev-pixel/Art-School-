@@ -5,6 +5,7 @@ import { StudentTabs } from './StudentTabs';
 import { PostDetailScreen } from '../screens/shared/PostDetailScreen';
 import { CreatePostScreen } from '../screens/shared/CreatePostScreen';
 import { EditProfileScreen } from '../screens/shared/EditProfileScreen';
+import { NotificationSettingsScreen } from '../screens/shared/NotificationSettingsScreen';
 import { UserProfileScreen } from '../screens/shared/UserProfileScreen';
 import { ListingDetailScreen } from '../screens/shared/ListingDetailScreen';
 import { CreateListingScreen } from '../screens/shared/CreateListingScreen';
@@ -25,6 +26,11 @@ export function StudentNavigator() {
       <Stack.Screen name="PostDetail" component={PostDetailScreen} options={{ title: 'Публикация' }} />
       <Stack.Screen name="CreatePost" component={CreatePostScreen} options={{ title: 'Новая работа' }} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Редактирование профиля' }} />
+      <Stack.Screen
+        name="NotificationSettings"
+        component={NotificationSettingsScreen}
+        options={{ title: 'Уведомления' }}
+      />
       <Stack.Screen name="UserProfile" component={UserProfileScreen} options={{ title: 'Профиль' }} />
       <Stack.Screen name="ListingDetail" component={ListingDetailScreen} options={{ title: 'Объявление' }} />
       <Stack.Screen name="CreateListing" component={CreateListingScreen} options={{ title: 'Продажа работы' }} />
