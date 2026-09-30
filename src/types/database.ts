@@ -12,13 +12,19 @@ export interface Profile {
   full_name: string;
   avatar_url: string | null;
   bio: string | null;
-  phone: string | null;
   target_institution: string | null;
   target_institution_status: EnrollmentStatus | null;
   notify_announcements: boolean;
   notify_comments: boolean;
   notify_moderation: boolean;
   created_at: string;
+  updated_at: string;
+}
+
+// Личные данные профиля: видит только владелец и сотрудники.
+export interface ProfilePrivate {
+  user_id: string;
+  phone: string | null;
   updated_at: string;
 }
 
@@ -151,6 +157,11 @@ export interface Database {
   public: {
     Tables: {
       profiles: { Row: Profile; Insert: Partial<Profile> & { id: string }; Update: Partial<Profile> };
+      profile_private: {
+        Row: ProfilePrivate;
+        Insert: Partial<ProfilePrivate> & { user_id: string };
+        Update: Partial<ProfilePrivate>;
+      };
       groups: { Row: Group; Insert: Partial<Group>; Update: Partial<Group> };
       group_members: { Row: GroupMember; Insert: GroupMember; Update: Partial<GroupMember> };
       lessons: { Row: Lesson; Insert: Partial<Lesson>; Update: Partial<Lesson> };

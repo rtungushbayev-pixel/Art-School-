@@ -39,7 +39,7 @@
    `0001_init.sql`, `0002_storage.sql`, `0003_marketplace.sql`,
    `0004_homework_attachments.sql`, `0005_security_fixes.sql`,
    `0006_notification_settings.sql`, `0007_push_security.sql`,
-   `0008_staff_role_assignment.sql`.
+   `0008_staff_role_assignment.sql`, `0009_private_data.sql`.
 3. Скопируйте `.env.example` в `.env` и укажите `EXPO_PUBLIC_SUPABASE_URL`
    и `EXPO_PUBLIC_SUPABASE_ANON_KEY` из настроек вашего проекта Supabase.
 4. Установите зависимости и запустите:
