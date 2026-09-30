@@ -97,6 +97,7 @@ export function ComposeAnnouncementScreen() {
           category: 'announcements',
           title: title.trim(),
           body: body.trim(),
+          data: { type: 'announcement' },
         });
       } catch {
         // объявление уже сохранено — сбой рассылки пушей не критичен

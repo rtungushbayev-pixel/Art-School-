@@ -27,12 +27,16 @@ export function ListingDetailScreen() {
   const { profile } = useAuth();
 
   const [listing, setListing] = useState<MarketplaceListing | null>(null);
+  const [notFound, setNotFound] = useState(false);
   const [images, setImages] = useState<MarketplaceListingImage[]>([]);
   const [seller, setSeller] = useState<Profile | null>(null);
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
-    const { data } = await supabase.from('marketplace_listings').select('*').eq('id', listingId).single();
+    const { data, error } = await supabase.from('marketplace_listings').select('*').eq('id', listingId).maybeSingle();
+    // Нет ошибки и нет строки — объявление удалено или недоступно (например,
+    // открыто из старого уведомления). При ошибке сети оставляем «Загрузка…».
+    if (!error && !data) setNotFound(true);
     if (!data) return;
     setListing(data as MarketplaceListing);
 
@@ -99,7 +103,7 @@ export function ListingDetailScreen() {
   if (!listing) {
     return (
       <Screen>
-        <Text style={styles.empty}>Загрузка…</Text>
+        <Text style={styles.empty}>{notFound ? 'Объявление удалено или недоступно' : 'Загрузка…'}</Text>
       </Screen>
     );
   }
