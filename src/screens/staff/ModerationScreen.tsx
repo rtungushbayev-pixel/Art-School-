@@ -52,6 +52,7 @@ export function ModerationScreen() {
     if (post.author) {
       sendPushNotification({
         userIds: [post.author.id],
+        category: 'moderation',
         title: status === 'approved' ? 'Работа одобрена' : 'Работа отклонена',
         body: status === 'approved' ? 'Ваша публикация появилась в общей ленте' : 'Публикацию не пропустили модераторы',
         data: { type: 'post_moderated', postId: post.id },
@@ -69,6 +70,7 @@ export function ModerationScreen() {
     if (listing.seller) {
       sendPushNotification({
         userIds: [listing.seller.id],
+        category: 'moderation',
         title: status === 'approved' ? 'Объявление одобрено' : 'Объявление отклонено',
         body:
           status === 'approved'

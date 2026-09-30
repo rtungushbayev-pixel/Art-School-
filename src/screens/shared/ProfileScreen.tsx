@@ -39,6 +39,12 @@ export function ProfileScreen() {
 
       <Button title="Редактировать профиль" variant="secondary" onPress={() => navigation.navigate('EditProfile')} />
       <View style={{ height: spacing.sm }} />
+      <Button
+        title="Уведомления"
+        variant="secondary"
+        onPress={() => navigation.navigate('NotificationSettings')}
+      />
+      <View style={{ height: spacing.sm }} />
       <Button title="Выйти" variant="danger" onPress={signOut} />
 
       <Text style={styles.sectionTitle}>Мои работы</Text>

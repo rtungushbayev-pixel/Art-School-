@@ -47,19 +47,24 @@ export async function syncPushToken(userId: string, currentToken: string | null)
   }
 }
 
+// Категория определяет, какая настройка получателя (profiles.notify_*)
+// разрешает ему это уведомление. Фильтрует Edge Function send-push.
+export type NotificationCategory = 'announcements' | 'comments' | 'moderation';
+
 interface SendPushParams {
   userIds: string[];
+  category: NotificationCategory;
   title: string;
   body: string;
   data?: Record<string, unknown>;
 }
 
-export async function sendPushNotification({ userIds, title, body, data }: SendPushParams) {
+export async function sendPushNotification({ userIds, category, title, body, data }: SendPushParams) {
   const recipients = userIds.filter(Boolean);
   if (recipients.length === 0) return;
   try {
     await supabase.functions.invoke('send-push', {
-      body: { userIds: recipients, title, body, data },
+      body: { userIds: recipients, category, title, body, data },
     });
   } catch (e) {
     // Отправка пушей не должна ломать основное действие пользователя (создание

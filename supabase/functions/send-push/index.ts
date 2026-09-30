@@ -3,15 +3,28 @@
 // Принимает список ID пользователей и текст уведомления, находит их
 // Expo push-токены (profiles.push_token) через service role (в обход RLS,
 // чтобы клиент никогда не читал чужие токены напрямую) и отправляет пуши
-// через Expo Push API.
+// через Expo Push API. Получатели, отключившие категорию уведомления в
+// настройках (profiles.notify_*), пропускаются.
 //
 // Деплой: supabase functions deploy send-push
 // (SUPABASE_URL и SUPABASE_SERVICE_ROLE_KEY передаются в функцию автоматически)
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
+type NotificationCategory = 'announcements' | 'comments' | 'moderation';
+
+// Категория → колонка профиля с настройкой получателя.
+const CATEGORY_COLUMNS: Record<NotificationCategory, string> = {
+  announcements: 'notify_announcements',
+  comments: 'notify_comments',
+  moderation: 'notify_moderation',
+};
+
 interface RequestBody {
   userIds: string[];
+  // Необязательна для совместимости со старыми версиями приложения, которые
+  // её не передают: без категории настройки получателей не учитываются.
+  category?: NotificationCategory;
   title: string;
   body: string;
   data?: Record<string, unknown>;
@@ -33,10 +46,17 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { userIds, title, body, data } = (await req.json()) as RequestBody;
+    const { userIds, category, title, body, data } = (await req.json()) as RequestBody;
 
     if (!Array.isArray(userIds) || userIds.length === 0 || !title || !body) {
       return new Response(JSON.stringify({ error: 'userIds, title и body обязательны' }), {
+        status: 400,
+        headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (category !== undefined && !Object.hasOwn(CATEGORY_COLUMNS, category)) {
+      return new Response(JSON.stringify({ error: `Неизвестная категория: ${category}` }), {
         status: 400,
         headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
       });
@@ -47,11 +67,15 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    const { data: profiles, error } = await supabase
+    let query = supabase
       .from('profiles')
       .select('push_token')
       .in('id', userIds)
       .not('push_token', 'is', null);
+    if (category) {
+      query = query.eq(CATEGORY_COLUMNS[category], true);
+    }
+    const { data: profiles, error } = await query;
 
     if (error) throw error;
 

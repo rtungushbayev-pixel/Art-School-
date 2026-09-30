@@ -102,6 +102,7 @@ export function PostDetailScreen() {
     if (post && post.author_id !== profile.id) {
       sendPushNotification({
         userIds: [post.author_id],
+        category: 'comments',
         title: `${profile.full_name} прокомментировал(а) вашу работу`,
         body: commentBody,
         data: { type: 'post_comment', postId },

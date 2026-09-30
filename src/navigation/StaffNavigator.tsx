@@ -7,6 +7,7 @@ import { AttendanceGroupScreen } from '../screens/staff/AttendanceGroupScreen';
 import { PostDetailScreen } from '../screens/shared/PostDetailScreen';
 import { CreatePostScreen } from '../screens/shared/CreatePostScreen';
 import { EditProfileScreen } from '../screens/shared/EditProfileScreen';
+import { NotificationSettingsScreen } from '../screens/shared/NotificationSettingsScreen';
 import { UserProfileScreen } from '../screens/shared/UserProfileScreen';
 import { CreateGroupScreen } from '../screens/staff/CreateGroupScreen';
 import { GroupDetailScreen } from '../screens/staff/GroupDetailScreen';
@@ -37,6 +38,11 @@ export function StaffNavigator() {
       <Stack.Screen name="PostDetail" component={PostDetailScreen} options={{ title: 'Публикация' }} />
       <Stack.Screen name="CreatePost" component={CreatePostScreen} options={{ title: 'Новая работа' }} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Редактирование профиля' }} />
+      <Stack.Screen
+        name="NotificationSettings"
+        component={NotificationSettingsScreen}
+        options={{ title: 'Уведомления' }}
+      />
       <Stack.Screen name="UserProfile" component={UserProfileScreen} options={{ title: 'Профиль' }} />
       <Stack.Screen name="CreateGroup" component={CreateGroupScreen} options={{ title: 'Новая группа' }} />
       <Stack.Screen name="GroupDetail" component={GroupDetailScreen} options={{ title: 'Группа' }} />

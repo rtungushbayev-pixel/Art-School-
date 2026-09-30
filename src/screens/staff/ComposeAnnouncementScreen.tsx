@@ -92,7 +92,12 @@ export function ComposeAnnouncementScreen() {
     if (!isEditing) {
       try {
         const recipientIds = (await resolveAudienceRecipientIds(audience, groupId)).filter((id) => id !== profile.id);
-        await sendPushNotification({ userIds: recipientIds, title: title.trim(), body: body.trim() });
+        await sendPushNotification({
+          userIds: recipientIds,
+          category: 'announcements',
+          title: title.trim(),
+          body: body.trim(),
+        });
       } catch {
         // объявление уже сохранено — сбой рассылки пушей не критичен
       }
