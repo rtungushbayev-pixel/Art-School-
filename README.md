@@ -149,6 +149,32 @@ update public.profiles set role = 'staff' where id = '<uuid пользовате
 «Разрешить» / «Открыть настройки». После обновления функции её нужно
 заново задеплоить: `supabase functions deploy send-push`.
 
+## Сборка приложения (EAS)
+
+Профили сборки описаны в `eas.json`: `preview` собирает APK для установки
+на Android напрямую, `production` — сборку для магазинов. Идентификатор
+приложения — `kz.kasteyev.artschool` (`app.json`); после публикации в
+магазине его менять нельзя.
+
+`.env` не попадает в сборку (он в `.gitignore`), поэтому адрес и ключ
+Supabase задаются как переменные окружения EAS — один раз для каждого
+окружения (`preview`, `production`):
+
+```bash
+npx eas-cli login
+npx eas-cli init   # создаёт EAS-проект и добавляет projectId в app.json
+npx eas-cli env:create --environment preview --name EXPO_PUBLIC_SUPABASE_URL --value https://xxx.supabase.co --visibility plaintext
+npx eas-cli env:create --environment preview --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value <anon key> --visibility plaintext
+npx eas-cli build --platform android --profile preview
+```
+
+После сборки EAS даёт ссылку и QR-код для установки APK. Чтобы на Android
+приходили push-уведомления, нужен ключ Firebase Cloud Messaging:
+создайте проект в Firebase, добавьте Android-приложение с пакетом
+`kz.kasteyev.artschool`, положите `google-services.json` в корень проекта
+и укажите его в `app.json` (`android.googleServicesFile`), затем загрузите
+ключ сервисного аккаунта (FCM V1) через `npx eas-cli credentials`.
+
 ## Продажа работ и kasteyevshop.kz
 
 Прямой интеграции (API) с kasteyevshop.kz нет — у школы нет доступа к
