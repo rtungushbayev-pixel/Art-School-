@@ -86,8 +86,8 @@ export function NotificationSettingsScreen() {
       Linking.openSettings();
       return;
     }
-    // Запрашивает разрешение и сохраняет push-токен в профиль.
-    await syncPushToken(profile.id, profile.push_token);
+    // Запрашивает разрешение и регистрирует push-токен устройства.
+    await syncPushToken();
     await loadPermission();
     refreshProfile();
   };

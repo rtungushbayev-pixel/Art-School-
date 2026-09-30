@@ -1,17 +1,58 @@
 // Supabase Edge Function: send-push
 //
-// Принимает список ID пользователей и текст уведомления, находит их
-// Expo push-токены (profiles.push_token) через service role (в обход RLS,
-// чтобы клиент никогда не читал чужие токены напрямую) и отправляет пуши
-// через Expo Push API. Получатели, отключившие категорию уведомления в
-// настройках (profiles.notify_*), пропускаются.
+// Рассылает push-уведомление о событии в приложении. Клиент передаёт только
+// тип события и ID записи — получателей, текст и право на отправку функция
+// определяет сама по данным в базе, поэтому через неё нельзя разослать
+// произвольный текст произвольным пользователям:
+//
+//   post_comment      { id: comment_id }      — автор комментария → автору работы
+//   post_moderated    { id: post_id }         — сотрудник → автору работы
+//   listing_moderated { id: listing_id }      — сотрудник → продавцу
+//   announcement      { id: announcement_id } — сотрудник → аудитории объявления
+//
+// Каждое событие рассылается не более одного раза (таблица push_events).
+// Получатели, отключившие категорию в настройках (profiles.notify_*),
+// пропускаются. Push-токены читаются из push_tokens через service role —
+// клиенту эта таблица недоступна.
 //
 // Деплой: supabase functions deploy send-push
 // (SUPABASE_URL и SUPABASE_SERVICE_ROLE_KEY передаются в функцию автоматически)
+//
+// Необязательно: если в Expo включён Enhanced Push Security, задайте секрет
+// EXPO_ACCESS_TOKEN — тогда без него Expo не примет пуш даже по украденному токену.
 
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
 
+type PushEvent = 'post_comment' | 'post_moderated' | 'listing_moderated' | 'announcement';
 type NotificationCategory = 'announcements' | 'comments' | 'moderation';
+
+interface RequestBody {
+  event: PushEvent;
+  id: string;
+}
+
+interface Caller {
+  id: string;
+  role: 'student' | 'staff';
+  full_name: string;
+}
+
+// Что и кому отправить; null — отправлять нечего (например, автор
+// прокомментировал собственную работу).
+interface PushMessage {
+  dedupKey: string;
+  category: NotificationCategory;
+  recipientIds: string[];
+  title: string;
+  body: string;
+  data: Record<string, unknown>;
+}
+
+class HttpError extends Error {
+  constructor(public status: number, message: string) {
+    super(message);
+  }
+}
 
 // Категория → колонка профиля с настройкой получателя.
 const CATEGORY_COLUMNS: Record<NotificationCategory, string> = {
@@ -20,18 +61,9 @@ const CATEGORY_COLUMNS: Record<NotificationCategory, string> = {
   moderation: 'notify_moderation',
 };
 
-interface RequestBody {
-  userIds: string[];
-  // Необязательна для совместимости со старыми версиями приложения, которые
-  // её не передают: без категории настройки получателей не учитываются.
-  category?: NotificationCategory;
-  title: string;
-  body: string;
-  data?: Record<string, unknown>;
-}
-
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
 const CHUNK_SIZE = 100;
+const MAX_BODY_LENGTH = 180;
 
 function corsHeaders() {
   return {
@@ -40,74 +72,233 @@ function corsHeaders() {
   };
 }
 
+function json(status: number, payload: unknown) {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
+  });
+}
+
+function truncate(text: string) {
+  return text.length > MAX_BODY_LENGTH ? `${text.slice(0, MAX_BODY_LENGTH - 1)}…` : text;
+}
+
+function requireStaff(caller: Caller) {
+  if (caller.role !== 'staff') {
+    throw new HttpError(403, 'Только сотрудники могут отправлять это уведомление');
+  }
+}
+
+async function getCaller(admin: SupabaseClient, req: Request): Promise<Caller> {
+  const jwt = req.headers.get('Authorization')?.replace(/^Bearer\s+/i, '');
+  if (!jwt) throw new HttpError(401, 'Требуется авторизация');
+
+  // anon-ключ — тоже валидный JWT, но пользователя за ним нет.
+  const { data: auth, error } = await admin.auth.getUser(jwt);
+  if (error || !auth.user) throw new HttpError(401, 'Требуется авторизация');
+
+  const { data: profile } = await admin
+    .from('profiles')
+    .select('id, role, full_name')
+    .eq('id', auth.user.id)
+    .single();
+  if (!profile) throw new HttpError(401, 'Профиль не найден');
+  return profile as Caller;
+}
+
+async function buildMessage(admin: SupabaseClient, caller: Caller, { event, id }: RequestBody): Promise<PushMessage | null> {
+  switch (event) {
+    case 'post_comment': {
+      const { data: comment } = await admin
+        .from('post_comments')
+        .select('id, post_id, author_id, content, post:post_id ( author_id )')
+        .eq('id', id)
+        .single();
+      if (!comment) throw new HttpError(404, 'Комментарий не найден');
+      if (comment.author_id !== caller.id) throw new HttpError(403, 'Это не ваш комментарий');
+      const postAuthorId = (comment.post as unknown as { author_id: string } | null)?.author_id;
+      if (!postAuthorId) return null;
+      return {
+        dedupKey: `post_comment:${comment.id}`,
+        category: 'comments',
+        recipientIds: [postAuthorId],
+        title: `${caller.full_name} прокомментировал(а) вашу работу`,
+        body: truncate(comment.content),
+        data: { type: 'post_comment', postId: comment.post_id },
+      };
+    }
+
+    case 'post_moderated': {
+      requireStaff(caller);
+      const { data: post } = await admin
+        .from('posts')
+        .select('id, author_id, status, moderated_at')
+        .eq('id', id)
+        .single();
+      if (!post) throw new HttpError(404, 'Публикация не найдена');
+      if (post.status === 'pending') throw new HttpError(409, 'Публикация ещё не проверена');
+      const approved = post.status === 'approved';
+      return {
+        // Повторное решение по той же работе (другой статус/время) — новое событие.
+        dedupKey: `post_moderated:${post.id}:${post.status}:${post.moderated_at}`,
+        category: 'moderation',
+        recipientIds: [post.author_id],
+        title: approved ? 'Работа одобрена' : 'Работа отклонена',
+        body: approved ? 'Ваша публикация появилась в общей ленте' : 'Публикацию не пропустили модераторы',
+        data: { type: 'post_moderated', postId: post.id },
+      };
+    }
+
+    case 'listing_moderated': {
+      requireStaff(caller);
+      const { data: listing } = await admin
+        .from('marketplace_listings')
+        .select('id, seller_id, title, status, moderated_at')
+        .eq('id', id)
+        .single();
+      if (!listing) throw new HttpError(404, 'Объявление не найдено');
+      if (listing.status === 'pending') throw new HttpError(409, 'Объявление ещё не проверено');
+      const approved = listing.status === 'approved';
+      return {
+        dedupKey: `listing_moderated:${listing.id}:${listing.status}:${listing.moderated_at}`,
+        category: 'moderation',
+        recipientIds: [listing.seller_id],
+        title: approved ? 'Объявление одобрено' : 'Объявление отклонено',
+        body: approved
+          ? `«${listing.title}» опубликовано в разделе «Продажа»`
+          : `«${listing.title}» не прошло проверку`,
+        data: { type: 'listing_moderated', listingId: listing.id },
+      };
+    }
+
+    case 'announcement': {
+      requireStaff(caller);
+      const { data: announcement } = await admin
+        .from('announcements')
+        .select('id, title, body, audience, group_id')
+        .eq('id', id)
+        .single();
+      if (!announcement) throw new HttpError(404, 'Объявление не найдено');
+      return {
+        dedupKey: `announcement:${announcement.id}`,
+        category: 'announcements',
+        recipientIds: await resolveAudience(admin, announcement.audience, announcement.group_id),
+        title: announcement.title,
+        body: truncate(announcement.body),
+        data: { type: 'announcement' },
+      };
+    }
+
+    default:
+      throw new HttpError(400, `Неизвестное событие: ${event}`);
+  }
+}
+
+async function resolveAudience(admin: SupabaseClient, audience: string, groupId: string | null): Promise<string[]> {
+  if (audience === 'group') {
+    if (!groupId) return [];
+    const { data, error } = await admin.from('group_members').select('student_id').eq('group_id', groupId);
+    if (error) throw error;
+    return (data ?? []).map((row: { student_id: string }) => row.student_id);
+  }
+
+  let query = admin.from('profiles').select('id');
+  if (audience === 'students') query = query.eq('role', 'student');
+  if (audience === 'staff') query = query.eq('role', 'staff');
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data ?? []).map((row: { id: string }) => row.id);
+}
+
+// Токены получателей, у которых категория уведомления включена.
+async function resolveTokens(admin: SupabaseClient, userIds: string[], category: NotificationCategory) {
+  const { data: allowed, error: profilesError } = await admin
+    .from('profiles')
+    .select('id')
+    .in('id', userIds)
+    .eq(CATEGORY_COLUMNS[category], true);
+  if (profilesError) throw profilesError;
+
+  const allowedIds = (allowed ?? []).map((p: { id: string }) => p.id);
+  if (allowedIds.length === 0) return [];
+
+  const { data: tokens, error: tokensError } = await admin
+    .from('push_tokens')
+    .select('token')
+    .in('user_id', allowedIds);
+  if (tokensError) throw tokensError;
+  return (tokens ?? []).map((t: { token: string }) => t.token);
+}
+
+async function sendToExpo(tokens: string[], message: PushMessage) {
+  const accessToken = Deno.env.get('EXPO_ACCESS_TOKEN');
+  let sent = 0;
+  for (let i = 0; i < tokens.length; i += CHUNK_SIZE) {
+    const chunk = tokens.slice(i, i + CHUNK_SIZE);
+    const messages = chunk.map((to) => ({
+      to,
+      title: message.title,
+      body: message.body,
+      data: message.data,
+      sound: 'default',
+    }));
+
+    const response = await fetch(EXPO_PUSH_URL, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Accept-Encoding': 'gzip, deflate',
+        'Content-Type': 'application/json',
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      },
+      body: JSON.stringify(messages),
+    });
+
+    if (response.ok) {
+      sent += chunk.length;
+    }
+  }
+  return sent;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders() });
   }
 
   try {
-    const { userIds, category, title, body, data } = (await req.json()) as RequestBody;
-
-    if (!Array.isArray(userIds) || userIds.length === 0 || !title || !body) {
-      return new Response(JSON.stringify({ error: 'userIds, title и body обязательны' }), {
-        status: 400,
-        headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
-      });
+    const request = (await req.json()) as RequestBody;
+    if (!request || typeof request.event !== 'string' || typeof request.id !== 'string' || !request.id) {
+      return json(400, { error: 'event и id обязательны' });
     }
 
-    if (category !== undefined && !Object.hasOwn(CATEGORY_COLUMNS, category)) {
-      return new Response(JSON.stringify({ error: `Неизвестная категория: ${category}` }), {
-        status: 400,
-        headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
-      });
+    const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const caller = await getCaller(admin, req);
+    const message = await buildMessage(admin, caller, request);
+
+    // Себе уведомления не шлём (свой комментарий, модерация своей работы).
+    const recipientIds = message ? [...new Set(message.recipientIds)].filter((id) => id !== caller.id) : [];
+    if (!message || recipientIds.length === 0) {
+      return json(200, { recipients: 0, sent: 0 });
     }
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
-
-    let query = supabase
-      .from('profiles')
-      .select('push_token')
-      .in('id', userIds)
-      .not('push_token', 'is', null);
-    if (category) {
-      query = query.eq(CATEGORY_COLUMNS[category], true);
-    }
-    const { data: profiles, error } = await query;
-
-    if (error) throw error;
-
-    const tokens = [...new Set((profiles ?? []).map((p: { push_token: string }) => p.push_token))];
-
-    let sent = 0;
-    for (let i = 0; i < tokens.length; i += CHUNK_SIZE) {
-      const chunk = tokens.slice(i, i + CHUNK_SIZE);
-      const messages = chunk.map((to) => ({ to, title, body, data, sound: 'default' }));
-
-      const response = await fetch(EXPO_PUSH_URL, {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Accept-Encoding': 'gzip, deflate',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(messages),
-      });
-
-      if (response.ok) {
-        sent += chunk.length;
+    // Занимаем событие до отправки: повторный вызов с тем же событием
+    // (случайный или намеренный спам) ничего не разошлёт.
+    const { error: dedupError } = await admin.from('push_events').insert({ key: message.dedupKey });
+    if (dedupError) {
+      if (dedupError.code === '23505') {
+        return json(200, { recipients: 0, sent: 0, duplicate: true });
       }
+      throw dedupError;
     }
 
-    return new Response(JSON.stringify({ recipients: tokens.length, sent }), {
-      headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
-    });
+    const tokens = await resolveTokens(admin, recipientIds, message.category);
+    const sent = await sendToExpo(tokens, message);
+    return json(200, { recipients: tokens.length, sent });
   } catch (e) {
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : 'Unknown error' }), {
-      status: 500,
-      headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
-    });
+    if (e instanceof HttpError) {
+      return json(e.status, { error: e.message });
+    }
+    return json(500, { error: e instanceof Error ? e.message : 'Unknown error' });
   }
 });

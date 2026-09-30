@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import { syncPushToken } from '../lib/notifications';
+import { clearPushToken, syncPushToken } from '../lib/notifications';
 import type { Profile, UserRole } from '../types/database';
 
 interface AuthContextValue {
@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (profile) {
-      syncPushToken(profile.id, profile.push_token);
+      syncPushToken();
     }
   }, [profile?.id]);
 
@@ -92,7 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // следующий пользователь не получал чужие уведомления (тот же физический
         // токен иначе остаётся привязан к профилю прошлого аккаунта).
         if (profile) {
-          await supabase.from('profiles').update({ push_token: null }).eq('id', profile.id);
+          await clearPushToken();
         }
         await supabase.auth.signOut();
       },
