@@ -1,3 +1,5 @@
+import type { NavigatorScreenParams } from '@react-navigation/native';
+
 export type AuthStackParamList = {
   Login: undefined;
   SignUp: undefined;
@@ -12,7 +14,7 @@ export type StudentTabParamList = {
 };
 
 export type StudentStackParamList = {
-  StudentTabs: undefined;
+  StudentTabs: NavigatorScreenParams<StudentTabParamList> | undefined;
   PostDetail: { postId: string };
   CreatePost: undefined;
   EditProfile: undefined;
@@ -33,7 +35,7 @@ export type StaffTabParamList = {
 };
 
 export type StaffStackParamList = {
-  StaffTabs: undefined;
+  StaffTabs: NavigatorScreenParams<StaffTabParamList> | undefined;
   ComposeAnnouncement: { announcementId?: string } | undefined;
   AttendanceGroup: { groupId: string; groupName: string };
   PostDetail: { postId: string };

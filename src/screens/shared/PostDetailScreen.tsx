@@ -32,6 +32,7 @@ export function PostDetailScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<NavParamList>>();
 
   const [post, setPost] = useState<Post | null>(null);
+  const [notFound, setNotFound] = useState(false);
   const [images, setImages] = useState<PostImage[]>([]);
   const [author, setAuthor] = useState<Profile | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -41,7 +42,10 @@ export function PostDetailScreen() {
   const [posting, setPosting] = useState(false);
 
   const load = useCallback(async () => {
-    const { data: postData } = await supabase.from('posts').select('*').eq('id', postId).single();
+    const { data: postData, error } = await supabase.from('posts').select('*').eq('id', postId).maybeSingle();
+    // Нет ошибки и нет строки — публикация удалена или недоступна (например,
+    // открыта из старого уведомления). При ошибке сети оставляем «Загрузка…».
+    if (!error && !postData) setNotFound(true);
     if (!postData) return;
     setPost(postData as Post);
 
@@ -129,7 +133,7 @@ export function PostDetailScreen() {
   if (!post) {
     return (
       <Screen>
-        <Text style={styles.empty}>Загрузка…</Text>
+        <Text style={styles.empty}>{notFound ? 'Публикация удалена или недоступна' : 'Загрузка…'}</Text>
       </Screen>
     );
   }

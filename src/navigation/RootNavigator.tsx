@@ -1,14 +1,20 @@
 import React from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { useAuth } from '../hooks/useAuth';
 import { AuthNavigator } from './AuthNavigator';
 import { StudentNavigator } from './StudentNavigator';
 import { StaffNavigator } from './StaffNavigator';
 import { colors } from '../theme/colors';
+import { useNotificationNavigation } from '../lib/notificationRouting';
+import type { StaffStackParamList, StudentStackParamList } from './types';
+
+const navigationRef = createNavigationContainerRef<StudentStackParamList & StaffStackParamList>();
 
 export function RootNavigator() {
   const { session, profile, loading } = useAuth();
+  const signedInRole = session && profile ? profile.role : null;
+  const flushNotificationNavigation = useNotificationNavigation(navigationRef, signedInRole);
 
   if (loading) {
     return (
@@ -19,7 +25,11 @@ export function RootNavigator() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer
+      ref={navigationRef}
+      onReady={flushNotificationNavigation}
+      onStateChange={flushNotificationNavigation}
+    >
       {!session || !profile ? (
         <AuthNavigator />
       ) : profile.role === 'staff' ? (
