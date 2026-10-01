@@ -4,6 +4,7 @@ export type PostStatus = 'pending' | 'approved' | 'rejected';
 export type AnnouncementAudience = 'all' | 'students' | 'staff' | 'group';
 export type AttendanceStatus = 'present' | 'absent' | 'late' | 'excused';
 export type ListingStatus = 'pending' | 'approved' | 'rejected';
+export type AchievementKind = 'competition' | 'exhibition' | 'award' | 'other';
 
 export interface Profile {
   id: string;
@@ -13,6 +14,8 @@ export interface Profile {
   bio: string | null;
   target_institution: string | null;
   target_institution_status: EnrollmentStatus | null;
+  specialization: string | null; // направление: живопись, графика, дизайн…
+  study_since: number | null; // год начала обучения в школе
   notify_announcements: boolean;
   notify_comments: boolean;
   notify_moderation: boolean;
@@ -57,6 +60,10 @@ export interface Post {
   id: string;
   author_id: string;
   caption: string | null;
+  title: string | null;
+  technique: string | null; // техника и материалы
+  artwork_year: number | null;
+  featured: boolean; // закреплена в начале портфолио
   status: PostStatus;
   moderated_by: string | null;
   moderated_at: string | null;
@@ -81,6 +88,20 @@ export interface PostComment {
   post_id: string;
   author_id: string;
   content: string;
+  created_at: string;
+}
+
+// Конкурсы, выставки, награды ученика. verified ставит только сотрудник.
+export interface StudentAchievement {
+  id: string;
+  student_id: string;
+  kind: AchievementKind;
+  title: string;
+  result: string | null;
+  event_date: string | null;
+  verified: boolean;
+  verified_by: string | null;
+  created_by: string | null;
   created_at: string;
 }
 
@@ -144,6 +165,11 @@ export interface Database {
       post_images: { Row: PostImage; Insert: Partial<PostImage>; Update: Partial<PostImage> };
       post_likes: { Row: PostLike; Insert: PostLike; Update: Partial<PostLike> };
       post_comments: { Row: PostComment; Insert: Partial<PostComment>; Update: Partial<PostComment> };
+      student_achievements: {
+        Row: StudentAchievement;
+        Insert: Partial<StudentAchievement> & { student_id: string; title: string };
+        Update: Partial<StudentAchievement>;
+      };
       announcements: { Row: Announcement; Insert: Partial<Announcement>; Update: Partial<Announcement> };
       attendance: { Row: Attendance; Insert: Partial<Attendance>; Update: Partial<Attendance> };
       marketplace_listings: {

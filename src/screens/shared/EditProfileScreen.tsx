@@ -8,6 +8,7 @@ import { TextField } from '../../components/TextField';
 import { Button } from '../../components/Button';
 import { Avatar } from '../../components/Avatar';
 import { supabase } from '../../lib/supabase';
+import { parseYear } from '../../lib/portfolio';
 import { useAuth } from '../../hooks/useAuth';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { EnrollmentStatus } from '../../types/database';
@@ -25,6 +26,8 @@ export function EditProfileScreen() {
   const [bio, setBio] = useState(profile?.bio ?? '');
   const [targetInstitution, setTargetInstitution] = useState(profile?.target_institution ?? '');
   const [status, setStatus] = useState<EnrollmentStatus | null>(profile?.target_institution_status ?? null);
+  const [specialization, setSpecialization] = useState(profile?.specialization ?? '');
+  const [studySince, setStudySince] = useState(profile?.study_since ? String(profile.study_since) : '');
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url ?? null);
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -65,7 +68,14 @@ export function EditProfileScreen() {
     }
   };
 
+  const isStudent = profile.role === 'student';
+
   const onSave = async () => {
+    const studySinceYear = parseYear(studySince);
+    if (studySinceYear === 'invalid') {
+      Alert.alert('Проверьте год', 'Укажите год четырьмя цифрами, например 2023.');
+      return;
+    }
     setSaving(true);
     const { error } = await supabase
       .from('profiles')
@@ -74,6 +84,8 @@ export function EditProfileScreen() {
         bio: bio.trim() || null,
         target_institution: targetInstitution.trim() || null,
         target_institution_status: targetInstitution.trim() ? status : null,
+        specialization: specialization.trim() || null,
+        study_since: studySinceYear,
         avatar_url: avatarUrl,
         updated_at: new Date().toISOString(),
       })
@@ -96,6 +108,29 @@ export function EditProfileScreen() {
 
       <TextField label="Имя" value={fullName} onChangeText={setFullName} />
       <TextField label="О себе" value={bio} onChangeText={setBio} multiline />
+
+      {isStudent ? (
+        <View style={styles.row}>
+          <View style={styles.rowWide}>
+            <TextField
+              label="Направление"
+              placeholder="Живопись, графика, дизайн…"
+              value={specialization}
+              onChangeText={setSpecialization}
+            />
+          </View>
+          <View style={styles.rowNarrow}>
+            <TextField
+              label="Учусь с"
+              placeholder="2023"
+              value={studySince}
+              onChangeText={setStudySince}
+              keyboardType="number-pad"
+              maxLength={4}
+            />
+          </View>
+        </View>
+      ) : null}
 
       <Text style={styles.sectionLabel}>Куда поступил(а) / планирую поступать</Text>
       <TextField
@@ -126,6 +161,9 @@ export function EditProfileScreen() {
 const styles = StyleSheet.create({
   avatarWrapper: { alignItems: 'center', marginBottom: spacing.lg },
   avatarHint: { color: colors.primary, fontWeight: '600', marginTop: spacing.sm },
+  row: { flexDirection: 'row', gap: spacing.sm },
+  rowWide: { flex: 2 },
+  rowNarrow: { flex: 1 },
   sectionLabel: { marginBottom: spacing.xs, color: colors.textMuted, fontSize: 13, fontWeight: '600' },
   statusRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.lg },
   statusOption: {

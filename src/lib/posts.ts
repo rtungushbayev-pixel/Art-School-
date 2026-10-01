@@ -4,6 +4,10 @@ import type { PostCardData } from '../components/PostCard';
 interface RawPost {
   id: string;
   caption: string | null;
+  title: string | null;
+  technique: string | null;
+  artwork_year: number | null;
+  featured: boolean;
   created_at: string;
   status: 'pending' | 'approved' | 'rejected';
   author_id: string;
@@ -14,7 +18,7 @@ interface RawPost {
 }
 
 const SELECT = `
-  id, caption, created_at, status, author_id,
+  id, caption, title, technique, artwork_year, featured, created_at, status, author_id,
   profiles:author_id ( id, full_name, avatar_url ),
   post_images ( id, image_url, position ),
   post_likes ( user_id ),
@@ -25,6 +29,10 @@ function toCardData(raw: RawPost, currentUserId?: string): PostCardData {
   return {
     id: raw.id,
     caption: raw.caption,
+    title: raw.title,
+    technique: raw.technique,
+    artwork_year: raw.artwork_year,
+    featured: raw.featured,
     created_at: raw.created_at,
     status: raw.status,
     author: raw.profiles,

@@ -20,6 +20,9 @@ export type StudentStackParamList = {
   EditProfile: undefined;
   NotificationSettings: undefined;
   UserProfile: { userId: string };
+  Portfolio: { userId: string };
+  EditArtwork: { postId: string };
+  EditAchievement: { studentId: string; achievementId?: string };
   ListingDetail: { listingId: string };
   CreateListing: undefined;
 };
@@ -43,6 +46,9 @@ export type StaffStackParamList = {
   EditProfile: undefined;
   NotificationSettings: undefined;
   UserProfile: { userId: string };
+  Portfolio: { userId: string };
+  EditArtwork: { postId: string };
+  EditAchievement: { studentId: string; achievementId?: string };
   CreateGroup: undefined;
   GroupDetail: { groupId: string };
   AddStudentToGroup: { groupId: string };
