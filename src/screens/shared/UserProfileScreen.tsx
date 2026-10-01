@@ -9,6 +9,17 @@ import { ProfileHeader } from '../../components/ProfileHeader';
 import { Button } from '../../components/Button';
 import { supabase } from '../../lib/supabase';
 import { fetchUserPosts } from '../../lib/posts';
+import {
+  deleteProgressNote,
+  fetchChildren,
+  fetchParents,
+  fetchProgressNotes,
+  unlinkChild,
+  type ProgressNoteWithAuthor,
+} from '../../lib/parents';
+import { Card } from '../../components/Card';
+import { Avatar } from '../../components/Avatar';
+import { ProgressNoteCard } from '../../components/ProgressNoteCard';
 import { useAuth } from '../../hooks/useAuth';
 import { colors, spacing } from '../../theme/colors';
 import type { Profile, UserRole } from '../../types/database';
@@ -17,21 +28,57 @@ import type { StaffStackParamList, StudentStackParamList } from '../../navigatio
 
 type NavParamList = StudentStackParamList & StaffStackParamList;
 
+const ROLE_CHANGE: Record<UserRole, { button: string; question: (name: string) => string }> = {
+  staff: {
+    button: 'Сделать сотрудником',
+    question: (name) => `${name} получит права сотрудника: модерация, оценки, посещаемость и объявления.`,
+  },
+  student: {
+    button: 'Сделать учеником',
+    question: (name) => `${name} станет учеником.`,
+  },
+  parent: {
+    button: 'Сделать родителем',
+    question: (name) =>
+      `${name} станет родителем: увидит прогресс и работы детей, которых вы к нему привяжете. Свои работы публиковать не сможет.`,
+  },
+};
+
+const ROLE_ORDER: UserRole[] = ['student', 'parent', 'staff'];
+
 export function UserProfileScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<NavParamList>>();
   const route = useRoute<RouteProp<NavParamList, 'UserProfile'>>();
   const { profile: viewer } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [posts, setPosts] = useState<PostCardData[]>([]);
-  const [changingRole, setChangingRole] = useState(false);
+  const [changingRole, setChangingRole] = useState<UserRole | null>(null);
+  const [children, setChildren] = useState<Profile[]>([]);
+  const [parents, setParents] = useState<Profile[]>([]);
+  const [notes, setNotes] = useState<ProgressNoteWithAuthor[]>([]);
 
   const userId = route.params.userId;
+  const viewerIsStaff = viewer?.role === 'staff';
 
   const load = useCallback(async () => {
     const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
-    setProfile(data as Profile);
+    const loaded = data as Profile;
+    setProfile(loaded);
     setPosts(await fetchUserPosts(userId, viewer?.id));
-  }, [userId, viewer?.id]);
+    // Блоки «Дети» и «Прогресс» — инструмент сотрудника; RLS всё равно не
+    // отдаст эти данные посторонним.
+    if (viewerIsStaff && loaded) {
+      setChildren(loaded.role === 'parent' ? await fetchChildren(userId) : []);
+      if (loaded.role === 'student') {
+        const [parentList, noteList] = await Promise.all([fetchParents(userId), fetchProgressNotes(userId)]);
+        setParents(parentList);
+        setNotes(noteList);
+      } else {
+        setParents([]);
+        setNotes([]);
+      }
+    }
+  }, [userId, viewer?.id, viewerIsStaff]);
 
   useFocusEffect(
     useCallback(() => {
@@ -41,23 +88,57 @@ export function UserProfileScreen() {
 
   const changeRole = (role: UserRole) => {
     if (!profile) return;
-    const question =
-      role === 'staff'
-        ? `${profile.full_name} получит права сотрудника: модерация, оценки, посещаемость и объявления.`
-        : `${profile.full_name} потеряет права сотрудника и станет учеником.`;
+    const question = ROLE_CHANGE[role].question(profile.full_name);
     Alert.alert('Изменить роль?', question, [
       { text: 'Отмена', style: 'cancel' },
       {
         text: 'Изменить',
-        style: role === 'staff' ? 'default' : 'destructive',
+        style: profile.role === 'staff' ? 'destructive' : 'default',
         onPress: async () => {
-          setChangingRole(true);
+          setChangingRole(role);
           const { error } = await supabase.rpc('set_user_role', { p_user_id: profile.id, p_role: role });
-          setChangingRole(false);
+          setChangingRole(null);
           if (error) {
             Alert.alert('Не удалось изменить роль', error.message);
           } else {
             load();
+          }
+        },
+      },
+    ]);
+  };
+
+  const onUnlinkChild = (child: Profile) => {
+    if (!profile) return;
+    Alert.alert('Отвязать ребёнка?', `${profile.full_name} больше не увидит прогресс и работы ${child.full_name}.`, [
+      { text: 'Отмена', style: 'cancel' },
+      {
+        text: 'Отвязать',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await unlinkChild(profile.id, child.id);
+            load();
+          } catch (e) {
+            Alert.alert('Не удалось отвязать', e instanceof Error ? e.message : undefined);
+          }
+        },
+      },
+    ]);
+  };
+
+  const onDeleteNote = (note: ProgressNoteWithAuthor) => {
+    Alert.alert('Удалить отзыв?', note.title, [
+      { text: 'Отмена', style: 'cancel' },
+      {
+        text: 'Удалить',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await deleteProgressNote(note.id);
+            load();
+          } catch (e) {
+            Alert.alert('Не удалось удалить', e instanceof Error ? e.message : undefined);
           }
         },
       },
@@ -77,25 +158,64 @@ export function UserProfileScreen() {
   return (
     <Screen scroll>
       <ProfileHeader profile={profile} />
-      {viewer?.role === 'staff' && viewer.id !== profile.id ? (
+      {viewerIsStaff && viewer?.id !== profile.id ? (
         <View style={styles.roleAction}>
-          {profile.role === 'staff' ? (
+          {ROLE_ORDER.filter((role) => role !== profile.role).map((role) => (
             <Button
-              title="Сделать учеником"
+              key={role}
+              title={ROLE_CHANGE[role].button}
               variant="secondary"
-              onPress={() => changeRole('student')}
-              loading={changingRole}
+              onPress={() => changeRole(role)}
+              loading={changingRole === role}
+              disabled={changingRole !== null}
             />
-          ) : (
-            <Button
-              title="Сделать сотрудником"
-              variant="secondary"
-              onPress={() => changeRole('staff')}
-              loading={changingRole}
-            />
-          )}
+          ))}
         </View>
       ) : null}
+
+      {viewerIsStaff && profile.role === 'parent' ? (
+        <>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitleInline}>Дети ({children.length})</Text>
+            <Pressable onPress={() => navigation.navigate('LinkChild', { parentId: profile.id })}>
+              <Text style={styles.addLink}>+ Привязать</Text>
+            </Pressable>
+          </View>
+          {children.length === 0 ? <Text style={styles.emptyLeft}>Дети ещё не привязаны</Text> : null}
+          {children.map((child) => (
+            <Card key={child.id} style={styles.personRow}>
+              <Avatar uri={child.avatar_url} name={child.full_name} size={36} />
+              <Text style={styles.personName}>{child.full_name}</Text>
+              <Pressable onPress={() => onUnlinkChild(child)} hitSlop={8}>
+                <Text style={styles.remove}>Отвязать</Text>
+              </Pressable>
+            </Card>
+          ))}
+        </>
+      ) : null}
+
+      {viewerIsStaff && profile.role === 'student' ? (
+        <>
+          {parents.length > 0 ? (
+            <Text style={styles.parents}>Родители: {parents.map((p) => p.full_name).join(', ')}</Text>
+          ) : null}
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitleInline}>Прогресс</Text>
+            <Pressable
+              onPress={() =>
+                navigation.navigate('AddProgressNote', { studentId: profile.id, studentName: profile.full_name })
+              }
+            >
+              <Text style={styles.addLink}>+ Отзыв</Text>
+            </Pressable>
+          </View>
+          {notes.length === 0 ? <Text style={styles.emptyLeft}>Отзывов пока нет</Text> : null}
+          {notes.map((note) => (
+            <ProgressNoteCard key={note.id} note={note} onDelete={() => onDeleteNote(note)} />
+          ))}
+        </>
+      ) : null}
+
       <Text style={styles.sectionTitle}>Работы</Text>
       <View style={styles.grid}>
         {visiblePosts.map((post) => (
@@ -118,7 +238,21 @@ export function UserProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  roleAction: { marginBottom: spacing.md },
+  roleAction: { marginBottom: spacing.md, gap: spacing.sm },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  sectionTitleInline: { fontSize: 16, fontWeight: '700', color: colors.primary },
+  addLink: { color: colors.primary, fontWeight: '700' },
+  emptyLeft: { color: colors.textMuted, marginBottom: spacing.md },
+  personRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  personName: { flex: 1, fontWeight: '600', color: colors.text },
+  remove: { color: colors.danger, fontWeight: '600' },
+  parents: { color: colors.textMuted, marginBottom: spacing.sm },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.primary, marginBottom: spacing.sm },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   gridItem: { width: '32%', aspectRatio: 1 },

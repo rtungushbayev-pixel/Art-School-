@@ -49,8 +49,12 @@ export function FeedScreen() {
   return (
     <Screen scroll refreshing={loading} onRefresh={load}>
       <Text style={styles.header}>Лента достижений</Text>
-      <Button title="+ Поделиться работой" onPress={() => navigation.navigate('CreatePost')} />
-      <View style={{ height: spacing.md }} />
+      {profile?.role !== 'parent' ? (
+        <>
+          <Button title="+ Поделиться работой" onPress={() => navigation.navigate('CreatePost')} />
+          <View style={{ height: spacing.md }} />
+        </>
+      ) : null}
 
       {posts.length === 0 && !loading ? (
         <Text style={styles.empty}>Пока нет публикаций. Будьте первым!</Text>

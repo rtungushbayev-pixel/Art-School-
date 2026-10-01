@@ -33,7 +33,7 @@ interface RequestBody {
 
 interface Caller {
   id: string;
-  role: 'student' | 'staff';
+  role: 'student' | 'staff' | 'parent';
   full_name: string;
 }
 
@@ -199,7 +199,16 @@ async function resolveAudience(admin: SupabaseClient, audience: string, groupId:
     if (!groupId) return [];
     const { data, error } = await admin.from('group_members').select('student_id').eq('group_id', groupId);
     if (error) throw error;
-    return (data ?? []).map((row: { student_id: string }) => row.student_id);
+    const studentIds = (data ?? []).map((row: { student_id: string }) => row.student_id);
+    if (studentIds.length === 0) return [];
+    // Объявление группы получают и родители её учеников.
+    const { data: links, error: linksError } = await admin
+      .from('parent_children')
+      .select('parent_id')
+      .in('student_id', studentIds);
+    if (linksError) throw linksError;
+    const parentIds = (links ?? []).map((row: { parent_id: string }) => row.parent_id);
+    return [...new Set([...studentIds, ...parentIds])];
   }
 
   let query = admin.from('profiles').select('id');

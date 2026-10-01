@@ -3,7 +3,7 @@ import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import type { NavigationContainerRefWithCurrent } from '@react-navigation/native';
 import type { UserRole } from '../types/database';
-import type { StaffStackParamList, StudentStackParamList } from '../navigation/types';
+import type { ParentStackParamList, StaffStackParamList, StudentStackParamList } from '../navigation/types';
 
 // Экран, который открывается по нажатию на уведомление. Поле `data` задаёт
 // отправитель (см. вызовы sendPushNotification), поэтому оно разбирается
@@ -36,7 +36,9 @@ export function resolveNotificationTarget(data: Record<string, unknown> | undefi
   }
 }
 
-type AppNavigationRef = NavigationContainerRefWithCurrent<StudentStackParamList & StaffStackParamList>;
+type AppNavigationRef = NavigationContainerRefWithCurrent<
+  StudentStackParamList & StaffStackParamList & ParentStackParamList
+>;
 
 function navigateToTarget(navigation: AppNavigationRef, role: UserRole, target: NotificationTarget) {
   switch (target.screen) {
@@ -44,11 +46,16 @@ function navigateToTarget(navigation: AppNavigationRef, role: UserRole, target: 
       navigation.navigate('PostDetail', { postId: target.postId });
       break;
     case 'ListingDetail':
-      navigation.navigate('ListingDetail', { listingId: target.listingId });
+      // У родителя нет раздела продажи работ.
+      if (role !== 'parent') {
+        navigation.navigate('ListingDetail', { listingId: target.listingId });
+      }
       break;
     case 'Announcements':
       if (role === 'staff') {
         navigation.navigate('StaffTabs', { screen: 'AnnouncementsTab' });
+      } else if (role === 'parent') {
+        navigation.navigate('ParentTabs', { screen: 'AnnouncementsTab' });
       } else {
         navigation.navigate('StudentTabs', { screen: 'AnnouncementsTab' });
       }
@@ -76,9 +83,10 @@ export function useNotificationNavigation(navigation: AppNavigationRef, role: Us
     const target = pending.current;
     const currentRole = roleRef.current;
     if (!target || !currentRole || !navigation.isReady()) return;
-    // Сразу после входа стек ученика/сотрудника может ещё не смонтироваться —
+    // Сразу после входа стек ученика/сотрудника/родителя может ещё не смонтироваться —
     // тогда ждём следующего onStateChange.
-    const stack = currentRole === 'staff' ? 'StaffTabs' : 'StudentTabs';
+    const stack =
+      currentRole === 'staff' ? 'StaffTabs' : currentRole === 'parent' ? 'ParentTabs' : 'StudentTabs';
     if (!navigation.getRootState()?.routeNames.includes(stack)) return;
     pending.current = null;
     navigateToTarget(navigation, currentRole, target);

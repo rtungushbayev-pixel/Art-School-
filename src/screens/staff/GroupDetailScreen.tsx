@@ -83,8 +83,13 @@ export function GroupDetailScreen({ route }: Props) {
       {members.length === 0 ? <Text style={styles.empty}>В группе пока нет учеников</Text> : null}
       {members.map((m) => (
         <Card key={m.id} style={styles.memberRow}>
-          <Avatar uri={m.avatar_url} name={m.full_name} size={36} />
-          <Text style={styles.memberName}>{m.full_name}</Text>
+          <Pressable
+            style={styles.memberLink}
+            onPress={() => navigation.navigate('UserProfile', { userId: m.id })}
+          >
+            <Avatar uri={m.avatar_url} name={m.full_name} size={36} />
+            <Text style={styles.memberName}>{m.full_name}</Text>
+          </Pressable>
           <Pressable onPress={() => onRemoveMember(m)}>
             <Text style={styles.remove}>Убрать</Text>
           </Pressable>
@@ -132,6 +137,7 @@ const styles = StyleSheet.create({
   addLink: { color: colors.primary, fontWeight: '700' },
   memberRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   memberName: { flex: 1, fontWeight: '600', color: colors.text },
+  memberLink: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   remove: { color: colors.danger, fontWeight: '600' },
   lessonRow: { flexDirection: 'row', alignItems: 'center' },
   lessonDay: { width: 32, fontWeight: '700', color: colors.primary },

@@ -2,7 +2,13 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Avatar } from './Avatar';
 import { colors, radius, spacing } from '../theme/colors';
-import type { EnrollmentStatus, Profile } from '../types/database';
+import type { EnrollmentStatus, Profile, UserRole } from '../types/database';
+
+const ROLE_LABELS: Record<UserRole, string> = {
+  student: 'Ученик',
+  staff: 'Сотрудник школы',
+  parent: 'Родитель',
+};
 
 const STATUS_LABELS: Record<EnrollmentStatus, string> = {
   planning: 'Планирует поступать',
@@ -15,7 +21,7 @@ export function ProfileHeader({ profile }: { profile: Profile }) {
     <View style={styles.wrapper}>
       <Avatar uri={profile.avatar_url} name={profile.full_name} size={84} />
       <Text style={styles.name}>{profile.full_name || 'Без имени'}</Text>
-      <Text style={styles.role}>{profile.role === 'staff' ? 'Сотрудник школы' : 'Ученик'}</Text>
+      <Text style={styles.role}>{ROLE_LABELS[profile.role]}</Text>
       {profile.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
 
       {profile.target_institution ? (

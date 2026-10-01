@@ -49,4 +49,23 @@ export type StaffStackParamList = {
   CreateLesson: { groupId: string; lessonId?: string };
   ListingDetail: { listingId: string };
   CreateListing: undefined;
+  People: undefined;
+  LinkChild: { parentId: string };
+  AddProgressNote: { studentId: string; studentName: string };
+};
+
+export type ParentTabParamList = {
+  ChildrenTab: undefined;
+  FeedTab: undefined;
+  AnnouncementsTab: undefined;
+  ProfileTab: undefined;
+};
+
+export type ParentStackParamList = {
+  ParentTabs: NavigatorScreenParams<ParentTabParamList> | undefined;
+  ChildDetail: { childId: string };
+  PostDetail: { postId: string };
+  EditProfile: undefined;
+  NotificationSettings: undefined;
+  UserProfile: { userId: string };
 };

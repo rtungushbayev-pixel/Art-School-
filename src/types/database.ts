@@ -1,4 +1,4 @@
-export type UserRole = 'student' | 'staff';
+export type UserRole = 'student' | 'staff' | 'parent';
 export type EnrollmentStatus = 'planning' | 'applied' | 'enrolled';
 export type PostStatus = 'pending' | 'approved' | 'rejected';
 export type AnnouncementAudience = 'all' | 'students' | 'staff' | 'group';
@@ -106,6 +106,25 @@ export interface Attendance {
   created_at: string;
 }
 
+// Привязка родителя к ребёнку. Назначает сотрудник.
+export interface ParentChild {
+  parent_id: string;
+  student_id: string;
+  created_at: string;
+}
+
+// Запись преподавателя о прогрессе ученика. Видят сотрудники, сам ученик
+// и его родители.
+export interface ProgressNote {
+  id: string;
+  student_id: string;
+  author_id: string | null;
+  title: string;
+  body: string | null;
+  rating: number | null; // 1–5
+  created_at: string;
+}
+
 export interface MarketplaceListing {
   id: string;
   seller_id: string;
@@ -146,6 +165,8 @@ export interface Database {
       post_comments: { Row: PostComment; Insert: Partial<PostComment>; Update: Partial<PostComment> };
       announcements: { Row: Announcement; Insert: Partial<Announcement>; Update: Partial<Announcement> };
       attendance: { Row: Attendance; Insert: Partial<Attendance>; Update: Partial<Attendance> };
+      parent_children: { Row: ParentChild; Insert: Omit<ParentChild, 'created_at'>; Update: Partial<ParentChild> };
+      progress_notes: { Row: ProgressNote; Insert: Partial<ProgressNote>; Update: Partial<ProgressNote> };
       marketplace_listings: {
         Row: MarketplaceListing;
         Insert: Partial<MarketplaceListing>;

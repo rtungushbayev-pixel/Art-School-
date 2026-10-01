@@ -5,11 +5,12 @@ import { useAuth } from '../hooks/useAuth';
 import { AuthNavigator } from './AuthNavigator';
 import { StudentNavigator } from './StudentNavigator';
 import { StaffNavigator } from './StaffNavigator';
+import { ParentNavigator } from './ParentNavigator';
 import { colors } from '../theme/colors';
 import { useNotificationNavigation } from '../lib/notificationRouting';
-import type { StaffStackParamList, StudentStackParamList } from './types';
+import type { ParentStackParamList, StaffStackParamList, StudentStackParamList } from './types';
 
-const navigationRef = createNavigationContainerRef<StudentStackParamList & StaffStackParamList>();
+const navigationRef = createNavigationContainerRef<StudentStackParamList & StaffStackParamList & ParentStackParamList>();
 
 export function RootNavigator() {
   const { session, profile, loading } = useAuth();
@@ -34,6 +35,8 @@ export function RootNavigator() {
         <AuthNavigator />
       ) : profile.role === 'staff' ? (
         <StaffNavigator />
+      ) : profile.role === 'parent' ? (
+        <ParentNavigator />
       ) : (
         <StudentNavigator />
       )}
