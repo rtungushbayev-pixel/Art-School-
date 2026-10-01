@@ -5,9 +5,11 @@ import { Screen } from '../../components/Screen';
 import { TextField } from '../../components/TextField';
 import { Button } from '../../components/Button';
 import { PaintDots } from '../../components/PaintDots';
+import { SvgXml } from 'react-native-svg';
+import { LOGO_RU_XML } from '../../components/logoRuXml';
 import { LanguageSwitcher } from '../../components/LanguageSwitcher';
 import { useAuth } from '../../hooks/useAuth';
-import { useStrings } from '../../i18n';
+import { useLanguage, useStrings } from '../../i18n';
 import { colors, spacing } from '../../theme/colors';
 import type { AuthStackParamList } from '../../navigation/types';
 
@@ -49,6 +51,7 @@ const STRINGS = {
 export function LoginScreen({ navigation }: Props) {
   const { signIn } = useAuth();
   const s = useStrings(STRINGS);
+  const { lang } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -70,9 +73,16 @@ export function LoginScreen({ navigation }: Props) {
     <Screen scroll>
       <LanguageSwitcher compact />
       <View style={styles.header}>
-        <PaintDots />
-        <Text style={styles.title}>{s.school}</Text>
-        <Text style={styles.subtitle}>{s.schoolName}</Text>
+        {/* Логотип с надписью по-русски; для других языков — название текстом. */}
+        {lang === 'ru' ? (
+          <SvgXml xml={LOGO_RU_XML} width={220} height={220} accessibilityLabel={`${s.school} ${s.schoolName}`} />
+        ) : (
+          <>
+            <PaintDots />
+            <Text style={styles.title}>{s.school}</Text>
+            <Text style={styles.subtitle}>{s.schoolName}</Text>
+          </>
+        )}
       </View>
 
       <TextField
