@@ -83,23 +83,11 @@ export async function fetchStudentGroupIds(studentId: string): Promise<string[]>
   return (data ?? []).map((m) => m.group_id as string);
 }
 
-// Родитель видит расписание группы, выбранной при регистрации, и групп
-// детей, к которым его привязал сотрудник.
-export async function fetchParentGroupIds(parentId: string): Promise<string[]> {
-  const [own, children] = await Promise.all([
-    supabase.from('parent_groups').select('group_id').eq('parent_id', parentId),
-    supabase.from('parent_children').select('student_id').eq('parent_id', parentId),
-  ]);
-  if (own.error) throw own.error;
-  if (children.error) throw children.error;
-  const ids = new Set((own.data ?? []).map((r) => r.group_id as string));
-  const childIds = (children.data ?? []).map((r) => r.student_id as string);
-  if (childIds.length > 0) {
-    const { data, error } = await supabase.from('group_members').select('group_id').in('student_id', childIds);
-    if (error) throw error;
-    for (const r of data ?? []) ids.add(r.group_id as string);
-  }
-  return [...ids];
+// Группа, которую родитель выбрал при регистрации (пока ребёнок не привязан).
+export async function fetchParentChosenGroupIds(parentId: string): Promise<string[]> {
+  const { data, error } = await supabase.from('parent_groups').select('group_id').eq('parent_id', parentId);
+  if (error) throw error;
+  return (data ?? []).map((r) => r.group_id as string);
 }
 
 export interface SignupGroup {

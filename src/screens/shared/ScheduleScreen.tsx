@@ -5,13 +5,15 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { Card } from '../../components/Card';
 import { useAuth } from '../../hooks/useAuth';
+import { fetchChildren } from '../../lib/parents';
+import type { Profile } from '../../types/database';
 import {
   DAY_NAMES,
   addDays,
   changeKey,
   fetchLessonChanges,
   fetchScheduleLessons,
-  fetchParentGroupIds,
+  fetchParentChosenGroupIds,
   fetchStudentGroupIds,
   formatDayMonth,
   formatTime,
@@ -36,6 +38,10 @@ export function ScheduleScreen() {
   const [changes, setChanges] = useState<Map<string, LessonChange>>(new Map());
   const [groupFilter, setGroupFilter] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  // Родитель: дети и выбранный ребёнок — показываем расписание его групп.
+  const isParent = profile?.role === 'parent';
+  const [children, setChildren] = useState<Profile[]>([]);
+  const [childId, setChildId] = useState<string | null>(null);
 
   const today = toDateKey(new Date());
   const weekStart = useMemo(() => addDays(startOfWeek(new Date()), weekOffset * 7), [weekOffset]);
@@ -45,11 +51,19 @@ export function ScheduleScreen() {
     if (!profile) return;
     setLoading(true);
     try {
-      const groupIds = isStaff
-        ? null
-        : profile.role === 'parent'
-          ? await fetchParentGroupIds(profile.id)
-          : await fetchStudentGroupIds(profile.id);
+      let groupIds: string[] | null = null;
+      if (isParent) {
+        const kids = await fetchChildren(profile.id);
+        setChildren(kids);
+        const selected = kids.find((k) => k.id === childId) ?? kids[0] ?? null;
+        if (selected && selected.id !== childId) setChildId(selected.id);
+        // Пока ни один ребёнок не привязан — группа, выбранная при регистрации.
+        groupIds = selected
+          ? await fetchStudentGroupIds(selected.id)
+          : await fetchParentChosenGroupIds(profile.id);
+      } else if (!isStaff) {
+        groupIds = await fetchStudentGroupIds(profile.id);
+      }
       const lessonRows = await fetchScheduleLessons(groupIds);
       const changeRows = await fetchLessonChanges(
         lessonRows.map((l) => l.id),
@@ -62,7 +76,7 @@ export function ScheduleScreen() {
       // Нет сети — оставляем то, что уже показано; потянуть вниз, чтобы повторить.
     }
     setLoading(false);
-  }, [profile, isStaff, weekDates]);
+  }, [profile, isStaff, isParent, childId, weekDates]);
 
   useFocusEffect(
     useCallback(() => {
@@ -105,6 +119,19 @@ export function ScheduleScreen() {
         </Pressable>
       </View>
 
+      {isParent && children.length > 0 ? (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filters}>
+          {children.map((child) => (
+            <Chip
+              key={child.id}
+              label={child.full_name || 'Ребёнок'}
+              active={childId === child.id}
+              onPress={() => setChildId(child.id)}
+            />
+          ))}
+        </ScrollView>
+      ) : null}
+
       {isStaff && groups.length > 1 ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filters}>
           <Chip label="Все группы" active={!groupFilter} onPress={() => setGroupFilter(null)} />
@@ -117,8 +144,10 @@ export function ScheduleScreen() {
       {visibleLessons.length === 0 && !loading ? (
         <Card>
           <Text style={styles.empty}>
-            {isStaff ? 'Пока нет занятий в расписании' : profile?.role === 'parent'
-                ? 'Группа не выбрана, или у группы пока нет занятий'
+            {isStaff ? 'Пока нет занятий в расписании' : isParent
+                ? children.length > 0
+                  ? 'Ребёнок пока не записан в группу, или у группы нет занятий'
+                  : 'Добавьте ребёнка в Профиль → «Мои дети», и здесь появится его расписание'
                 : 'Вы пока не записаны в группу, или у группы нет занятий'}
           </Text>
         </Card>
