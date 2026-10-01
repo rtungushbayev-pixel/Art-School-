@@ -22,8 +22,7 @@
     "react-native-safe-area-context": "^5.10.0",
     "react-native-screens": "^4.28.0",
     "react-native-svg": "15.15.4",
-    "react-native-url-polyfill": "^4.0.0",
-    "undefined": "/private/tmp/claude-501/-Users-richi-Art-School-/c6acfe26-4874-4d92-871a-10f41b039c8b/scratchpad/npm-cache"
+    "react-native-url-polyfill": "^4.0.0"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
