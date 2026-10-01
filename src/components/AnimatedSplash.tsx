@@ -99,7 +99,9 @@ export function AnimatedSplash({ onFinish }: { onFinish: () => void }) {
         >
           KasteyevSchool
         </Animated.Text>
-        <Animated.Text style={[styles.subtitle, { opacity: titleOpacity }]}>Школа искусств</Animated.Text>
+        <Animated.Text style={[styles.subtitle, { opacity: titleOpacity }]}>
+          Школа искусств и дизайна им. А. Кастеева
+        </Animated.Text>
       </Pressable>
     </Animated.View>
   );
@@ -140,10 +142,11 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   subtitle: {
-    marginTop: 6,
+    marginTop: 8,
+    paddingHorizontal: 32,
     fontSize: 16,
+    lineHeight: 22,
     color: colors.textMuted,
-    letterSpacing: 2,
-    textTransform: 'uppercase',
+    textAlign: 'center',
   },
 });
