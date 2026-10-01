@@ -38,6 +38,7 @@ const STRINGS = {
     pending: 'На проверке',
     rejected: 'Отклонено',
     openPost: 'Открыть публикацию',
+    openAuthor: 'Профиль автора',
     writeComment: 'Написать комментарий',
   },
   kk: {
@@ -45,6 +46,7 @@ const STRINGS = {
     pending: 'Тексерілуде',
     rejected: 'Қабылданбады',
     openPost: 'Жарияланымды ашу',
+    openAuthor: 'Автордың профилі',
     writeComment: 'Пікір жазу',
   },
   en: {
@@ -52,6 +54,7 @@ const STRINGS = {
     pending: 'Under review',
     rejected: 'Rejected',
     openPost: 'Open post',
+    openAuthor: 'Author profile',
     writeComment: 'Write a comment',
   },
 };
@@ -100,7 +103,7 @@ export function PostCard({ post, onPress, onToggleLike, onAuthorPress, showModer
             <Text style={styles.badgeText}>{post.status === 'pending' ? s.pending : s.rejected}</Text>
           </View>
         ) : null}
-        <Pressable onPress={onPress} hitSlop={10} accessibilityLabel={s.openPost}>
+        <Pressable onPress={onAuthorPress ?? onPress} hitSlop={10} accessibilityLabel={s.openAuthor}>
           <Ionicons name="ellipsis-horizontal" size={22} color={colors.text} />
         </Pressable>
       </View>
