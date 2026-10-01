@@ -2,6 +2,7 @@
   "expo": {
     "name": "KasteyevSchool",
     "slug": "Art-School-",
+    "scheme": "kasteyevschool",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -37,6 +38,14 @@
           "imageWidth": 300,
           "resizeMode": "contain",
           "backgroundColor": "#FAF7F2"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Приложению нужен доступ к фото, чтобы вы могли загрузить работы и аватар.",
+          "cameraPermission": "Приложению нужен доступ к камере, чтобы сфотографировать работу ученика.",
+          "microphonePermission": false
         }
       ]
     ]

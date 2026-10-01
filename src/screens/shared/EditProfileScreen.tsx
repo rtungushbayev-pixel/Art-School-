@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
-import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
 import { TextField } from '../../components/TextField';
 import { Button } from '../../components/Button';
 import { Avatar } from '../../components/Avatar';
 import { supabase } from '../../lib/supabase';
+import { pickAndUploadAvatar } from '../../lib/avatar';
 import { parseYear } from '../../lib/portfolio';
 import { useAuth } from '../../hooks/useAuth';
 import { colors, radius, spacing } from '../../theme/colors';
@@ -35,32 +35,10 @@ export function EditProfileScreen() {
   if (!profile) return null;
 
   const pickAvatar = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert('Нужен доступ к галерее');
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 0.8,
-      allowsEditing: true,
-      aspect: [1, 1],
-    });
-    if (result.canceled || !result.assets[0]) return;
-
     setUploadingAvatar(true);
     try {
-      const asset = result.assets[0];
-      const ext = asset.uri.split('.').pop()?.toLowerCase() || 'jpg';
-      const path = `${profile.id}/avatar.${ext}`;
-      const response = await fetch(asset.uri);
-      const arrayBuffer = await response.arrayBuffer();
-      const { error } = await supabase.storage
-        .from('avatars')
-        .upload(path, arrayBuffer, { contentType: asset.mimeType ?? 'image/jpeg', upsert: true });
-      if (error) throw error;
-      const { data } = supabase.storage.from('avatars').getPublicUrl(path);
-      setAvatarUrl(`${data.publicUrl}?t=${Date.now()}`);
+      const url = await pickAndUploadAvatar(profile.id);
+      if (url) setAvatarUrl(url);
     } catch (e) {
       Alert.alert('Не удалось загрузить фото', e instanceof Error ? e.message : undefined);
     } finally {

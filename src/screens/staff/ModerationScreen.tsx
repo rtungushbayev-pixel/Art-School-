@@ -64,7 +64,6 @@ export function ModerationScreen() {
 
   return (
     <Screen scroll refreshing={loading} onRefresh={load}>
-      <Text style={styles.header}>Модерация</Text>
 
       <View style={styles.scopeRow}>
         <Pressable

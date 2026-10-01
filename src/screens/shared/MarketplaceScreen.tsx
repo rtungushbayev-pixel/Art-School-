@@ -37,7 +37,6 @@ export function MarketplaceScreen() {
 
   return (
     <Screen scroll refreshing={loading} onRefresh={load}>
-      <Text style={styles.header}>Продажа работ</Text>
       <Text style={styles.subheader}>
         Одобренные работы школа переносит на сайт{' '}
         <Text style={styles.link}>kasteyevshop.kz</Text>

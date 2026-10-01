@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Alert, Image, StyleSheet, Text, View } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import type * as ImagePicker from 'expo-image-picker';
+import { askImageSource, pickImage } from '../../lib/pickImage';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { Button } from '../../components/Button';
 import { TextField } from '../../components/TextField';
-import { supabase } from '../../lib/supabase';
+import { publishPost } from '../../lib/posts';
 import { parseYear } from '../../lib/portfolio';
 import { useAuth } from '../../hooks/useAuth';
 import { colors, radius, spacing } from '../../theme/colors';
@@ -24,21 +25,11 @@ export function CreatePostScreen() {
   const [year, setYear] = useState('');
   const [uploading, setUploading] = useState(false);
 
-  const pickImage = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert('Нужен доступ к галерее, чтобы выбрать фото работы');
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 0.8,
-      allowsEditing: true,
-      aspect: [1, 1],
-    });
-    if (!result.canceled && result.assets[0]) {
-      setAsset(result.assets[0]);
-    }
+  const choosePhoto = async () => {
+    const source = await askImageSource('Фото работы');
+    if (!source) return;
+    const picked = await pickImage(source);
+    if (picked) setAsset(picked);
   };
 
   const onPublish = async () => {
@@ -54,36 +45,7 @@ export function CreatePostScreen() {
     }
     setUploading(true);
     try {
-      const ext = asset.uri.split('.').pop()?.toLowerCase() || 'jpg';
-      const path = `${profile.id}/${Date.now()}.${ext}`;
-      const response = await fetch(asset.uri);
-      const arrayBuffer = await response.arrayBuffer();
-
-      const { error: uploadError } = await supabase.storage
-        .from('portfolio')
-        .upload(path, arrayBuffer, { contentType: asset.mimeType ?? 'image/jpeg' });
-      if (uploadError) throw uploadError;
-
-      const { data: publicUrlData } = supabase.storage.from('portfolio').getPublicUrl(path);
-
-      const { data: post, error: postError } = await supabase
-        .from('posts')
-        .insert({
-          author_id: profile.id,
-          caption: caption.trim() || null,
-          title: title.trim() || null,
-          technique: technique.trim() || null,
-          artwork_year: artworkYear,
-        })
-        .select()
-        .single();
-      if (postError) throw postError;
-
-      const { error: imageError } = await supabase
-        .from('post_images')
-        .insert({ post_id: post.id, image_url: publicUrlData.publicUrl, position: 0 });
-      if (imageError) throw imageError;
-
+      await publishPost({ authorId: profile.id, asset, caption, title, technique, artworkYear });
       navigation.goBack();
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Не удалось опубликовать работу';
@@ -101,13 +63,13 @@ export function CreatePostScreen() {
         {asset ? (
           <Image source={{ uri: asset.uri }} style={styles.preview} />
         ) : (
-          <Text onPress={pickImage} style={styles.pickText}>
-            Нажмите, чтобы выбрать фото
+          <Text onPress={choosePhoto} style={styles.pickText}>
+            Нажмите, чтобы снять или выбрать фото
           </Text>
         )}
       </View>
       {asset ? (
-        <Text onPress={pickImage} style={styles.changePhoto}>
+        <Text onPress={choosePhoto} style={styles.changePhoto}>
           Выбрать другое фото
         </Text>
       ) : null}

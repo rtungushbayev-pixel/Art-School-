@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { clearPushToken, syncPushToken } from '../lib/notifications';
+import { AUTH_REDIRECT_URL, listenForAuthLinks } from '../lib/authLinks';
 import type { Profile } from '../types/database';
 
 interface AuthContextValue {
@@ -13,10 +14,15 @@ interface AuthContextValue {
     email: string;
     password: string;
     fullName: string;
+    accountType: SignUpAccountType;
+    groupId: string | null;
   }) => Promise<string | null>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
+
+// Сотрудником при регистрации стать нельзя: эту роль назначает администрация.
+export type SignUpAccountType = 'student' | 'parent';
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
@@ -63,6 +69,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  // Вход по ссылке подтверждения из письма.
+  useEffect(() => listenForAuthLinks(), []);
+
   useEffect(() => {
     if (profile) {
       syncPushToken();
@@ -78,11 +87,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         return error?.message ?? null;
       },
-      signUp: async ({ email, password, fullName }) => {
+      signUp: async ({ email, password, fullName, accountType, groupId }) => {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { full_name: fullName } },
+          options: {
+            emailRedirectTo: AUTH_REDIRECT_URL,
+            data: { full_name: fullName, account_type: accountType, group_id: groupId },
+          },
         });
         return error?.message ?? null;
       },

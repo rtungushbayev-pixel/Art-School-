@@ -31,8 +31,7 @@ export function StaffAnnouncementsScreen() {
 
   return (
     <Screen scroll refreshing={loading} onRefresh={load}>
-      <Text style={styles.header}>Объявления</Text>
-      <Button title="+ Новое объявление" onPress={() => navigation.navigate('ComposeAnnouncement')} />
+      <Button title="+ Новое сообщение" onPress={() => navigation.navigate('ComposeAnnouncement')} />
       <View style={{ height: spacing.md }} />
 
       {items.length === 0 && !loading ? <Text style={styles.empty}>Объявлений пока нет</Text> : null}
