@@ -5,37 +5,74 @@ import { Screen } from '../../components/Screen';
 import { TextField } from '../../components/TextField';
 import { Button } from '../../components/Button';
 import { PaintDots } from '../../components/PaintDots';
+import { LanguageSwitcher } from '../../components/LanguageSwitcher';
 import { useAuth } from '../../hooks/useAuth';
+import { useStrings } from '../../i18n';
 import { colors, spacing } from '../../theme/colors';
 import type { AuthStackParamList } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
+const STRINGS = {
+  ru: {
+    fillAll: 'Заполните все поля',
+    loginFailed: 'Не удалось войти',
+    school: 'Школа искусств и дизайна',
+    schoolName: 'им. А. Кастеева',
+    password: 'Пароль',
+    signIn: 'Войти',
+    noAccount: 'Нет аккаунта?',
+    signUp: 'Зарегистрироваться',
+  },
+  kk: {
+    fillAll: 'Барлық өрістерді толтырыңыз',
+    loginFailed: 'Кіру мүмкін болмады',
+    school: 'Өнер және дизайн мектебі',
+    schoolName: 'Ә. Қастеев атындағы',
+    password: 'Құпиясөз',
+    signIn: 'Кіру',
+    noAccount: 'Аккаунтыңыз жоқ па?',
+    signUp: 'Тіркелу',
+  },
+  en: {
+    fillAll: 'Please fill in all fields',
+    loginFailed: 'Could not sign in',
+    school: 'School of Art and Design',
+    schoolName: 'named after A. Kasteyev',
+    password: 'Password',
+    signIn: 'Sign in',
+    noAccount: 'No account?',
+    signUp: 'Sign up',
+  },
+};
+
 export function LoginScreen({ navigation }: Props) {
   const { signIn } = useAuth();
+  const s = useStrings(STRINGS);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   const onSubmit = async () => {
     if (!email || !password) {
-      Alert.alert('Заполните все поля');
+      Alert.alert(s.fillAll);
       return;
     }
     setLoading(true);
     const error = await signIn(email.trim(), password);
     setLoading(false);
     if (error) {
-      Alert.alert('Не удалось войти', error);
+      Alert.alert(s.loginFailed, error);
     }
   };
 
   return (
     <Screen scroll>
+      <LanguageSwitcher compact />
       <View style={styles.header}>
         <PaintDots />
-        <Text style={styles.title}>Школа искусств и дизайна</Text>
-        <Text style={styles.subtitle}>им. А. Кастеева</Text>
+        <Text style={styles.title}>{s.school}</Text>
+        <Text style={styles.subtitle}>{s.schoolName}</Text>
       </View>
 
       <TextField
@@ -47,20 +84,20 @@ export function LoginScreen({ navigation }: Props) {
         placeholder="you@example.com"
       />
       <TextField
-        label="Пароль"
+        label={s.password}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
         placeholder="••••••••"
       />
 
-      <Button title="Войти" onPress={onSubmit} loading={loading} />
+      <Button title={s.signIn} onPress={onSubmit} loading={loading} />
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>Нет аккаунта?</Text>
+        <Text style={styles.footerText}>{s.noAccount}</Text>
         <Text style={styles.link} onPress={() => navigation.navigate('SignUp')}>
           {' '}
-          Зарегистрироваться
+          {s.signUp}
         </Text>
       </View>
     </Screen>
@@ -68,7 +105,7 @@ export function LoginScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  header: { marginTop: spacing.xl, marginBottom: spacing.xl, alignItems: 'center' },
+  header: { marginTop: spacing.lg, marginBottom: spacing.xl, alignItems: 'center' },
   title: { fontSize: 24, fontWeight: '800', color: colors.primary, textAlign: 'center', marginTop: spacing.md },
   subtitle: { fontSize: 15, color: colors.textMuted, marginTop: spacing.xs },
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: spacing.lg },

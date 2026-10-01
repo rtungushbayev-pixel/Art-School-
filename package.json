@@ -12,6 +12,7 @@
     "expo": "~57.0.24",
     "expo-image": "^57.0.5",
     "expo-image-picker": "^57.0.19",
+    "expo-localization": "~57.0.2",
     "expo-notifications": "^57.0.20",
     "expo-secure-store": "^57.0.4",
     "expo-splash-screen": "~57.0.9",
@@ -21,7 +22,8 @@
     "react-native-safe-area-context": "^5.10.0",
     "react-native-screens": "^4.28.0",
     "react-native-svg": "15.15.4",
-    "react-native-url-polyfill": "^4.0.0"
+    "react-native-url-polyfill": "^4.0.0",
+    "undefined": "/private/tmp/claude-501/-Users-richi-Art-School-/c6acfe26-4874-4d92-871a-10f41b039c8b/scratchpad/npm-cache"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
