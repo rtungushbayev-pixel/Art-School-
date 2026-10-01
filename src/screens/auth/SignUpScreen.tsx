@@ -50,7 +50,7 @@ export function SignUpScreen({ navigation }: Props) {
       return;
     }
     setLoading(true);
-    const error = await signUp({
+    const { error, needsConfirmation } = await signUp({
       email: email.trim(),
       password,
       fullName: fullName.trim(),
@@ -60,13 +60,14 @@ export function SignUpScreen({ navigation }: Props) {
     setLoading(false);
     if (error) {
       Alert.alert('Не удалось зарегистрироваться', error);
-    } else {
+    } else if (needsConfirmation) {
       Alert.alert(
-        'Готово',
-        'Проверьте почту для подтверждения аккаунта (если это требуется настройками проекта), затем войдите.'
+        'Подтвердите почту',
+        `Мы отправили письмо на ${email.trim()}. Откройте ссылку из письма на этом телефоне. Если письма нет, проверьте папку «Спам».`
       );
       navigation.navigate('Login');
     }
+    // Иначе пользователь уже вошёл, и приложение само откроет главный экран.
   };
 
   return (

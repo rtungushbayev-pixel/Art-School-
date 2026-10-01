@@ -16,10 +16,14 @@ interface AuthContextValue {
     fullName: string;
     accountType: SignUpAccountType;
     groupId: string | null;
-  }) => Promise<string | null>;
+  }) => Promise<SignUpResult>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
+
+// needsConfirmation: Supabase ждёт подтверждения почты; иначе пользователь
+// уже вошёл (подтверждение выключено в настройках проекта).
+export type SignUpResult = { error: string | null; needsConfirmation: boolean };
 
 // Сотрудником при регистрации стать нельзя: эту роль назначает администрация.
 export type SignUpAccountType = 'student' | 'parent';
@@ -88,7 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return error?.message ?? null;
       },
       signUp: async ({ email, password, fullName, accountType, groupId }) => {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -96,7 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             data: { full_name: fullName, account_type: accountType, group_id: groupId },
           },
         });
-        return error?.message ?? null;
+        return { error: error?.message ?? null, needsConfirmation: !error && !data.session };
       },
       signOut: async () => {
         // Чистим push-токен устройства, чтобы после выхода на общем устройстве
