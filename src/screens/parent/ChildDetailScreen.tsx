@@ -13,7 +13,9 @@ import {
   fetchProgressNotes,
   fetchStudentAttendance,
   fetchStudentGroupNames,
+  fetchStudentPhotos,
   type ProgressNoteWithAuthor,
+  type StudentPhotoWithUrl,
 } from '../../lib/parents';
 import { useAuth } from '../../hooks/useAuth';
 import { colors, radius, spacing } from '../../theme/colors';
@@ -23,6 +25,12 @@ import type { ParentStackParamList } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<ParentStackParamList, 'ChildDetail'>;
 type Tab = 'progress' | 'gallery';
+
+// Галерея объединяет работы, которые ребёнок публикует сам, и фото,
+// загруженные преподавателем; показываем их вместе по дате.
+type GalleryItem =
+  | { kind: 'post'; id: string; created_at: string; imageUrl: string | null; post: PostCardData }
+  | { kind: 'photo'; id: string; created_at: string; imageUrl: string | null; photo: StudentPhotoWithUrl };
 
 const ATTENDANCE_DAYS = 30;
 
@@ -40,7 +48,7 @@ export function ChildDetailScreen({ route, navigation }: Props) {
   const [groups, setGroups] = useState<string[]>([]);
   const [attendance, setAttendance] = useState<Attendance[]>([]);
   const [notes, setNotes] = useState<ProgressNoteWithAuthor[]>([]);
-  const [posts, setPosts] = useState<PostCardData[]>([]);
+  const [gallery, setGallery] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -48,16 +56,34 @@ export function ChildDetailScreen({ route, navigation }: Props) {
     try {
       const { data } = await supabase.from('profiles').select('*').eq('id', childId).single();
       setChild(data as Profile);
-      const [groupNames, attendanceRows, progress, works] = await Promise.all([
+      const [groupNames, attendanceRows, progress, works, photos] = await Promise.all([
         fetchStudentGroupNames(childId),
         fetchStudentAttendance(childId, daysAgoISO(ATTENDANCE_DAYS)),
         fetchProgressNotes(childId),
         fetchUserPosts(childId, viewer?.id),
+        fetchStudentPhotos(childId),
       ]);
       setGroups(groupNames);
       setAttendance(attendanceRows);
       setNotes(progress);
-      setPosts(works);
+      const items: GalleryItem[] = [
+        ...works.map((post) => ({
+          kind: 'post' as const,
+          id: `post-${post.id}`,
+          created_at: post.created_at,
+          imageUrl: post.images[0]?.image_url ?? null,
+          post,
+        })),
+        ...photos.map((photo) => ({
+          kind: 'photo' as const,
+          id: `photo-${photo.id}`,
+          created_at: photo.created_at,
+          imageUrl: photo.url,
+          photo,
+        })),
+      ];
+      items.sort((a, b) => b.created_at.localeCompare(a.created_at));
+      setGallery(items);
     } finally {
       setLoading(false);
     }
@@ -83,7 +109,7 @@ export function ChildDetailScreen({ route, navigation }: Props) {
         {(
           [
             ['progress', 'Прогресс'],
-            ['gallery', `Галерея (${posts.length})`],
+            ['gallery', `Галерея (${gallery.length})`],
           ] as const
         ).map(([value, label]) => (
           <Pressable
@@ -109,28 +135,39 @@ export function ChildDetailScreen({ route, navigation }: Props) {
         </>
       ) : (
         <>
-          {posts.length === 0 && !loading ? <Text style={styles.empty}>Работ пока нет</Text> : null}
+          {gallery.length === 0 && !loading ? <Text style={styles.empty}>Работ пока нет</Text> : null}
           <View style={styles.grid}>
-            {posts.map((post) => (
+            {gallery.map((item) => (
               <Pressable
-                key={post.id}
+                key={item.id}
                 style={styles.gridItem}
-                onPress={() => navigation.navigate('PostDetail', { postId: post.id })}
+                onPress={() =>
+                  item.kind === 'post'
+                    ? navigation.navigate('PostDetail', { postId: item.post.id })
+                    : item.imageUrl &&
+                      navigation.navigate('PhotoView', { uri: item.imageUrl, caption: item.photo.caption })
+                }
               >
-                {post.images[0] ? (
-                  <Image source={{ uri: post.images[0].image_url }} style={styles.gridImage} contentFit="cover" />
+                {item.imageUrl ? (
+                  <Image source={{ uri: item.imageUrl }} style={styles.gridImage} contentFit="cover" />
                 ) : (
                   <View style={styles.gridImage} />
                 )}
-                {post.status !== 'approved' ? (
+                {item.kind === 'post' && item.post.status !== 'approved' ? (
                   <View style={styles.statusOverlay}>
                     <Text style={styles.statusText}>
-                      {post.status === 'pending' ? 'На модерации' : 'Отклонено'}
+                      {item.post.status === 'pending' ? 'На модерации' : 'Отклонено'}
                     </Text>
                   </View>
                 ) : null}
-                <Text style={styles.gridDate}>
-                  {new Date(post.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
+                {item.kind === 'photo' ? (
+                  <View style={styles.statusOverlay}>
+                    <Text style={styles.statusText}>С занятия</Text>
+                  </View>
+                ) : null}
+                <Text style={styles.gridDate} numberOfLines={1}>
+                  {new Date(item.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
+                  {item.kind === 'photo' && item.photo.caption ? ` · ${item.photo.caption}` : ''}
                 </Text>
               </Pressable>
             ))}

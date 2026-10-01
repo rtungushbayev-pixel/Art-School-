@@ -18,6 +18,8 @@ import { CreateListingScreen } from '../screens/shared/CreateListingScreen';
 import { PeopleScreen } from '../screens/staff/PeopleScreen';
 import { LinkChildScreen } from '../screens/staff/LinkChildScreen';
 import { AddProgressNoteScreen } from '../screens/staff/AddProgressNoteScreen';
+import { AddStudentPhotoScreen } from '../screens/staff/AddStudentPhotoScreen';
+import { PhotoViewScreen } from '../screens/shared/PhotoViewScreen';
 import { colors } from '../theme/colors';
 
 const Stack = createNativeStackNavigator<StaffStackParamList>();
@@ -60,6 +62,8 @@ export function StaffNavigator() {
       <Stack.Screen name="People" component={PeopleScreen} options={{ title: 'Ученики и родители' }} />
       <Stack.Screen name="LinkChild" component={LinkChildScreen} options={{ title: 'Привязать ребёнка' }} />
       <Stack.Screen name="AddProgressNote" component={AddProgressNoteScreen} options={{ title: 'Отзыв о прогрессе' }} />
+      <Stack.Screen name="AddStudentPhoto" component={AddStudentPhotoScreen} options={{ title: 'Фото в галерею' }} />
+      <Stack.Screen name="PhotoView" component={PhotoViewScreen} options={{ title: 'Фото' }} />
     </Stack.Navigator>
   );
 }

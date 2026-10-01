@@ -125,6 +125,17 @@ export interface ProgressNote {
   created_at: string;
 }
 
+// Фото в галерее ученика, которое загрузил сотрудник. Файл лежит в закрытом
+// бакете student-photos, показывается по временной ссылке.
+export interface StudentPhoto {
+  id: string;
+  student_id: string;
+  uploaded_by: string | null;
+  storage_path: string;
+  caption: string | null;
+  created_at: string;
+}
+
 export interface MarketplaceListing {
   id: string;
   seller_id: string;
@@ -167,6 +178,7 @@ export interface Database {
       attendance: { Row: Attendance; Insert: Partial<Attendance>; Update: Partial<Attendance> };
       parent_children: { Row: ParentChild; Insert: Omit<ParentChild, 'created_at'>; Update: Partial<ParentChild> };
       progress_notes: { Row: ProgressNote; Insert: Partial<ProgressNote>; Update: Partial<ProgressNote> };
+      student_photos: { Row: StudentPhoto; Insert: Partial<StudentPhoto>; Update: Partial<StudentPhoto> };
       marketplace_listings: {
         Row: MarketplaceListing;
         Insert: Partial<MarketplaceListing>;

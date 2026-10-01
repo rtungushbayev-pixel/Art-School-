@@ -52,6 +52,8 @@ export type StaffStackParamList = {
   People: undefined;
   LinkChild: { parentId: string };
   AddProgressNote: { studentId: string; studentName: string };
+  AddStudentPhoto: { studentId: string; studentName: string };
+  PhotoView: { uri: string; caption?: string | null };
 };
 
 export type ParentTabParamList = {
@@ -64,6 +66,7 @@ export type ParentTabParamList = {
 export type ParentStackParamList = {
   ParentTabs: NavigatorScreenParams<ParentTabParamList> | undefined;
   ChildDetail: { childId: string };
+  PhotoView: { uri: string; caption?: string | null };
   PostDetail: { postId: string };
   EditProfile: undefined;
   NotificationSettings: undefined;

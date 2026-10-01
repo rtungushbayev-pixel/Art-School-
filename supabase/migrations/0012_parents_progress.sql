@@ -6,7 +6,8 @@
 --
 -- Родитель видит только своих детей: их посещаемость, записи преподавателей
 -- о прогрессе, все их работы (включая ещё не прошедшие модерацию) и
--- объявления групп, в которых учатся дети.
+-- объявления групп, в которых учатся дети, а также фото, которые
+-- преподаватель загрузил в галерею ребёнка (закрытый бакет student-photos).
 --
 -- Новое значение enum нельзя использовать в той же транзакции, где оно
 -- добавлено, а SQL Editor выполняет скрипт одной транзакцией. Поэтому ниже
@@ -149,3 +150,76 @@ create policy "announcements_select_parent" on public.announcements
       where gm.group_id = announcements.group_id and public.is_parent_of(gm.student_id)
     )
   );
+
+-- =========================================================
+-- ГАЛЕРЕЯ: фото, которые загружает преподаватель
+-- (процесс на занятии, работы, которые ребёнок не публикует сам).
+-- Бакет закрытый: фото детей доступны только по временной ссылке
+-- сотрудникам, самому ученику и его родителям.
+-- Путь файла: {student_id}/{имя файла}.
+-- =========================================================
+
+create table public.student_photos (
+  id uuid primary key default gen_random_uuid(),
+  student_id uuid not null references public.profiles (id) on delete cascade,
+  uploaded_by uuid references public.profiles (id) on delete set null,
+  storage_path text not null,
+  caption text,
+  created_at timestamptz not null default now()
+);
+
+create index student_photos_student_idx on public.student_photos (student_id, created_at desc);
+
+create function public.set_student_photo_uploader()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is not null then
+    new.uploaded_by := auth.uid();
+  end if;
+  return new;
+end;
+$$;
+
+create trigger student_photos_set_uploader
+  before insert on public.student_photos
+  for each row execute procedure public.set_student_photo_uploader();
+
+alter table public.student_photos enable row level security;
+
+create policy "student_photos_select" on public.student_photos
+  for select using (
+    public.is_staff() or student_id = auth.uid() or public.is_parent_of(student_id)
+  );
+
+create policy "student_photos_write_staff" on public.student_photos
+  for all using (public.is_staff()) with check (public.is_staff());
+
+insert into storage.buckets (id, name, public)
+values ('student-photos', 'student-photos', false)
+on conflict (id) do nothing;
+
+-- Имя папки сравнивается как текст, чтобы файл с «кривым» путём не ломал
+-- запрос ошибкой приведения к uuid.
+create policy "student_photos_bucket_read" on storage.objects
+  for select using (
+    bucket_id = 'student-photos'
+    and (
+      public.is_staff()
+      or (storage.foldername(name))[1] = auth.uid()::text
+      or exists (
+        select 1 from public.parent_children pc
+        where pc.student_id::text = (storage.foldername(name))[1]
+          and public.is_parent_of(pc.student_id)
+      )
+    )
+  );
+
+create policy "student_photos_bucket_insert_staff" on storage.objects
+  for insert with check (bucket_id = 'student-photos' and public.is_staff());
+
+create policy "student_photos_bucket_delete_staff" on storage.objects
+  for delete using (bucket_id = 'student-photos' and public.is_staff());

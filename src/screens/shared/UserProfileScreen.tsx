@@ -11,11 +11,14 @@ import { supabase } from '../../lib/supabase';
 import { fetchUserPosts } from '../../lib/posts';
 import {
   deleteProgressNote,
+  deleteStudentPhoto,
   fetchChildren,
+  fetchStudentPhotos,
   fetchParents,
   fetchProgressNotes,
   unlinkChild,
   type ProgressNoteWithAuthor,
+  type StudentPhotoWithUrl,
 } from '../../lib/parents';
 import { Card } from '../../components/Card';
 import { Avatar } from '../../components/Avatar';
@@ -56,6 +59,7 @@ export function UserProfileScreen() {
   const [children, setChildren] = useState<Profile[]>([]);
   const [parents, setParents] = useState<Profile[]>([]);
   const [notes, setNotes] = useState<ProgressNoteWithAuthor[]>([]);
+  const [photos, setPhotos] = useState<StudentPhotoWithUrl[]>([]);
 
   const userId = route.params.userId;
   const viewerIsStaff = viewer?.role === 'staff';
@@ -70,12 +74,18 @@ export function UserProfileScreen() {
     if (viewerIsStaff && loaded) {
       setChildren(loaded.role === 'parent' ? await fetchChildren(userId) : []);
       if (loaded.role === 'student') {
-        const [parentList, noteList] = await Promise.all([fetchParents(userId), fetchProgressNotes(userId)]);
+        const [parentList, noteList, photoList] = await Promise.all([
+          fetchParents(userId),
+          fetchProgressNotes(userId),
+          fetchStudentPhotos(userId),
+        ]);
         setParents(parentList);
         setNotes(noteList);
+        setPhotos(photoList);
       } else {
         setParents([]);
         setNotes([]);
+        setPhotos([]);
       }
     }
   }, [userId, viewer?.id, viewerIsStaff]);
@@ -136,6 +146,24 @@ export function UserProfileScreen() {
         onPress: async () => {
           try {
             await deleteProgressNote(note.id);
+            load();
+          } catch (e) {
+            Alert.alert('Не удалось удалить', e instanceof Error ? e.message : undefined);
+          }
+        },
+      },
+    ]);
+  };
+
+  const onDeletePhoto = (photo: StudentPhotoWithUrl) => {
+    Alert.alert('Удалить фото из галереи?', photo.caption ?? undefined, [
+      { text: 'Отмена', style: 'cancel' },
+      {
+        text: 'Удалить',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await deleteStudentPhoto(photo);
             load();
           } catch (e) {
             Alert.alert('Не удалось удалить', e instanceof Error ? e.message : undefined);
@@ -213,6 +241,38 @@ export function UserProfileScreen() {
           {notes.map((note) => (
             <ProgressNoteCard key={note.id} note={note} onDelete={() => onDeleteNote(note)} />
           ))}
+
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitleInline}>Фото с занятий</Text>
+            <Pressable
+              onPress={() =>
+                navigation.navigate('AddStudentPhoto', { studentId: profile.id, studentName: profile.full_name })
+              }
+            >
+              <Text style={styles.addLink}>+ Фото</Text>
+            </Pressable>
+          </View>
+          {photos.length === 0 ? (
+            <Text style={styles.emptyLeft}>Фото пока нет. Их увидят ученик и родители.</Text>
+          ) : (
+            <View style={[styles.grid, styles.photoGrid]}>
+              {photos.map((photo) => (
+                <Pressable
+                  key={photo.id}
+                  style={styles.gridItem}
+                  onPress={() => photo.url && navigation.navigate('PhotoView', { uri: photo.url, caption: photo.caption })}
+                  onLongPress={() => onDeletePhoto(photo)}
+                >
+                  {photo.url ? (
+                    <Image source={{ uri: photo.url }} style={styles.gridImage} contentFit="cover" />
+                  ) : (
+                    <View style={styles.gridImage} />
+                  )}
+                </Pressable>
+              ))}
+              <Text style={styles.photoHint}>Удерживайте фото, чтобы удалить его.</Text>
+            </View>
+          )}
         </>
       ) : null}
 
@@ -253,6 +313,8 @@ const styles = StyleSheet.create({
   personName: { flex: 1, fontWeight: '600', color: colors.text },
   remove: { color: colors.danger, fontWeight: '600' },
   parents: { color: colors.textMuted, marginBottom: spacing.sm },
+  photoGrid: { marginBottom: spacing.md },
+  photoHint: { width: '100%', color: colors.textMuted, fontSize: 12 },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.primary, marginBottom: spacing.sm },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   gridItem: { width: '32%', aspectRatio: 1 },

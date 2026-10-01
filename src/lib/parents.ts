@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { Attendance, Profile, ProgressNote } from '../types/database';
+import type { Attendance, Profile, ProgressNote, StudentPhoto } from '../types/database';
 
 export interface ProgressNoteWithAuthor extends ProgressNote {
   author: { id: string; full_name: string } | null;
@@ -112,4 +112,67 @@ export async function fetchStudentGroupNames(studentId: string): Promise<string[
     .eq('student_id', studentId);
   if (error) throw error;
   return ((data as any[]) ?? []).map((row) => row.groups?.name as string).filter(Boolean);
+}
+
+const PHOTOS_BUCKET = 'student-photos';
+// Бакет закрытый, поэтому фото показываются по временным ссылкам.
+const SIGNED_URL_TTL_SECONDS = 60 * 60;
+
+export interface StudentPhotoWithUrl extends StudentPhoto {
+  url: string | null;
+}
+
+export async function fetchStudentPhotos(studentId: string): Promise<StudentPhotoWithUrl[]> {
+  const { data, error } = await supabase
+    .from('student_photos')
+    .select('*')
+    .eq('student_id', studentId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  const photos = (data as StudentPhoto[]) ?? [];
+  if (photos.length === 0) return [];
+
+  const { data: signed, error: signError } = await supabase.storage
+    .from(PHOTOS_BUCKET)
+    .createSignedUrls(
+      photos.map((p) => p.storage_path),
+      SIGNED_URL_TTL_SECONDS
+    );
+  if (signError) throw signError;
+  const urlByPath = new Map((signed ?? []).map((s) => [s.path, s.signedUrl]));
+  return photos.map((p) => ({ ...p, url: urlByPath.get(p.storage_path) ?? null }));
+}
+
+export async function uploadStudentPhoto(params: {
+  studentId: string;
+  uri: string;
+  mimeType?: string | null;
+  caption: string;
+}) {
+  const ext = params.uri.split('.').pop()?.toLowerCase() || 'jpg';
+  const path = `${params.studentId}/${Date.now()}.${ext}`;
+  const response = await fetch(params.uri);
+  const arrayBuffer = await response.arrayBuffer();
+
+  const { error: uploadError } = await supabase.storage
+    .from(PHOTOS_BUCKET)
+    .upload(path, arrayBuffer, { contentType: params.mimeType ?? 'image/jpeg' });
+  if (uploadError) throw uploadError;
+
+  // uploaded_by проставляет триггер в базе.
+  const { error } = await supabase.from('student_photos').insert({
+    student_id: params.studentId,
+    storage_path: path,
+    caption: params.caption || null,
+  });
+  if (error) {
+    await supabase.storage.from(PHOTOS_BUCKET).remove([path]);
+    throw error;
+  }
+}
+
+export async function deleteStudentPhoto(photo: StudentPhoto) {
+  const { error } = await supabase.from('student_photos').delete().eq('id', photo.id);
+  if (error) throw error;
+  await supabase.storage.from(PHOTOS_BUCKET).remove([photo.storage_path]);
 }
