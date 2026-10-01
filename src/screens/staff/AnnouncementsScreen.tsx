@@ -8,9 +8,26 @@ import { AnnouncementCard } from '../../components/AnnouncementCard';
 import { fetchAnnouncements, AnnouncementWithAuthor } from '../../lib/announcements';
 import { colors, spacing } from '../../theme/colors';
 import type { StaffStackParamList } from '../../navigation/types';
+import { useStrings } from '../../i18n';
+
+const STRINGS = {
+  ru: {
+    newMessage: '+ Новое сообщение',
+    empty: 'Объявлений пока нет',
+  },
+  kk: {
+    newMessage: '+ Жаңа хабарлама',
+    empty: 'Әзірге хабарландырулар жоқ',
+  },
+  en: {
+    newMessage: '+ New message',
+    empty: 'No announcements yet',
+  },
+};
 
 export function StaffAnnouncementsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<StaffStackParamList>>();
+  const s = useStrings(STRINGS);
   const [items, setItems] = useState<AnnouncementWithAuthor[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -31,10 +48,10 @@ export function StaffAnnouncementsScreen() {
 
   return (
     <Screen scroll refreshing={loading} onRefresh={load}>
-      <Button title="+ Новое сообщение" onPress={() => navigation.navigate('ComposeAnnouncement')} />
+      <Button title={s.newMessage} onPress={() => navigation.navigate('ComposeAnnouncement')} />
       <View style={{ height: spacing.md }} />
 
-      {items.length === 0 && !loading ? <Text style={styles.empty}>Объявлений пока нет</Text> : null}
+      {items.length === 0 && !loading ? <Text style={styles.empty}>{s.empty}</Text> : null}
       {items.map((item) => (
         <Pressable key={item.id} onPress={() => navigation.navigate('ComposeAnnouncement', { announcementId: item.id })}>
           <AnnouncementCard announcement={item} editable />

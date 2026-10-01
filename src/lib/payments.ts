@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { getLang, pick, type Lang, type Translations } from '../i18n';
 import type { BillingEntry, BillingKind, PaymentMethod, StudentBalance } from '../types/database';
 
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
@@ -6,6 +7,16 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   card: 'Карта',
   transfer: 'Перевод',
 };
+
+const PAYMENT_METHOD_LABELS_I18N: Translations<Record<PaymentMethod, string>> = {
+  ru: PAYMENT_METHOD_LABELS,
+  kk: { cash: 'Қолма-қол', card: 'Карта', transfer: 'Аударым' },
+  en: { cash: 'Cash', card: 'Card', transfer: 'Transfer' },
+};
+
+export function paymentMethodLabel(method: PaymentMethod, lang: Lang = getLang()): string {
+  return pick(PAYMENT_METHOD_LABELS_I18N, lang)[method];
+}
 
 const CURRENCY_SIGNS: Record<string, string> = { KZT: '₸' };
 

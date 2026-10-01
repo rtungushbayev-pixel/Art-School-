@@ -9,9 +9,29 @@ import { supabase } from '../../lib/supabase';
 import { colors, spacing } from '../../theme/colors';
 import type { Group } from '../../types/database';
 import type { StaffStackParamList } from '../../navigation/types';
+import { useStrings } from '../../i18n';
+
+const STRINGS = {
+  ru: {
+    newGroup: '+ Новая группа',
+    people: 'Ученики и родители',
+    empty: 'Группы ещё не созданы',
+  },
+  kk: {
+    newGroup: '+ Жаңа топ',
+    people: 'Оқушылар мен ата-аналар',
+    empty: 'Топтар әлі құрылмаған',
+  },
+  en: {
+    newGroup: '+ New group',
+    people: 'Students and parents',
+    empty: 'No groups have been created yet',
+  },
+};
 
 export function GroupsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<StaffStackParamList>>();
+  const s = useStrings(STRINGS);
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -30,12 +50,12 @@ export function GroupsScreen() {
 
   return (
     <Screen scroll refreshing={loading} onRefresh={load}>
-      <Button title="+ Новая группа" onPress={() => navigation.navigate('CreateGroup')} />
+      <Button title={s.newGroup} onPress={() => navigation.navigate('CreateGroup')} />
       <View style={{ height: spacing.sm }} />
-      <Button title="Ученики и родители" variant="secondary" onPress={() => navigation.navigate('People')} />
+      <Button title={s.people} variant="secondary" onPress={() => navigation.navigate('People')} />
       <View style={{ height: spacing.md }} />
 
-      {groups.length === 0 && !loading ? <Text style={styles.empty}>Группы ещё не созданы</Text> : null}
+      {groups.length === 0 && !loading ? <Text style={styles.empty}>{s.empty}</Text> : null}
       {groups.map((g) => (
         <Pressable key={g.id} onPress={() => navigation.navigate('GroupDetail', { groupId: g.id })}>
           <Card>

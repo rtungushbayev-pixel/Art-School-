@@ -7,15 +7,50 @@ import { Screen } from '../../components/Screen';
 import { Avatar } from '../../components/Avatar';
 import { useAuth } from '../../hooks/useAuth';
 import { fetchStudentsNotLinked, requestChildLink } from '../../lib/parents';
+import { useStrings } from '../../i18n';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { Profile } from '../../types/database';
 import type { ParentStackParamList } from '../../navigation/types';
+
+const STRINGS = {
+  ru: {
+    requestSent: 'Заявка отправлена',
+    requestSentText: (name: string) =>
+      `Когда администрация школы подтвердит, что ${name} — ваш ребёнок, вы увидите его успехи и работы.`,
+    failed: 'Не получилось',
+    hint: 'Введите имя или фамилию ребёнка, как он указан в приложении.',
+    placeholder: 'Имя ребёнка',
+    notFound: 'Никого не нашли. Возможно, ребёнок ещё не зарегистрирован в приложении.',
+    myChild: 'Это мой ребёнок',
+  },
+  kk: {
+    requestSent: 'Өтінім жіберілді',
+    requestSentText: (name: string) =>
+      `Мектеп әкімшілігі ${name} сіздің балаңыз екенін растағанда, оның жетістіктері мен жұмыстарын көресіз.`,
+    failed: 'Сәтсіз аяқталды',
+    hint: 'Баланың қолданбада көрсетілген аты-жөнін енгізіңіз.',
+    placeholder: 'Баланың аты',
+    notFound: 'Ешкім табылмады. Мүмкін, бала қолданбада әлі тіркелмеген.',
+    myChild: 'Бұл менің балам',
+  },
+  en: {
+    requestSent: 'Request sent',
+    requestSentText: (name: string) =>
+      `Once the school administration confirms that ${name} is your child, you’ll see their progress and artwork.`,
+    failed: 'Something went wrong',
+    hint: 'Enter the child’s first or last name as it appears in the app.',
+    placeholder: 'Child’s name',
+    notFound: 'No one found. The child may not be registered in the app yet.',
+    myChild: 'This is my child',
+  },
+};
 
 // Родитель находит ребёнка по имени и отправляет заявку. Доступ к успехам
 // ребёнка откроется, когда школа подтвердит, что это действительно его ребёнок.
 export function AddChildScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<ParentStackParamList>>();
   const { profile } = useAuth();
+  const s = useStrings(STRINGS);
   const [query, setQuery] = useState('');
   const [students, setStudents] = useState<Profile[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -39,26 +74,23 @@ export function AddChildScreen() {
     setBusyId(student.id);
     try {
       await requestChildLink(profile.id, student.id);
-      Alert.alert(
-        'Заявка отправлена',
-        `Когда администрация школы подтвердит, что ${student.full_name} — ваш ребёнок, вы увидите его успехи и работы.`
-      );
+      Alert.alert(s.requestSent, s.requestSentText(student.full_name));
       navigation.goBack();
     } catch (e) {
-      Alert.alert('Не получилось', e instanceof Error ? e.message : undefined);
+      Alert.alert(s.failed, e instanceof Error ? e.message : undefined);
     }
     setBusyId(null);
   };
 
   return (
     <Screen scroll>
-      <Text style={styles.hint}>Введите имя или фамилию ребёнка, как он указан в приложении.</Text>
+      <Text style={styles.hint}>{s.hint}</Text>
       <View style={styles.search}>
         <Ionicons name="search" size={20} color={colors.textMuted} />
         <TextInput
           value={query}
           onChangeText={setQuery}
-          placeholder="Имя ребёнка"
+          placeholder={s.placeholder}
           placeholderTextColor={colors.textMuted}
           style={styles.searchInput}
           autoFocus
@@ -67,7 +99,7 @@ export function AddChildScreen() {
 
       {query.trim().length >= 2 && students.length === 0 ? (
         <Text style={styles.empty}>
-          Никого не нашли. Возможно, ребёнок ещё не зарегистрирован в приложении.
+          {s.notFound}
         </Text>
       ) : null}
 
@@ -82,7 +114,7 @@ export function AddChildScreen() {
             disabled={busyId !== null}
             style={[styles.button, busyId === student.id && styles.busy]}
           >
-            <Text style={styles.buttonText}>Это мой ребёнок</Text>
+            <Text style={styles.buttonText}>{s.myChild}</Text>
           </Pressable>
         </View>
       ))}

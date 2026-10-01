@@ -11,6 +11,34 @@ import { fetchBalances, formatMoney } from '../../lib/payments';
 import { colors, spacing } from '../../theme/colors';
 import type { Profile } from '../../types/database';
 import type { StaffStackParamList } from '../../navigation/types';
+import { useStrings } from '../../i18n';
+
+const STRINGS = {
+  ru: {
+    totalDebt: 'Общий долг учеников',
+    debtors: (count: number) => `Должников: ${count}`,
+    search: 'Поиск по имени',
+    onlyDebtors: 'Только должники',
+    nobody: 'Никого не найдено',
+    noName: 'Без имени',
+  },
+  kk: {
+    totalDebt: 'Оқушылардың жалпы қарызы',
+    debtors: (count: number) => `Қарыздарлар: ${count}`,
+    search: 'Аты бойынша іздеу',
+    onlyDebtors: 'Тек қарыздарлар',
+    nobody: 'Ешкім табылмады',
+    noName: 'Аты жоқ',
+  },
+  en: {
+    totalDebt: 'Total student debt',
+    debtors: (count: number) => `Students in debt: ${count}`,
+    search: 'Search by name',
+    onlyDebtors: 'Only students in debt',
+    nobody: 'No one found',
+    noName: 'No name',
+  },
+};
 
 interface Row {
   student: Profile;
@@ -21,6 +49,7 @@ interface Row {
 // Все ученики с балансом: сначала должники (по сумме долга), потом остальные.
 export function StudentBalancesScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<StaffStackParamList>>();
+  const s = useStrings(STRINGS);
   const [rows, setRows] = useState<Row[]>([]);
   const [query, setQuery] = useState('');
   const [onlyDebtors, setOnlyDebtors] = useState(false);
@@ -63,23 +92,23 @@ export function StudentBalancesScreen() {
   return (
     <Screen scroll refreshing={loading} onRefresh={load}>
       <Card style={styles.summary}>
-        <Text style={styles.summaryLabel}>Общий долг учеников</Text>
+        <Text style={styles.summaryLabel}>{s.totalDebt}</Text>
         <Text style={[styles.summaryValue, totalDebt > 0 && styles.debt]}>{formatMoney(totalDebt)}</Text>
-        <Text style={styles.summaryHint}>Должников: {debtorsCount}</Text>
+        <Text style={styles.summaryHint}>{s.debtors(debtorsCount)}</Text>
       </Card>
 
-      <TextField placeholder="Поиск по имени" value={query} onChangeText={setQuery} />
+      <TextField placeholder={s.search} value={query} onChangeText={setQuery} />
       <Pressable onPress={() => setOnlyDebtors((v) => !v)} style={styles.filterRow}>
         <View style={[styles.checkbox, onlyDebtors && styles.checkboxOn]} />
-        <Text style={styles.filterText}>Только должники</Text>
+        <Text style={styles.filterText}>{s.onlyDebtors}</Text>
       </Pressable>
 
-      {visible.length === 0 && !loading ? <Text style={styles.empty}>Никого не найдено</Text> : null}
+      {visible.length === 0 && !loading ? <Text style={styles.empty}>{s.nobody}</Text> : null}
       {visible.map(({ student, balance, currency }) => (
         <Pressable key={student.id} onPress={() => navigation.navigate('Payments', { studentId: student.id })}>
           <Card style={styles.row}>
             <Avatar uri={student.avatar_url} name={student.full_name} size={36} />
-            <Text style={styles.name}>{student.full_name || 'Без имени'}</Text>
+            <Text style={styles.name}>{student.full_name || s.noName}</Text>
             <Text style={[styles.balance, balance < 0 ? styles.debt : balance > 0 ? styles.credit : null]}>
               {balance > 0 ? '+' : ''}
               {formatMoney(balance, currency)}

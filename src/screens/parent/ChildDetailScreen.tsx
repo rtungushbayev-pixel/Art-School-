@@ -16,6 +16,7 @@ import {
   type StudentPhotoWithUrl,
 } from '../../lib/parents';
 import { useAuth } from '../../hooks/useAuth';
+import { useStrings } from '../../i18n';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { Profile } from '../../types/database';
 import type { PostCardData } from '../../components/PostCard';
@@ -30,9 +31,49 @@ type GalleryItem =
   | { kind: 'post'; id: string; created_at: string; imageUrl: string | null; post: PostCardData }
   | { kind: 'photo'; id: string; created_at: string; imageUrl: string | null; photo: StudentPhotoWithUrl };
 
+const STRINGS = {
+  ru: {
+    locale: 'ru-RU',
+    noName: 'Без имени',
+    progress: 'Прогресс',
+    gallery: (n: number) => `Галерея (${n})`,
+    teacherNotes: 'Отзывы преподавателей',
+    noNotes: 'Преподаватели ещё не оставляли отзывов',
+    noWorks: 'Работ пока нет',
+    pending: 'На модерации',
+    rejected: 'Отклонено',
+    fromClass: 'С занятия',
+  },
+  kk: {
+    locale: 'kk-KZ',
+    noName: 'Аты жоқ',
+    progress: 'Үлгерім',
+    gallery: (n: number) => `Галерея (${n})`,
+    teacherNotes: 'Оқытушылардың пікірлері',
+    noNotes: 'Оқытушылар әлі пікір қалдырмаған',
+    noWorks: 'Әзірге жұмыстар жоқ',
+    pending: 'Модерацияда',
+    rejected: 'Қабылданбады',
+    fromClass: 'Сабақтан',
+  },
+  en: {
+    locale: 'en-US',
+    noName: 'No name',
+    progress: 'Progress',
+    gallery: (n: number) => `Gallery (${n})`,
+    teacherNotes: 'Teacher feedback',
+    noNotes: 'Teachers haven’t left any feedback yet',
+    noWorks: 'No artwork yet',
+    pending: 'Under review',
+    rejected: 'Rejected',
+    fromClass: 'From class',
+  },
+};
+
 export function ChildDetailScreen({ route, navigation }: Props) {
   const { childId } = route.params;
   const { profile: viewer } = useAuth();
+  const s = useStrings(STRINGS);
   const [tab, setTab] = useState<Tab>('progress');
   const [child, setChild] = useState<Profile | null>(null);
   const [groups, setGroups] = useState<string[]>([]);
@@ -87,7 +128,7 @@ export function ChildDetailScreen({ route, navigation }: Props) {
       {child ? (
         <View style={styles.hero}>
           <Avatar uri={child.avatar_url} name={child.full_name} size={72} />
-          <Text style={styles.name}>{child.full_name || 'Без имени'}</Text>
+          <Text style={styles.name}>{child.full_name || s.noName}</Text>
           {groups.length > 0 ? <Text style={styles.groups}>{groups.join(', ')}</Text> : null}
         </View>
       ) : null}
@@ -95,8 +136,8 @@ export function ChildDetailScreen({ route, navigation }: Props) {
       <View style={styles.segment}>
         {(
           [
-            ['progress', 'Прогресс'],
-            ['gallery', `Галерея (${gallery.length})`],
+            ['progress', s.progress],
+            ['gallery', s.gallery(gallery.length)],
           ] as const
         ).map(([value, label]) => (
           <Pressable
@@ -111,9 +152,9 @@ export function ChildDetailScreen({ route, navigation }: Props) {
 
       {tab === 'progress' ? (
         <>
-          <Text style={styles.sectionTitle}>Отзывы преподавателей</Text>
+          <Text style={styles.sectionTitle}>{s.teacherNotes}</Text>
           {notes.length === 0 && !loading ? (
-            <Text style={styles.empty}>Преподаватели ещё не оставляли отзывов</Text>
+            <Text style={styles.empty}>{s.noNotes}</Text>
           ) : null}
           {notes.map((note) => (
             <ProgressNoteCard key={note.id} note={note} />
@@ -121,7 +162,7 @@ export function ChildDetailScreen({ route, navigation }: Props) {
         </>
       ) : (
         <>
-          {gallery.length === 0 && !loading ? <Text style={styles.empty}>Работ пока нет</Text> : null}
+          {gallery.length === 0 && !loading ? <Text style={styles.empty}>{s.noWorks}</Text> : null}
           <View style={styles.grid}>
             {gallery.map((item) => (
               <Pressable
@@ -142,17 +183,17 @@ export function ChildDetailScreen({ route, navigation }: Props) {
                 {item.kind === 'post' && item.post.status !== 'approved' ? (
                   <View style={styles.statusOverlay}>
                     <Text style={styles.statusText}>
-                      {item.post.status === 'pending' ? 'На модерации' : 'Отклонено'}
+                      {item.post.status === 'pending' ? s.pending : s.rejected}
                     </Text>
                   </View>
                 ) : null}
                 {item.kind === 'photo' ? (
                   <View style={styles.statusOverlay}>
-                    <Text style={styles.statusText}>С занятия</Text>
+                    <Text style={styles.statusText}>{s.fromClass}</Text>
                   </View>
                 ) : null}
                 <Text style={styles.gridDate} numberOfLines={1}>
-                  {new Date(item.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
+                  {new Date(item.created_at).toLocaleDateString(s.locale, { day: 'numeric', month: 'short' })}
                   {item.kind === 'photo' && item.photo.caption ? ` · ${item.photo.caption}` : ''}
                 </Text>
               </Pressable>

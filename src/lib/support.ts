@@ -1,30 +1,79 @@
 import { Platform } from 'react-native';
 import { supabase } from './supabase';
 import { sendPushNotification } from './notifications';
+import { getLang, pick, type Translations } from '../i18n';
 import type { Profile, SupportCategory, SupportMessage, SupportStatus, SupportTicket } from '../types/database';
 
-export const SUPPORT_CATEGORY_LABELS: Record<SupportCategory, string> = {
-  bug: 'Проблема с приложением',
-  schedule: 'Проблема с расписанием',
-  operations: 'Инфраструктура и операционные вопросы',
-  // Только у старых обращений: в новых этой причины нет.
-  question: 'Вопрос администрации',
-  other: 'Другое',
+const CATEGORY_LABELS: Translations<Record<SupportCategory, string>> = {
+  ru: {
+    bug: 'Проблема с приложением',
+    schedule: 'Проблема с расписанием',
+    operations: 'Инфраструктура и операционные вопросы',
+    // Только у старых обращений: в новых этой причины нет.
+    question: 'Вопрос администрации',
+    other: 'Другое',
+  },
+  kk: {
+    bug: 'Қолданбадағы ақау',
+    schedule: 'Кестеге қатысты мәселе',
+    operations: 'Инфрақұрылым және операциялық мәселелер',
+    question: 'Әкімшілікке сұрақ',
+    other: 'Басқа',
+  },
+  en: {
+    bug: 'App problem',
+    schedule: 'Schedule problem',
+    operations: 'Facilities and operations',
+    question: 'Question for the administration',
+    other: 'Other',
+  },
+};
+
+export function supportCategoryLabel(category: SupportCategory): string {
+  return pick(CATEGORY_LABELS)[category];
+}
+
+const CATEGORY_HINTS: Translations<Record<'bug' | 'schedule' | 'operations' | 'other', string>> = {
+  ru: {
+    bug: 'Что-то не работает, зависает или показывает ошибку',
+    schedule: 'Неверное время, отмена или перенос занятия',
+    operations: 'Помещения, оборудование, материалы, доступ в школу',
+    other: 'Предложение или любой другой вопрос',
+  },
+  kk: {
+    bug: 'Бірдеңе жұмыс істемейді, қатып қалады немесе қате көрсетеді',
+    schedule: 'Сабақ уақыты қате, сабақ тоқтатылды немесе ауыстырылды',
+    operations: 'Бөлмелер, жабдықтар, материалдар, мектепке кіру',
+    other: 'Ұсыныс немесе кез келген басқа сұрақ',
+  },
+  en: {
+    bug: 'Something doesn’t work, freezes or shows an error',
+    schedule: 'Wrong time, cancelled or rescheduled class',
+    operations: 'Rooms, equipment, supplies, access to the school',
+    other: 'A suggestion or any other question',
+  },
 };
 
 // Причины, которые можно выбрать в новом обращении, в порядке показа.
-export const SUPPORT_CATEGORIES: { value: SupportCategory; hint: string; icon: string }[] = [
-  { value: 'bug', hint: 'Что-то не работает, зависает или показывает ошибку', icon: 'phone-portrait-outline' },
-  { value: 'schedule', hint: 'Неверное время, отмена или перенос занятия', icon: 'calendar-outline' },
-  { value: 'operations', hint: 'Помещения, оборудование, материалы, доступ в школу', icon: 'business-outline' },
-  { value: 'other', hint: 'Предложение или любой другой вопрос', icon: 'chatbubbles-outline' },
-];
+export function supportCategories(): { value: SupportCategory; hint: string; icon: string }[] {
+  const hints = pick(CATEGORY_HINTS);
+  return [
+    { value: 'bug', hint: hints.bug, icon: 'phone-portrait-outline' },
+    { value: 'schedule', hint: hints.schedule, icon: 'calendar-outline' },
+    { value: 'operations', hint: hints.operations, icon: 'business-outline' },
+    { value: 'other', hint: hints.other, icon: 'chatbubbles-outline' },
+  ];
+}
 
-export const SUPPORT_STATUS_LABELS: Record<SupportStatus, string> = {
-  open: 'Ждёт ответа',
-  answered: 'Есть ответ',
-  closed: 'Закрыто',
+const STATUS_LABELS: Translations<Record<SupportStatus, string>> = {
+  ru: { open: 'Ждёт ответа', answered: 'Есть ответ', closed: 'Закрыто' },
+  kk: { open: 'Жауап күтуде', answered: 'Жауап бар', closed: 'Жабылды' },
+  en: { open: 'Awaiting reply', answered: 'Answered', closed: 'Closed' },
 };
+
+export function supportStatusLabel(status: SupportStatus): string {
+  return pick(STATUS_LABELS)[status];
+}
 
 type AuthorPreview = Pick<Profile, 'id' | 'full_name' | 'avatar_url' | 'role'>;
 
@@ -101,10 +150,16 @@ export async function setSupportTicketStatus(ticketId: string, status: SupportSt
 }
 
 // «1 окт., 14:05». Без Intl: на Hermes набор локалей зависит от сборки.
-const MONTHS = ['янв.', 'февр.', 'мар.', 'апр.', 'мая', 'июн.', 'июл.', 'авг.', 'сент.', 'окт.', 'нояб.', 'дек.'];
+const MONTHS: Translations<string[]> = {
+  ru: ['янв.', 'февр.', 'мар.', 'апр.', 'мая', 'июн.', 'июл.', 'авг.', 'сент.', 'окт.', 'нояб.', 'дек.'],
+  kk: ['қаң.', 'ақп.', 'нау.', 'сәу.', 'мам.', 'мау.', 'шіл.', 'там.', 'қыр.', 'қаз.', 'қар.', 'жел.'],
+  en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+};
 
 export function formatSupportDate(iso: string) {
   const d = new Date(iso);
   const time = `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
-  return `${d.getDate()} ${MONTHS[d.getMonth()]}, ${time}`;
+  const month = pick(MONTHS)[d.getMonth()];
+  if (getLang() === 'en') return `${month} ${d.getDate()}, ${time}`;
+  return `${d.getDate()} ${month}, ${time}`;
 }

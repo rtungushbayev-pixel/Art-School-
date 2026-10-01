@@ -8,9 +8,9 @@ import { useAuth } from '../../hooks/useAuth';
 import { fetchChildren } from '../../lib/parents';
 import type { Profile } from '../../types/database';
 import {
-  DAY_NAMES,
   addDays,
   changeKey,
+  dayName,
   fetchLessonChanges,
   fetchScheduleLessons,
   fetchParentChosenGroupIds,
@@ -24,12 +24,71 @@ import {
 import { colors, radius, spacing } from '../../theme/colors';
 import type { LessonChange } from '../../types/database';
 import type { StaffStackParamList } from '../../navigation/types';
+import { useStrings } from '../../i18n';
+
+const STRINGS = {
+  ru: {
+    thisWeek: 'Эта неделя',
+    nextWeek: 'Следующая неделя',
+    lastWeek: 'Прошлая неделя',
+    child: 'Ребёнок',
+    allGroups: 'Все группы',
+    emptyStaff: 'Пока нет занятий в расписании',
+    emptyParentChild: 'Ребёнок пока не записан в группу, или у группы нет занятий',
+    emptyParentNoChild: 'Добавьте ребёнка в Профиль → «Мои дети», и здесь появится его расписание',
+    emptyStudent: 'Вы пока не записаны в группу, или у группы нет занятий',
+    addChild: '+ Добавить ребёнка',
+    today: 'Сегодня',
+    staffHint: 'Нажмите на занятие, чтобы отменить или перенести его на эту дату',
+    room: (room: string) => `Кабинет ${room}`,
+    cancelled: 'Отменено',
+    changedWas: 'Изменено: было',
+    roomShort: (room: string) => `, каб. ${room}`,
+  },
+  kk: {
+    thisWeek: 'Осы апта',
+    nextWeek: 'Келесі апта',
+    lastWeek: 'Өткен апта',
+    child: 'Бала',
+    allGroups: 'Барлық топтар',
+    emptyStaff: 'Кестеде әзірге сабақ жоқ',
+    emptyParentChild: 'Бала әзірге топқа жазылмаған немесе топта сабақ жоқ',
+    emptyParentNoChild: 'Баланы Профиль → «Менің балаларым» бөліміне қосыңыз, сонда мұнда оның кестесі шығады',
+    emptyStudent: 'Сіз әзірге топқа жазылмағансыз немесе топта сабақ жоқ',
+    addChild: '+ Бала қосу',
+    today: 'Бүгін',
+    staffHint: 'Сабақты осы күнге болдырмау немесе ауыстыру үшін оны басыңыз',
+    room: (room: string) => `${room} кабинет`,
+    cancelled: 'Болдырылмады',
+    changedWas: 'Өзгертілді: бұрын',
+    roomShort: (room: string) => `, ${room} каб.`,
+  },
+  en: {
+    thisWeek: 'This week',
+    nextWeek: 'Next week',
+    lastWeek: 'Last week',
+    child: 'Child',
+    allGroups: 'All groups',
+    emptyStaff: 'No classes in the schedule yet',
+    emptyParentChild: 'Your child is not in a group yet, or the group has no classes',
+    emptyParentNoChild: 'Add your child in Profile → “My children” and their schedule will appear here',
+    emptyStudent: 'You are not in a group yet, or the group has no classes',
+    addChild: '+ Add child',
+    today: 'Today',
+    staffHint: 'Tap a class to cancel or reschedule it for this date',
+    room: (room: string) => `Room ${room}`,
+    cancelled: 'Cancelled',
+    changedWas: 'Changed: was',
+    roomShort: (room: string) => `, room ${room}`,
+  },
+};
 
 // Расписание на конкретную неделю: регулярные занятия + разовые изменения
 // (отмена, перенос) на даты этой недели. Ученик видит занятия своих групп,
 // сотрудник — всей школы и может отменить или перенести занятие на дату.
 export function ScheduleScreen() {
   const { profile } = useAuth();
+  const s = useStrings(STRINGS);
   const isStaff = profile?.role === 'staff';
   const navigation = useNavigation<NativeStackNavigationProp<StaffStackParamList>>();
 
@@ -94,11 +153,11 @@ export function ScheduleScreen() {
 
   const weekTitle =
     weekOffset === 0
-      ? 'Эта неделя'
+      ? s.thisWeek
       : weekOffset === 1
-        ? 'Следующая неделя'
+        ? s.nextWeek
         : weekOffset === -1
-          ? 'Прошлая неделя'
+          ? s.lastWeek
           : `${formatDayMonth(weekDates[0])} – ${formatDayMonth(weekDates[6])}`;
 
   return (
@@ -124,7 +183,7 @@ export function ScheduleScreen() {
           {children.map((child) => (
             <Chip
               key={child.id}
-              label={child.full_name || 'Ребёнок'}
+              label={child.full_name || s.child}
               active={childId === child.id}
               onPress={() => setChildId(child.id)}
             />
@@ -134,7 +193,7 @@ export function ScheduleScreen() {
 
       {isStaff && groups.length > 1 ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filters}>
-          <Chip label="Все группы" active={!groupFilter} onPress={() => setGroupFilter(null)} />
+          <Chip label={s.allGroups} active={!groupFilter} onPress={() => setGroupFilter(null)} />
           {groups.map(([id, name]) => (
             <Chip key={id} label={name} active={groupFilter === id} onPress={() => setGroupFilter(id)} />
           ))}
@@ -144,11 +203,11 @@ export function ScheduleScreen() {
       {visibleLessons.length === 0 && !loading ? (
         <Card>
           <Text style={styles.empty}>
-            {isStaff ? 'Пока нет занятий в расписании' : isParent
+            {isStaff ? s.emptyStaff : isParent
                 ? children.length > 0
-                  ? 'Ребёнок пока не записан в группу, или у группы нет занятий'
-                  : 'Добавьте ребёнка в Профиль → «Мои дети», и здесь появится его расписание'
-                : 'Вы пока не записаны в группу, или у группы нет занятий'}
+                  ? s.emptyParentChild
+                  : s.emptyParentNoChild
+                : s.emptyStudent}
           </Text>
           {isParent && children.length === 0 ? (
             <Pressable
@@ -156,7 +215,7 @@ export function ScheduleScreen() {
               // AddChild есть только в стеке родителя.
               onPress={() => (navigation as any).navigate('AddChild')}
             >
-              <Text style={styles.addChildText}>+ Добавить ребёнка</Text>
+              <Text style={styles.addChildText}>{s.addChild}</Text>
             </Pressable>
           ) : null}
         </Card>
@@ -173,9 +232,9 @@ export function ScheduleScreen() {
           <View key={dateKey} style={[styles.dayBlock, isPast && styles.past]}>
             <View style={styles.dayHeader}>
               <Text style={[styles.dayTitle, isToday && styles.todayTitle]}>
-                {DAY_NAMES[day]}, {formatDayMonth(date)}
+                {dayName(day)}, {formatDayMonth(date)}
               </Text>
-              {isToday ? <Text style={styles.todayBadge}>Сегодня</Text> : null}
+              {isToday ? <Text style={styles.todayBadge}>{s.today}</Text> : null}
             </View>
             {dayLessons.map((lesson) => {
               const change = changes.get(changeKey(lesson.id, dateKey));
@@ -196,13 +255,14 @@ export function ScheduleScreen() {
       })}
 
       {isStaff && visibleLessons.length > 0 ? (
-        <Text style={styles.hint}>Нажмите на занятие, чтобы отменить или перенести его на эту дату</Text>
+        <Text style={styles.hint}>{s.staffHint}</Text>
       ) : null}
     </Screen>
   );
 }
 
 function LessonCard({ lesson, change }: { lesson: ScheduleLesson; change?: LessonChange }) {
+  const s = useStrings(STRINGS);
   const cancelled = !!change?.cancelled;
   const moved = !cancelled && !!change && (!!change.start_time || !!change.room);
   const start = !cancelled && change?.start_time ? change.start_time : lesson.start_time;
@@ -221,12 +281,12 @@ function LessonCard({ lesson, change }: { lesson: ScheduleLesson; change?: Lesso
           {lesson.group_name}
           {lesson.teacher_name ? ` · ${lesson.teacher_name}` : ''}
         </Text>
-        {room ? <Text style={styles.meta}>Кабинет {room}</Text> : null}
-        {cancelled ? <Text style={[styles.badge, styles.badgeCancelled]}>Отменено</Text> : null}
+        {room ? <Text style={styles.meta}>{s.room(room)}</Text> : null}
+        {cancelled ? <Text style={[styles.badge, styles.badgeCancelled]}>{s.cancelled}</Text> : null}
         {moved ? (
           <Text style={[styles.badge, styles.badgeMoved]}>
-            Изменено: было {formatTime(lesson.start_time)}–{formatTime(lesson.end_time)}
-            {lesson.room ? `, каб. ${lesson.room}` : ''}
+            {s.changedWas} {formatTime(lesson.start_time)}–{formatTime(lesson.end_time)}
+            {lesson.room ? s.roomShort(lesson.room) : ''}
           </Text>
         ) : null}
         {change?.note ? <Text style={styles.note}>{change.note}</Text> : null}

@@ -18,16 +18,17 @@ import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { useAuth } from '../../hooks/useAuth';
 import {
-  SUPPORT_CATEGORY_LABELS,
-  SUPPORT_STATUS_LABELS,
   fetchSupportMessages,
   fetchSupportTicket,
   formatSupportDate,
   sendSupportMessage,
   setSupportTicketStatus,
+  supportCategoryLabel,
+  supportStatusLabel,
   type SupportMessageWithAuthor,
   type SupportTicketWithAuthor,
 } from '../../lib/support';
+import { useStrings } from '../../i18n';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { StaffStackParamList, StudentStackParamList } from '../../navigation/types';
 
@@ -36,11 +37,72 @@ type NavParamList = StudentStackParamList & StaffStackParamList;
 // Высота стандартного заголовка native-stack без системной панели сверху.
 const HEADER_HEIGHT = Platform.OS === 'ios' ? 44 : 56;
 
+const STRINGS = {
+  ru: {
+    notFound: 'Обращение не найдено',
+    sendFailed: 'Не удалось отправить',
+    statusFailed: 'Не удалось изменить статус',
+    closeConfirm: 'Закрыть обращение?',
+    closeHint: 'Если вопрос решён. Написать снова можно в любой момент.',
+    cancel: 'Отмена',
+    close: 'Закрыть',
+    from: (name: string) => `От: ${name}`,
+    noName: 'Без имени',
+    reopen: 'Открыть снова',
+    closeTicket: 'Закрыть обращение',
+    you: 'Вы',
+    staffAuthor: (name: string) => `${name} · администрация`,
+    closedNote: 'Обращение закрыто. Если напишете сообщение, оно откроется снова.',
+    replyPlaceholder: 'Ответ пользователю',
+    messagePlaceholder: 'Сообщение',
+    send: 'Отправить',
+  },
+  kk: {
+    notFound: 'Өтініш табылмады',
+    sendFailed: 'Жіберу мүмкін болмады',
+    statusFailed: 'Күйін өзгерту мүмкін болмады',
+    closeConfirm: 'Өтінішті жабу керек пе?',
+    closeHint: 'Егер мәселе шешілсе. Кез келген уақытта қайта жаза аласыз.',
+    cancel: 'Бас тарту',
+    close: 'Жабу',
+    from: (name: string) => `Кімнен: ${name}`,
+    noName: 'Аты жоқ',
+    reopen: 'Қайта ашу',
+    closeTicket: 'Өтінішті жабу',
+    you: 'Сіз',
+    staffAuthor: (name: string) => `${name} · әкімшілік`,
+    closedNote: 'Өтініш жабылды. Хабарлама жазсаңыз, ол қайта ашылады.',
+    replyPlaceholder: 'Пайдаланушыға жауап',
+    messagePlaceholder: 'Хабарлама',
+    send: 'Жіберу',
+  },
+  en: {
+    notFound: 'Request not found',
+    sendFailed: 'Could not send',
+    statusFailed: 'Could not change the status',
+    closeConfirm: 'Close this request?',
+    closeHint: 'If your issue is resolved. You can write again at any time.',
+    cancel: 'Cancel',
+    close: 'Close',
+    from: (name: string) => `From: ${name}`,
+    noName: 'No name',
+    reopen: 'Reopen',
+    closeTicket: 'Close request',
+    you: 'You',
+    staffAuthor: (name: string) => `${name} · administration`,
+    closedNote: 'This request is closed. If you send a message, it will reopen.',
+    replyPlaceholder: 'Reply to the user',
+    messagePlaceholder: 'Message',
+    send: 'Send',
+  },
+};
+
 // Переписка по обращению: автор и сотрудники пишут в одном окне.
 export function SupportTicketScreen() {
   const route = useRoute<RouteProp<NavParamList, 'SupportTicket'>>();
   const { ticketId } = route.params;
   const { profile } = useAuth();
+  const s = useStrings(STRINGS);
   const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView>(null);
   const [ticket, setTicket] = useState<SupportTicketWithAuthor | null>(null);
@@ -71,7 +133,7 @@ export function SupportTicketScreen() {
   if (!ticket) {
     return (
       <View style={styles.center}>
-        {loaded ? <Text style={styles.muted}>Обращение не найдено</Text> : null}
+        {loaded ? <Text style={styles.muted}>{s.notFound}</Text> : null}
       </View>
     );
   }
@@ -89,7 +151,7 @@ export function SupportTicketScreen() {
       setText('');
       await load();
     } catch (e) {
-      Alert.alert('Не удалось отправить', e instanceof Error ? e.message : undefined);
+      Alert.alert(s.sendFailed, e instanceof Error ? e.message : undefined);
     }
     setSending(false);
   };
@@ -99,14 +161,14 @@ export function SupportTicketScreen() {
       await setSupportTicketStatus(ticket.id, status);
       await load();
     } catch (e) {
-      Alert.alert('Не удалось изменить статус', e instanceof Error ? e.message : undefined);
+      Alert.alert(s.statusFailed, e instanceof Error ? e.message : undefined);
     }
   };
 
   const onClose = () => {
-    Alert.alert('Закрыть обращение?', isAuthor ? 'Если вопрос решён. Написать снова можно в любой момент.' : '', [
-      { text: 'Отмена', style: 'cancel' },
-      { text: 'Закрыть', onPress: () => changeStatus('closed') },
+    Alert.alert(s.closeConfirm, isAuthor ? s.closeHint : '', [
+      { text: s.cancel, style: 'cancel' },
+      { text: s.close, onPress: () => changeStatus('closed') },
     ]);
   };
 
@@ -126,20 +188,20 @@ export function SupportTicketScreen() {
         <Card>
           <Text style={styles.subject}>{ticket.subject}</Text>
           <Text style={styles.muted}>
-            {SUPPORT_CATEGORY_LABELS[ticket.category]} · {SUPPORT_STATUS_LABELS[ticket.status]}
+            {supportCategoryLabel(ticket.category)} · {supportStatusLabel(ticket.status)}
           </Text>
           {isStaff ? (
             <Text style={styles.muted}>
-              От: {ticket.author?.full_name || 'Без имени'}
+              {s.from(ticket.author?.full_name || s.noName)}
               {ticket.device_info ? ` · ${ticket.device_info}` : ''}
             </Text>
           ) : null}
           {isStaff || (isAuthor && !closed) ? (
             <View style={styles.statusAction}>
               {closed ? (
-                <Button title="Открыть снова" variant="secondary" onPress={() => changeStatus('open')} />
+                <Button title={s.reopen} variant="secondary" onPress={() => changeStatus('open')} />
               ) : (
-                <Button title="Закрыть обращение" variant="secondary" onPress={onClose} />
+                <Button title={s.closeTicket} variant="secondary" onPress={onClose} />
               )}
             </View>
           ) : null}
@@ -151,7 +213,7 @@ export function SupportTicketScreen() {
           return (
             <View key={message.id} style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleOther]}>
               <Text style={[styles.bubbleAuthor, mine && styles.textOnPrimary]}>
-                {mine ? 'Вы' : fromStaff ? `${message.author?.full_name ?? ''} · администрация` : message.author?.full_name}
+                {mine ? s.you : fromStaff ? s.staffAuthor(message.author?.full_name ?? '') : message.author?.full_name}
               </Text>
               <Text style={[styles.bubbleText, mine && styles.textOnPrimary]}>{message.body}</Text>
               <Text style={[styles.bubbleTime, mine && styles.textOnPrimary]}>
@@ -163,7 +225,7 @@ export function SupportTicketScreen() {
 
         {closed ? (
           <Text style={[styles.muted, styles.closedNote]}>
-            Обращение закрыто. Если напишете сообщение, оно откроется снова.
+            {s.closedNote}
           </Text>
         ) : null}
       </ScrollView>
@@ -171,7 +233,7 @@ export function SupportTicketScreen() {
       <View style={[styles.inputBar, { paddingBottom: Math.max(insets.bottom, spacing.sm) }]}>
         <TextInput
           style={styles.input}
-          placeholder={isStaff && !isAuthor ? 'Ответ пользователю' : 'Сообщение'}
+          placeholder={isStaff && !isAuthor ? s.replyPlaceholder : s.messagePlaceholder}
           placeholderTextColor={colors.textMuted}
           value={text}
           onChangeText={setText}
@@ -182,7 +244,7 @@ export function SupportTicketScreen() {
           onPress={onSend}
           disabled={sending || !text.trim()}
           style={[styles.sendButton, (sending || !text.trim()) && styles.sendDisabled]}
-          accessibilityLabel="Отправить"
+          accessibilityLabel={s.send}
         >
           <Ionicons name="send" size={20} color={colors.white} />
         </Pressable>

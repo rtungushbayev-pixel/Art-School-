@@ -9,16 +9,83 @@ import { Button } from '../../components/Button';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import {
-  PAYMENT_METHOD_LABELS,
   deleteBillingEntry,
   fetchBalances,
   fetchBillingEntries,
   formatMoney,
+  paymentMethodLabel,
 } from '../../lib/payments';
 import { formatDayMonth, parseDateKey } from '../../lib/schedule';
 import { colors, spacing } from '../../theme/colors';
 import type { BillingEntry, StudentBalance } from '../../types/database';
 import type { StaffStackParamList, StudentStackParamList } from '../../navigation/types';
+import { useStrings } from '../../i18n';
+
+const STRINGS = {
+  ru: {
+    deleteCharge: 'Удалить начисление?',
+    deletePayment: 'Удалить оплату?',
+    cancel: 'Отмена',
+    delete: 'Удалить',
+    deleteFailed: 'Не удалось удалить',
+    myPayments: 'Мои оплаты',
+    balance: 'Баланс',
+    noDebt: 'Задолженности нет',
+    toPay: (amount: string) => `К оплате ${amount}`,
+    overpaid: 'Переплата учтётся в следующих начислениях',
+    charged: 'Начислено',
+    paid: 'оплачено',
+    charge: 'Начислить',
+    acceptPayment: 'Принять оплату',
+    history: 'История',
+    noEntries: 'Записей пока нет',
+    kindCharge: 'Начисление',
+    kindPayment: 'Оплата',
+    deleteHint: 'Удерживайте запись, чтобы удалить ошибочную',
+  },
+  kk: {
+    deleteCharge: 'Есептеуді жою керек пе?',
+    deletePayment: 'Төлемді жою керек пе?',
+    cancel: 'Бас тарту',
+    delete: 'Жою',
+    deleteFailed: 'Жою мүмкін болмады',
+    myPayments: 'Менің төлемдерім',
+    balance: 'Баланс',
+    noDebt: 'Қарыз жоқ',
+    toPay: (amount: string) => `Төлеуге ${amount}`,
+    overpaid: 'Артық төлем келесі есептеулерде ескеріледі',
+    charged: 'Есептелді',
+    paid: 'төленді',
+    charge: 'Есептеу',
+    acceptPayment: 'Төлем қабылдау',
+    history: 'Тарих',
+    noEntries: 'Әзірге жазбалар жоқ',
+    kindCharge: 'Есептеу',
+    kindPayment: 'Төлем',
+    deleteHint: 'Қате жазбаны жою үшін оны басып тұрыңыз',
+  },
+  en: {
+    deleteCharge: 'Delete this charge?',
+    deletePayment: 'Delete this payment?',
+    cancel: 'Cancel',
+    delete: 'Delete',
+    deleteFailed: 'Could not delete',
+    myPayments: 'My payments',
+    balance: 'Balance',
+    noDebt: 'Nothing owed',
+    toPay: (amount: string) => `Amount due: ${amount}`,
+    overpaid: 'The overpayment will be applied to future charges',
+    charged: 'Charged',
+    paid: 'paid',
+    charge: 'Add charge',
+    acceptPayment: 'Record payment',
+    history: 'History',
+    noEntries: 'No entries yet',
+    kindCharge: 'Charge',
+    kindPayment: 'Payment',
+    deleteHint: 'Press and hold an entry to delete it if it was added by mistake',
+  },
+};
 
 type NavParamList = StudentStackParamList & StaffStackParamList;
 
@@ -26,6 +93,7 @@ type NavParamList = StudentStackParamList & StaffStackParamList;
 // сотрудник — оплаты выбранного ученика и может добавлять/удалять записи.
 export function PaymentsScreen() {
   const { profile } = useAuth();
+  const s = useStrings(STRINGS);
   const navigation = useNavigation<NativeStackNavigationProp<NavParamList>>();
   const route = useRoute<RouteProp<NavParamList, 'Payments'>>();
   const isStaff = profile?.role === 'staff';
@@ -63,18 +131,18 @@ export function PaymentsScreen() {
   const onDelete = (entry: BillingEntry) => {
     if (!isStaff) return;
     Alert.alert(
-      entry.kind === 'charge' ? 'Удалить начисление?' : 'Удалить оплату?',
+      entry.kind === 'charge' ? s.deleteCharge : s.deletePayment,
       `${entry.description} · ${formatMoney(entry.amount, entry.currency)}`,
       [
-        { text: 'Отмена', style: 'cancel' },
+        { text: s.cancel, style: 'cancel' },
         {
-          text: 'Удалить',
+          text: s.delete,
           style: 'destructive',
           onPress: async () => {
             try {
               await deleteBillingEntry(entry.id);
             } catch (e) {
-              Alert.alert('Не удалось удалить', (e as Error).message);
+              Alert.alert(s.deleteFailed, (e as Error).message);
             }
             load();
           },
@@ -89,10 +157,10 @@ export function PaymentsScreen() {
 
   return (
     <Screen scroll refreshing={loading} onRefresh={load}>
-      {isStaff ? <Text style={styles.header}>{studentName}</Text> : <Text style={styles.header}>Мои оплаты</Text>}
+      {isStaff ? <Text style={styles.header}>{studentName}</Text> : <Text style={styles.header}>{s.myPayments}</Text>}
 
       <Card style={styles.balanceCard}>
-        <Text style={styles.balanceLabel}>Баланс</Text>
+        <Text style={styles.balanceLabel}>{s.balance}</Text>
         {balances.length === 0 ? (
           <Text style={styles.balanceValue}>{formatMoney(0)}</Text>
         ) : (
@@ -108,14 +176,14 @@ export function PaymentsScreen() {
         )}
         <Text style={styles.balanceHint}>
           {!mainBalance || mainBalance.balance === 0
-            ? 'Задолженности нет'
+            ? s.noDebt
             : mainBalance.balance < 0
-              ? `К оплате ${formatMoney(-mainBalance.balance, mainBalance.currency)}`
-              : 'Переплата учтётся в следующих начислениях'}
+              ? s.toPay(formatMoney(-mainBalance.balance, mainBalance.currency))
+              : s.overpaid}
         </Text>
         {mainBalance ? (
           <Text style={styles.totals}>
-            Начислено {formatMoney(mainBalance.charged, mainBalance.currency)} · оплачено{' '}
+            {s.charged} {formatMoney(mainBalance.charged, mainBalance.currency)} · {s.paid}{' '}
             {formatMoney(mainBalance.paid, mainBalance.currency)}
           </Text>
         ) : null}
@@ -125,22 +193,22 @@ export function PaymentsScreen() {
         <View style={styles.actions}>
           <View style={styles.action}>
             <Button
-              title="Начислить"
+              title={s.charge}
               variant="secondary"
               onPress={() => navigation.navigate('BillingEntryForm', { studentId, kind: 'charge' })}
             />
           </View>
           <View style={styles.action}>
             <Button
-              title="Принять оплату"
+              title={s.acceptPayment}
               onPress={() => navigation.navigate('BillingEntryForm', { studentId, kind: 'payment' })}
             />
           </View>
         </View>
       ) : null}
 
-      <Text style={styles.sectionTitle}>История</Text>
-      {entries.length === 0 && !loading ? <Text style={styles.empty}>Записей пока нет</Text> : null}
+      <Text style={styles.sectionTitle}>{s.history}</Text>
+      {entries.length === 0 && !loading ? <Text style={styles.empty}>{s.noEntries}</Text> : null}
       {entries.map((entry) => (
         <Pressable key={entry.id} onLongPress={() => onDelete(entry)} delayLongPress={400}>
           <Card style={styles.entryRow}>
@@ -149,8 +217,8 @@ export function PaymentsScreen() {
               <Text style={styles.entryMeta}>
                 {formatDayMonth(parseDateKey(entry.entry_date))} {entry.entry_date.slice(0, 4)}
                 {' · '}
-                {entry.kind === 'charge' ? 'Начисление' : 'Оплата'}
-                {entry.method ? ` · ${PAYMENT_METHOD_LABELS[entry.method]}` : ''}
+                {entry.kind === 'charge' ? s.kindCharge : s.kindPayment}
+                {entry.method ? ` · ${paymentMethodLabel(entry.method)}` : ''}
               </Text>
             </View>
             <Text style={[styles.amount, entry.kind === 'payment' ? styles.credit : styles.debt]}>
@@ -161,7 +229,7 @@ export function PaymentsScreen() {
         </Pressable>
       ))}
       {isStaff && entries.length > 0 ? (
-        <Text style={styles.hint}>Удерживайте запись, чтобы удалить ошибочную</Text>
+        <Text style={styles.hint}>{s.deleteHint}</Text>
       ) : null}
     </Screen>
   );

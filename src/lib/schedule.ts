@@ -1,22 +1,78 @@
 import { supabase } from './supabase';
 import type { Lesson, LessonChange } from '../types/database';
 
+import { getLang, pick, type Lang } from '../i18n';
+
+// Русские названия оставлены для совместимости; в экранах используйте dayName/dayShort.
 export const DAY_NAMES = ['', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'];
 export const DAY_SHORT = ['', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
-const MONTHS_GENITIVE = [
-  'января',
-  'февраля',
-  'марта',
-  'апреля',
-  'мая',
-  'июня',
-  'июля',
-  'августа',
-  'сентября',
-  'октября',
-  'ноября',
-  'декабря',
-];
+
+const DAY_NAMES_I18N = {
+  ru: DAY_NAMES,
+  kk: ['', 'Дүйсенбі', 'Сейсенбі', 'Сәрсенбі', 'Бейсенбі', 'Жұма', 'Сенбі', 'Жексенбі'],
+  en: ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+};
+
+const DAY_SHORT_I18N = {
+  ru: DAY_SHORT,
+  kk: ['', 'Дс', 'Сс', 'Ср', 'Бс', 'Жм', 'Сб', 'Жс'],
+  en: ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+};
+
+// Месяц в форме «5 января» / «5 қаңтар» / «5 January».
+const MONTHS_I18N = {
+  ru: [
+    'января',
+    'февраля',
+    'марта',
+    'апреля',
+    'мая',
+    'июня',
+    'июля',
+    'августа',
+    'сентября',
+    'октября',
+    'ноября',
+    'декабря',
+  ],
+  kk: [
+    'қаңтар',
+    'ақпан',
+    'наурыз',
+    'сәуір',
+    'мамыр',
+    'маусым',
+    'шілде',
+    'тамыз',
+    'қыркүйек',
+    'қазан',
+    'қараша',
+    'желтоқсан',
+  ],
+  en: [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ],
+};
+
+// 1 = понедельник ... 7 = воскресенье
+export function dayName(day: number, lang: Lang = getLang()): string {
+  return pick(DAY_NAMES_I18N, lang)[day] ?? '';
+}
+
+export function dayShort(day: number, lang: Lang = getLang()): string {
+  return pick(DAY_SHORT_I18N, lang)[day] ?? '';
+}
 
 export interface ScheduleLesson extends Lesson {
   group_name: string;
@@ -52,8 +108,8 @@ export function startOfWeek(date: Date): Date {
   return addDays(date, 1 - isoDayOfWeek(date));
 }
 
-export function formatDayMonth(date: Date): string {
-  return `${date.getDate()} ${MONTHS_GENITIVE[date.getMonth()]}`;
+export function formatDayMonth(date: Date, lang: Lang = getLang()): string {
+  return `${date.getDate()} ${pick(MONTHS_I18N, lang)[date.getMonth()]}`;
 }
 
 export function formatTime(time: string): string {

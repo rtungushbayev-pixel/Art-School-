@@ -8,9 +8,47 @@ import { supabase } from '../../lib/supabase';
 import { fetchStaffProfiles } from '../../lib/groups';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { Profile } from '../../types/database';
+import { useStrings } from '../../i18n';
+
+const STRINGS = {
+  ru: {
+    needName: 'Укажите название группы',
+    createFailed: 'Не удалось создать группу',
+    title: 'Новая группа',
+    name: 'Название',
+    namePlaceholder: 'Например: Живопись, 2 курс',
+    description: 'Описание',
+    teacher: 'Преподаватель',
+    notAssigned: 'Не назначен',
+    create: 'Создать',
+  },
+  kk: {
+    needName: 'Топтың атауын көрсетіңіз',
+    createFailed: 'Топты құру мүмкін болмады',
+    title: 'Жаңа топ',
+    name: 'Атауы',
+    namePlaceholder: 'Мысалы: Кескіндеме, 2-курс',
+    description: 'Сипаттама',
+    teacher: 'Мұғалім',
+    notAssigned: 'Тағайындалмаған',
+    create: 'Құру',
+  },
+  en: {
+    needName: 'Enter a group name',
+    createFailed: 'Could not create the group',
+    title: 'New group',
+    name: 'Name',
+    namePlaceholder: 'For example: Painting, year 2',
+    description: 'Description',
+    teacher: 'Teacher',
+    notAssigned: 'Not assigned',
+    create: 'Create',
+  },
+};
 
 export function CreateGroupScreen() {
   const navigation = useNavigation();
+  const s = useStrings(STRINGS);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [teachers, setTeachers] = useState<Profile[]>([]);
@@ -25,7 +63,7 @@ export function CreateGroupScreen() {
 
   const onCreate = async () => {
     if (!name.trim()) {
-      Alert.alert('Укажите название группы');
+      Alert.alert(s.needName);
       return;
     }
     setSaving(true);
@@ -34,7 +72,7 @@ export function CreateGroupScreen() {
       .insert({ name: name.trim(), description: description.trim() || null, teacher_id: teacherId });
     setSaving(false);
     if (error) {
-      Alert.alert('Не удалось создать группу', error.message);
+      Alert.alert(s.createFailed, error.message);
       return;
     }
     navigation.goBack();
@@ -42,20 +80,20 @@ export function CreateGroupScreen() {
 
   return (
     <Screen scroll>
-      <Text style={styles.title}>Новая группа</Text>
+      <Text style={styles.title}>{s.title}</Text>
 
-      <TextField label="Название" value={name} onChangeText={setName} placeholder="Например: Живопись, 2 курс" />
-      <TextField label="Описание" value={description} onChangeText={setDescription} multiline />
+      <TextField label={s.name} value={name} onChangeText={setName} placeholder={s.namePlaceholder} />
+      <TextField label={s.description} value={description} onChangeText={setDescription} multiline />
 
       {teachers.length > 0 ? (
         <>
-          <Text style={styles.label}>Преподаватель</Text>
+          <Text style={styles.label}>{s.teacher}</Text>
           <View style={styles.teacherList}>
             <Pressable
               onPress={() => setTeacherId(null)}
               style={[styles.teacherOption, teacherId === null && styles.teacherOptionActive]}
             >
-              <Text style={[styles.teacherText, teacherId === null && styles.teacherTextActive]}>Не назначен</Text>
+              <Text style={[styles.teacherText, teacherId === null && styles.teacherTextActive]}>{s.notAssigned}</Text>
             </Pressable>
             {teachers.map((t) => (
               <Pressable
@@ -72,7 +110,7 @@ export function CreateGroupScreen() {
         </>
       ) : null}
 
-      <Button title="Создать" onPress={onCreate} loading={saving} />
+      <Button title={s.create} onPress={onCreate} loading={saving} />
     </Screen>
   );
 }

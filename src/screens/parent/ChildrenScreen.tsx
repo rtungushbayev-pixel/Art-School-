@@ -14,6 +14,7 @@ import {
   type ParentLinkRequest,
 } from '../../lib/parents';
 import { useAuth } from '../../hooks/useAuth';
+import { useStrings } from '../../i18n';
 import { colors, spacing } from '../../theme/colors';
 import type { Profile } from '../../types/database';
 import type { ParentStackParamList } from '../../navigation/types';
@@ -23,9 +24,46 @@ interface ChildRow {
   groups: string[];
 }
 
+const STRINGS = {
+  ru: {
+    addChild: 'Добавить ребёнка',
+    empty: 'Пока ни один ребёнок не привязан к вашему аккаунту.',
+    student: 'Ученик',
+    pending: 'Ждёт подтверждения школы',
+    withdrawConfirm: 'Отозвать заявку?',
+    no: 'Нет',
+    withdraw: 'Отозвать',
+    noName: 'Без имени',
+    noGroups: 'Не состоит в группах',
+  },
+  kk: {
+    addChild: 'Бала қосу',
+    empty: 'Әзірге сіздің аккаунтыңызға бірде-бір бала тіркелмеген.',
+    student: 'Оқушы',
+    pending: 'Мектептің растауын күтуде',
+    withdrawConfirm: 'Өтінімді кері қайтарып алу керек пе?',
+    no: 'Жоқ',
+    withdraw: 'Кері қайтару',
+    noName: 'Аты жоқ',
+    noGroups: 'Ешбір топта жоқ',
+  },
+  en: {
+    addChild: 'Add child',
+    empty: 'No children are linked to your account yet.',
+    student: 'Student',
+    pending: 'Awaiting school confirmation',
+    withdrawConfirm: 'Withdraw the request?',
+    no: 'No',
+    withdraw: 'Withdraw',
+    noName: 'No name',
+    noGroups: 'Not in any group',
+  },
+};
+
 export function ChildrenScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<ParentStackParamList>>();
   const { profile } = useAuth();
+  const s = useStrings(STRINGS);
   const [children, setChildren] = useState<ChildRow[]>([]);
   const [requests, setRequests] = useState<ParentLinkRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,12 +71,12 @@ export function ChildrenScreen() {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <Pressable hitSlop={10} onPress={() => navigation.navigate('AddChild')} accessibilityLabel="Добавить ребёнка">
+        <Pressable hitSlop={10} onPress={() => navigation.navigate('AddChild')} accessibilityLabel={s.addChild}>
           <Ionicons name="add-circle" size={30} color={colors.primary} />
         </Pressable>
       ),
     });
-  }, [navigation]);
+  }, [navigation, s]);
 
   const load = useCallback(async () => {
     if (!profile) return;
@@ -65,10 +103,10 @@ export function ChildrenScreen() {
     <Screen scroll refreshing={loading} onRefresh={load}>
       {children.length === 0 && requests.length === 0 && !loading ? (
         <View style={styles.emptyBox}>
-          <Text style={styles.empty}>Пока ни один ребёнок не привязан к вашему аккаунту.</Text>
+          <Text style={styles.empty}>{s.empty}</Text>
           <Pressable style={styles.addButton} onPress={() => navigation.navigate('AddChild')}>
             <Ionicons name="add" size={20} color={colors.white} />
-            <Text style={styles.addButtonText}>Добавить ребёнка</Text>
+            <Text style={styles.addButtonText}>{s.addChild}</Text>
           </Pressable>
         </View>
       ) : null}
@@ -76,23 +114,23 @@ export function ChildrenScreen() {
         <Card key={request.id} style={styles.row}>
           <Avatar uri={request.student?.avatar_url} name={request.student?.full_name} size={52} />
           <View style={styles.info}>
-            <Text style={styles.name}>{request.student?.full_name ?? 'Ученик'}</Text>
-            <Text style={styles.pending}>Ждёт подтверждения школы</Text>
+            <Text style={styles.name}>{request.student?.full_name ?? s.student}</Text>
+            <Text style={styles.pending}>{s.pending}</Text>
           </View>
           <Pressable
             hitSlop={8}
             onPress={() =>
-              Alert.alert('Отозвать заявку?', undefined, [
-                { text: 'Нет', style: 'cancel' },
+              Alert.alert(s.withdrawConfirm, undefined, [
+                { text: s.no, style: 'cancel' },
                 {
-                  text: 'Отозвать',
+                  text: s.withdraw,
                   style: 'destructive',
                   onPress: () => cancelChildLinkRequest(request.id).then(load).catch(() => {}),
                 },
               ])
             }
           >
-            <Text style={styles.cancel}>Отозвать</Text>
+            <Text style={styles.cancel}>{s.withdraw}</Text>
           </Pressable>
         </Card>
       ))}
@@ -101,8 +139,8 @@ export function ChildrenScreen() {
           <Card style={styles.row}>
             <Avatar uri={child.avatar_url} name={child.full_name} size={52} />
             <View style={styles.info}>
-              <Text style={styles.name}>{child.full_name || 'Без имени'}</Text>
-              <Text style={styles.groups}>{groups.length > 0 ? groups.join(', ') : 'Не состоит в группах'}</Text>
+              <Text style={styles.name}>{child.full_name || s.noName}</Text>
+              <Text style={styles.groups}>{groups.length > 0 ? groups.join(', ') : s.noGroups}</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
           </Card>

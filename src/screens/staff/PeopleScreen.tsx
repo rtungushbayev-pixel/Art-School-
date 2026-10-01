@@ -10,17 +10,34 @@ import { searchProfiles } from '../../lib/parents';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { Profile, UserRole } from '../../types/database';
 import type { StaffStackParamList } from '../../navigation/types';
+import { useStrings } from '../../i18n';
 
-const ROLE_LABELS: Record<UserRole, string> = {
-  student: 'Ученик',
-  staff: 'Сотрудник',
-  parent: 'Родитель',
+const STRINGS = {
+  ru: {
+    roles: { student: 'Ученик', staff: 'Сотрудник', parent: 'Родитель' } as Record<UserRole, string>,
+    search: 'Поиск по имени…',
+    nobody: 'Никого не найдено',
+    noName: 'Без имени',
+  },
+  kk: {
+    roles: { student: 'Оқушы', staff: 'Қызметкер', parent: 'Ата-ана' } as Record<UserRole, string>,
+    search: 'Аты бойынша іздеу…',
+    nobody: 'Ешкім табылмады',
+    noName: 'Аты жоқ',
+  },
+  en: {
+    roles: { student: 'Student', staff: 'Staff', parent: 'Parent' } as Record<UserRole, string>,
+    search: 'Search by name…',
+    nobody: 'No one found',
+    noName: 'No name',
+  },
 };
 
 // Поиск любого пользователя: отсюда сотрудник открывает профиль, чтобы
 // назначить роль родителя, привязать детей или оставить отзыв о прогрессе.
 export function PeopleScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<StaffStackParamList>>();
+  const s = useStrings(STRINGS);
   const [query, setQuery] = useState('');
   const [people, setPeople] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,15 +58,15 @@ export function PeopleScreen() {
 
   return (
     <Screen scroll refreshing={loading} onRefresh={load}>
-      <TextField placeholder="Поиск по имени…" value={query} onChangeText={setQuery} autoCapitalize="none" />
-      {people.length === 0 && !loading ? <Text style={styles.empty}>Никого не найдено</Text> : null}
+      <TextField placeholder={s.search} value={query} onChangeText={setQuery} autoCapitalize="none" />
+      {people.length === 0 && !loading ? <Text style={styles.empty}>{s.nobody}</Text> : null}
       {people.map((person) => (
         <Pressable key={person.id} onPress={() => navigation.navigate('UserProfile', { userId: person.id })}>
           <Card style={styles.row}>
             <Avatar uri={person.avatar_url} name={person.full_name} size={36} />
-            <Text style={styles.name}>{person.full_name || 'Без имени'}</Text>
+            <Text style={styles.name}>{person.full_name || s.noName}</Text>
             <View style={styles.rolePill}>
-              <Text style={styles.roleText}>{ROLE_LABELS[person.role]}</Text>
+              <Text style={styles.roleText}>{s.roles[person.role]}</Text>
             </View>
           </Card>
         </Pressable>

@@ -8,13 +8,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { Avatar } from '../../components/Avatar';
 import { useAuth } from '../../hooks/useAuth';
 import {
-  SUPPORT_CATEGORIES,
-  SUPPORT_CATEGORY_LABELS,
-  SUPPORT_STATUS_LABELS,
   fetchSupportTickets,
+  supportCategories,
+  supportCategoryLabel,
+  supportStatusLabel,
   formatSupportDate,
   type SupportTicketWithAuthor,
 } from '../../lib/support';
+import { useStrings } from '../../i18n';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { SupportStatus } from '../../types/database';
 import type { StaffStackParamList, StudentStackParamList } from '../../navigation/types';
@@ -29,16 +30,48 @@ const STATUS_COLORS: Record<SupportStatus, string> = {
 
 type Filter = 'active' | 'all' | 'mine';
 
-const STAFF_FILTERS: { value: Filter; label: string }[] = [
-  { value: 'active', label: 'Ждут ответа' },
-  { value: 'all', label: 'Все' },
-  { value: 'mine', label: 'Мои' },
-];
+const STRINGS = {
+  ru: {
+    filterActive: 'Ждут ответа',
+    filterAll: 'Все',
+    filterMine: 'Мои',
+    introTitle: 'С чем нужна помощь?',
+    introText: 'Выберите тему. Администрация школы ответит здесь же, а вам придёт уведомление.',
+    myTickets: 'Мои обращения',
+    noTickets: 'Обращений нет',
+    neverContacted: 'Вы ещё не обращались в поддержку',
+    noName: 'Без имени',
+  },
+  kk: {
+    filterActive: 'Жауап күтуде',
+    filterAll: 'Барлығы',
+    filterMine: 'Менікі',
+    introTitle: 'Қандай көмек керек?',
+    introText: 'Тақырыпты таңдаңыз. Мектеп әкімшілігі осы жерде жауап береді, ал сізге хабарлама келеді.',
+    myTickets: 'Менің өтініштерім',
+    noTickets: 'Өтініштер жоқ',
+    neverContacted: 'Сіз әлі қолдау қызметіне жүгінбегенсіз',
+    noName: 'Аты жоқ',
+  },
+  en: {
+    filterActive: 'Awaiting reply',
+    filterAll: 'All',
+    filterMine: 'Mine',
+    introTitle: 'What do you need help with?',
+    introText: 'Choose a topic. The school administration will reply right here, and you’ll get a notification.',
+    myTickets: 'My requests',
+    noTickets: 'No requests',
+    neverContacted: 'You haven’t contacted support yet',
+    noName: 'No name',
+  },
+};
+
 
 // Ученик видит свои обращения, сотрудник — обращения всех пользователей.
 export function SupportScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<NavParamList>>();
   const { profile } = useAuth();
+  const s = useStrings(STRINGS);
   const isStaff = profile?.role === 'staff';
   const [tickets, setTickets] = useState<SupportTicketWithAuthor[]>([]);
   const [filter, setFilter] = useState<Filter>('active');
@@ -73,7 +106,11 @@ export function SupportScreen() {
     <Screen scroll refreshing={loading} onRefresh={load}>
       {isStaff ? (
         <View style={styles.filterRow}>
-          {STAFF_FILTERS.map((opt) => (
+          {([
+            { value: 'active', label: s.filterActive },
+            { value: 'all', label: s.filterAll },
+            { value: 'mine', label: s.filterMine },
+          ] as { value: Filter; label: string }[]).map((opt) => (
             <Pressable
               key={opt.value}
               onPress={() => setFilter(opt.value)}
@@ -85,11 +122,11 @@ export function SupportScreen() {
         </View>
       ) : (
         <>
-          <Text style={styles.introTitle}>С чем нужна помощь?</Text>
+          <Text style={styles.introTitle}>{s.introTitle}</Text>
           <Text style={styles.introText}>
-            Выберите тему. Администрация школы ответит здесь же, а вам придёт уведомление.
+            {s.introText}
           </Text>
-          {SUPPORT_CATEGORIES.map((opt) => (
+          {supportCategories().map((opt) => (
             <Pressable
               key={opt.value}
               onPress={() => navigation.navigate('NewSupportTicket', { category: opt.value })}
@@ -99,19 +136,19 @@ export function SupportScreen() {
                   <Ionicons name={opt.icon as keyof typeof Ionicons.glyphMap} size={22} color={colors.primary} />
                 </View>
                 <View style={styles.topicText}>
-                  <Text style={styles.topicTitle}>{SUPPORT_CATEGORY_LABELS[opt.value]}</Text>
+                  <Text style={styles.topicTitle}>{supportCategoryLabel(opt.value)}</Text>
                   <Text style={styles.topicHint}>{opt.hint}</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
               </Card>
             </Pressable>
           ))}
-          {tickets.length > 0 ? <Text style={styles.sectionTitle}>Мои обращения</Text> : null}
+          {tickets.length > 0 ? <Text style={styles.sectionTitle}>{s.myTickets}</Text> : null}
         </>
       )}
 
       {visible.length === 0 && !loading && isStaff ? (
-        <Text style={styles.empty}>{isStaff ? 'Обращений нет' : 'Вы ещё не обращались в поддержку'}</Text>
+        <Text style={styles.empty}>{isStaff ? s.noTickets : s.neverContacted}</Text>
       ) : null}
 
       {visible.map((ticket) => (
@@ -122,21 +159,21 @@ export function SupportScreen() {
                 <>
                   <Avatar uri={ticket.author?.avatar_url} name={ticket.author?.full_name} size={28} />
                   <Text style={styles.author} numberOfLines={1}>
-                    {ticket.author?.full_name || 'Без имени'}
+                    {ticket.author?.full_name || s.noName}
                   </Text>
                 </>
               ) : (
-                <Text style={styles.category}>{SUPPORT_CATEGORY_LABELS[ticket.category]}</Text>
+                <Text style={styles.category}>{supportCategoryLabel(ticket.category)}</Text>
               )}
               <Text style={[styles.status, { color: STATUS_COLORS[ticket.status] }]}>
-                {SUPPORT_STATUS_LABELS[ticket.status]}
+                {supportStatusLabel(ticket.status)}
               </Text>
             </View>
             <Text style={styles.subject} numberOfLines={2}>
               {ticket.subject}
             </Text>
             <Text style={styles.meta}>
-              {isStaff ? `${SUPPORT_CATEGORY_LABELS[ticket.category]} · ` : ''}
+              {isStaff ? `${supportCategoryLabel(ticket.category)} · ` : ''}
               {formatSupportDate(ticket.last_message_at)}
             </Text>
           </Card>

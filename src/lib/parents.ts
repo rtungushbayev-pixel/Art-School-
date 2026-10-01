@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { pick } from '../i18n';
 import type { Attendance, Profile, ProgressNote, StudentPhoto } from '../types/database';
 
 export interface ProgressNoteWithAuthor extends ProgressNote {
@@ -196,11 +197,26 @@ export async function fetchParentLinkRequests(parentId?: string): Promise<Parent
   return (data as unknown as ParentLinkRequest[]) ?? [];
 }
 
+const LINK_ERRORS = {
+  ru: {
+    alreadySent: 'Заявка на этого ребёнка уже отправлена.',
+    alreadyLinked: 'Этот ребёнок уже привязан к вам.',
+  },
+  kk: {
+    alreadySent: 'Бұл балаға өтінім әлдеқашан жіберілген.',
+    alreadyLinked: 'Бұл бала сізге әлдеқашан тіркелген.',
+  },
+  en: {
+    alreadySent: 'A request for this child has already been sent.',
+    alreadyLinked: 'This child is already linked to you.',
+  },
+};
+
 export async function requestChildLink(parentId: string, studentId: string) {
   const { error } = await supabase.from('parent_link_requests').insert({ parent_id: parentId, student_id: studentId });
   if (error) {
-    if (error.code === '23505') throw new Error('Заявка на этого ребёнка уже отправлена.');
-    if (error.message.includes('child_already_linked')) throw new Error('Этот ребёнок уже привязан к вам.');
+    if (error.code === '23505') throw new Error(pick(LINK_ERRORS).alreadySent);
+    if (error.message.includes('child_already_linked')) throw new Error(pick(LINK_ERRORS).alreadyLinked);
     throw error;
   }
 }

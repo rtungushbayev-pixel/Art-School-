@@ -19,11 +19,64 @@ import { sendPushNotification } from '../../lib/notifications';
 import { useAuth } from '../../hooks/useAuth';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { StaffStackParamList } from '../../navigation/types';
+import { useStrings } from '../../i18n';
+
+const STRINGS = {
+  ru: {
+    failed: 'Не получилось',
+    works: 'Работы',
+    market: 'Продажа',
+    parents: 'Родители',
+    noPosts: 'Новых работ на проверку нет',
+    approve: 'Одобрить',
+    reject: 'Отклонить',
+    noRequests: 'Новых заявок от родителей нет',
+    parent: 'Родитель',
+    asksToLink: ' просит привязать ребёнка:',
+    student: 'Ученик',
+    linkHint: 'Подтвердите, только если уверены, что это родитель этого ребёнка.',
+    confirm: 'Подтвердить',
+    noListings: 'Новых объявлений на проверку нет',
+  },
+  kk: {
+    failed: 'Сәтсіз аяқталды',
+    works: 'Жұмыстар',
+    market: 'Сату',
+    parents: 'Ата-аналар',
+    noPosts: 'Тексеруге жаңа жұмыстар жоқ',
+    approve: 'Мақұлдау',
+    reject: 'Қабылдамау',
+    noRequests: 'Ата-аналардан жаңа өтінімдер жоқ',
+    parent: 'Ата-ана',
+    asksToLink: ' баланы байланыстыруды сұрайды:',
+    student: 'Оқушы',
+    linkHint: 'Бұл осы баланың ата-анасы екеніне сенімді болсаңыз ғана растаңыз.',
+    confirm: 'Растау',
+    noListings: 'Тексеруге жаңа хабарландырулар жоқ',
+  },
+  en: {
+    failed: 'Something went wrong',
+    works: 'Artworks',
+    market: 'For sale',
+    parents: 'Parents',
+    noPosts: 'No new artworks to review',
+    approve: 'Approve',
+    reject: 'Reject',
+    noRequests: 'No new requests from parents',
+    parent: 'Parent',
+    asksToLink: ' asks to link a child:',
+    student: 'Student',
+    linkHint: 'Confirm only if you are sure this is the child’s parent.',
+    confirm: 'Confirm',
+    noListings: 'No new listings to review',
+  },
+};
 
 type ModerationScope = 'posts' | 'listings' | 'parents';
 
 export function ModerationScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<StaffStackParamList>>();
+  const s = useStrings(STRINGS);
   const { profile } = useAuth();
   const [scope, setScope] = useState<ModerationScope>('posts');
   const [posts, setPosts] = useState<PostCardData[]>([]);
@@ -78,7 +131,7 @@ export function ModerationScreen() {
       else await cancelChildLinkRequest(request.id);
       setLinkRequests((prev) => prev.filter((r) => r.id !== request.id));
     } catch (e) {
-      Alert.alert('Не получилось', e instanceof Error ? e.message : undefined);
+      Alert.alert(s.failed, e instanceof Error ? e.message : undefined);
     }
   };
 
@@ -90,26 +143,26 @@ export function ModerationScreen() {
           onPress={() => setScope('posts')}
           style={[styles.scopeOption, scope === 'posts' && styles.scopeOptionActive]}
         >
-          <Text style={[styles.scopeText, scope === 'posts' && styles.scopeTextActive]}>Работы</Text>
+          <Text style={[styles.scopeText, scope === 'posts' && styles.scopeTextActive]}>{s.works}</Text>
         </Pressable>
         <Pressable
           onPress={() => setScope('listings')}
           style={[styles.scopeOption, scope === 'listings' && styles.scopeOptionActive]}
         >
-          <Text style={[styles.scopeText, scope === 'listings' && styles.scopeTextActive]}>Продажа</Text>
+          <Text style={[styles.scopeText, scope === 'listings' && styles.scopeTextActive]}>{s.market}</Text>
         </Pressable>
         <Pressable
           onPress={() => setScope('parents')}
           style={[styles.scopeOption, scope === 'parents' && styles.scopeOptionActive]}
         >
-          <Text style={[styles.scopeText, scope === 'parents' && styles.scopeTextActive]}>Родители</Text>
+          <Text style={[styles.scopeText, scope === 'parents' && styles.scopeTextActive]}>{s.parents}</Text>
         </Pressable>
       </View>
 
       {scope === 'posts' ? (
         <>
           {posts.length === 0 && !loading ? (
-            <Text style={styles.empty}>Новых работ на проверку нет</Text>
+            <Text style={styles.empty}>{s.noPosts}</Text>
           ) : null}
           {posts.map((post) => (
             <View key={post.id}>
@@ -124,13 +177,13 @@ export function ModerationScreen() {
                   style={[styles.actionButton, styles.approve]}
                   onPress={() => moderatePost(post, 'approved')}
                 >
-                  <Text style={styles.actionText}>Одобрить</Text>
+                  <Text style={styles.actionText}>{s.approve}</Text>
                 </Pressable>
                 <Pressable
                   style={[styles.actionButton, styles.reject]}
                   onPress={() => moderatePost(post, 'rejected')}
                 >
-                  <Text style={styles.actionText}>Отклонить</Text>
+                  <Text style={styles.actionText}>{s.reject}</Text>
                 </Pressable>
               </View>
             </View>
@@ -139,33 +192,33 @@ export function ModerationScreen() {
       ) : scope === 'parents' ? (
         <>
           {linkRequests.length === 0 && !loading ? (
-            <Text style={styles.empty}>Новых заявок от родителей нет</Text>
+            <Text style={styles.empty}>{s.noRequests}</Text>
           ) : null}
           {linkRequests.map((request) => (
             <View key={request.id} style={styles.linkCard}>
               <Text style={styles.linkText}>
-                <Text style={styles.linkName}>{request.parent?.full_name ?? 'Родитель'}</Text> просит привязать ребёнка:
+                <Text style={styles.linkName}>{request.parent?.full_name ?? s.parent}</Text>{s.asksToLink}
               </Text>
               <Pressable
                 style={styles.linkChild}
                 onPress={() => request.student && navigation.navigate('UserProfile', { userId: request.student.id })}
               >
                 <Avatar uri={request.student?.avatar_url} name={request.student?.full_name} size={40} />
-                <Text style={styles.linkName}>{request.student?.full_name ?? 'Ученик'}</Text>
+                <Text style={styles.linkName}>{request.student?.full_name ?? s.student}</Text>
               </Pressable>
-              <Text style={styles.linkHint}>Подтвердите, только если уверены, что это родитель этого ребёнка.</Text>
+              <Text style={styles.linkHint}>{s.linkHint}</Text>
               <View style={styles.linkActions}>
                 <Pressable
                   style={[styles.actionButton, styles.approve]}
                   onPress={() => resolveLinkRequest(request, true)}
                 >
-                  <Text style={styles.actionText}>Подтвердить</Text>
+                  <Text style={styles.actionText}>{s.confirm}</Text>
                 </Pressable>
                 <Pressable
                   style={[styles.actionButton, styles.reject]}
                   onPress={() => resolveLinkRequest(request, false)}
                 >
-                  <Text style={styles.actionText}>Отклонить</Text>
+                  <Text style={styles.actionText}>{s.reject}</Text>
                 </Pressable>
               </View>
             </View>
@@ -174,7 +227,7 @@ export function ModerationScreen() {
       ) : (
         <>
           {listings.length === 0 && !loading ? (
-            <Text style={styles.empty}>Новых объявлений на проверку нет</Text>
+            <Text style={styles.empty}>{s.noListings}</Text>
           ) : null}
           {listings.map((listing) => (
             <View key={listing.id}>
@@ -188,13 +241,13 @@ export function ModerationScreen() {
                   style={[styles.actionButton, styles.approve]}
                   onPress={() => moderateListing(listing, 'approved')}
                 >
-                  <Text style={styles.actionText}>Одобрить</Text>
+                  <Text style={styles.actionText}>{s.approve}</Text>
                 </Pressable>
                 <Pressable
                   style={[styles.actionButton, styles.reject]}
                   onPress={() => moderateListing(listing, 'rejected')}
                 >
-                  <Text style={styles.actionText}>Отклонить</Text>
+                  <Text style={styles.actionText}>{s.reject}</Text>
                 </Pressable>
               </View>
             </View>
