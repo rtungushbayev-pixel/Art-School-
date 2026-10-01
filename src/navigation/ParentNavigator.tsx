@@ -11,6 +11,9 @@ import { PhotoViewScreen } from '../screens/shared/PhotoViewScreen';
 import { AnnouncementsScreen } from '../screens/student/AnnouncementsScreen';
 import { ChildrenScreen } from '../screens/parent/ChildrenScreen';
 import { AddChildScreen } from '../screens/parent/AddChildScreen';
+import { SupportScreen } from '../screens/shared/SupportScreen';
+import { NewSupportTicketScreen } from '../screens/shared/NewSupportTicketScreen';
+import { SupportTicketScreen } from '../screens/shared/SupportTicketScreen';
 import { PortfolioScreen } from '../screens/shared/PortfolioScreen';
 import { colors } from '../theme/colors';
 
@@ -29,6 +32,9 @@ export function ParentNavigator() {
       <Stack.Screen name="Messages" component={AnnouncementsScreen} options={{ title: 'Сообщения' }} />
       <Stack.Screen name="Children" component={ChildrenScreen} options={{ title: 'Мои дети' }} />
       <Stack.Screen name="AddChild" component={AddChildScreen} options={{ title: 'Добавить ребёнка' }} />
+      <Stack.Screen name="Support" component={SupportScreen} options={{ title: 'Помощь' }} />
+      <Stack.Screen name="NewSupportTicket" component={NewSupportTicketScreen} options={{ title: 'Помощь' }} />
+      <Stack.Screen name="SupportTicket" component={SupportTicketScreen} options={{ title: 'Обращение' }} />
       <Stack.Screen name="Portfolio" component={PortfolioScreen} options={{ title: 'Публикации' }} />
       <Stack.Screen name="ChildDetail" component={ChildDetailScreen} options={{ title: 'Успехи ребёнка' }} />
       <Stack.Screen name="PostDetail" component={PostDetailScreen} options={{ title: 'Публикация' }} />

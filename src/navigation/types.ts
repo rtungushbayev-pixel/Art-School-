@@ -1,5 +1,5 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
-import type { BillingKind } from '../types/database';
+import type { BillingKind, SupportCategory } from '../types/database';
 
 export type AuthStackParamList = {
   Login: undefined;
@@ -28,6 +28,9 @@ export type StudentStackParamList = {
   ListingDetail: { listingId: string };
   CreateListing: undefined;
   Payments: { studentId?: string } | undefined;
+  Support: undefined;
+  NewSupportTicket: { category: SupportCategory };
+  SupportTicket: { ticketId: string };
 };
 
 export type StaffTabParamList = {
@@ -69,6 +72,9 @@ export type StaffStackParamList = {
   AddProgressNote: { studentId: string; studentName: string };
   AddStudentPhoto: { studentId: string; studentName: string };
   PhotoView: { uri: string; caption?: string | null };
+  Support: undefined;
+  NewSupportTicket: { category: SupportCategory };
+  SupportTicket: { ticketId: string };
 };
 
 export type ParentTabParamList = {
@@ -89,4 +95,7 @@ export type ParentStackParamList = {
   EditProfile: undefined;
   NotificationSettings: undefined;
   UserProfile: { userId: string };
+  Support: undefined;
+  NewSupportTicket: { category: SupportCategory };
+  SupportTicket: { ticketId: string };
 };

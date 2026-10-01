@@ -29,6 +29,9 @@ import { LinkChildScreen } from '../screens/staff/LinkChildScreen';
 import { AddProgressNoteScreen } from '../screens/staff/AddProgressNoteScreen';
 import { AddStudentPhotoScreen } from '../screens/staff/AddStudentPhotoScreen';
 import { PhotoViewScreen } from '../screens/shared/PhotoViewScreen';
+import { SupportScreen } from '../screens/shared/SupportScreen';
+import { NewSupportTicketScreen } from '../screens/shared/NewSupportTicketScreen';
+import { SupportTicketScreen } from '../screens/shared/SupportTicketScreen';
 import { colors } from '../theme/colors';
 
 const Stack = createNativeStackNavigator<StaffStackParamList>();
@@ -82,6 +85,13 @@ export function StaffNavigator() {
       <Stack.Screen name="AddProgressNote" component={AddProgressNoteScreen} options={{ title: 'Отзыв о прогрессе' }} />
       <Stack.Screen name="AddStudentPhoto" component={AddStudentPhotoScreen} options={{ title: 'Фото в галерею' }} />
       <Stack.Screen name="PhotoView" component={PhotoViewScreen} options={{ title: 'Фото' }} />
+      <Stack.Screen name="Support" component={SupportScreen} options={{ title: 'Обращения' }} />
+      <Stack.Screen
+        name="NewSupportTicket"
+        component={NewSupportTicketScreen}
+        options={{ title: 'Помощь' }}
+      />
+      <Stack.Screen name="SupportTicket" component={SupportTicketScreen} options={{ title: 'Обращение' }} />
     </Stack.Navigator>
   );
 }

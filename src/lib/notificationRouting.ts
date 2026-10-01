@@ -11,7 +11,8 @@ import type { ParentStackParamList, StaffStackParamList, StudentStackParamList }
 type NotificationTarget =
   | { screen: 'PostDetail'; postId: string }
   | { screen: 'ListingDetail'; listingId: string }
-  | { screen: 'Announcements' };
+  | { screen: 'Announcements' }
+  | { screen: 'SupportTicket'; ticketId: string };
 
 function asId(value: unknown): string | null {
   return typeof value === 'string' && value.length > 0 ? value : null;
@@ -31,6 +32,10 @@ export function resolveNotificationTarget(data: Record<string, unknown> | undefi
     }
     case 'announcement':
       return { screen: 'Announcements' };
+    case 'support_ticket': {
+      const ticketId = asId(data.ticketId);
+      return ticketId ? { screen: 'SupportTicket', ticketId } : null;
+    }
     default:
       return null;
   }
@@ -54,6 +59,9 @@ function navigateToTarget(navigation: AppNavigationRef, role: UserRole, target: 
     case 'Announcements':
       // «Сообщения» есть в стеке каждой роли.
       navigation.navigate('Messages');
+      break;
+    case 'SupportTicket':
+      navigation.navigate('SupportTicket', { ticketId: target.ticketId });
       break;
   }
 }

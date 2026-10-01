@@ -19,7 +19,7 @@ interface HeaderActionsProps {
 }
 
 function HeaderActions({ showFriends, showMarket }: HeaderActionsProps) {
-  // Экраны Friends, Market и Messages есть в стеке каждой роли, у которой показана иконка.
+  // Экраны Friends, Market, Messages и Support есть в стеке каждой роли, у которой показана иконка.
   const navigation = useNavigation<any>();
   return (
     <View style={styles.actions}>
@@ -50,6 +50,14 @@ function HeaderActions({ showFriends, showMarket }: HeaderActionsProps) {
         style={styles.action}
       >
         <Ionicons name="chatbubble-ellipses-outline" size={22} color={colors.primary} />
+      </Pressable>
+      <Pressable
+        hitSlop={8}
+        onPress={() => navigation.navigate('Support')}
+        accessibilityLabel="Помощь"
+        style={styles.action}
+      >
+        <Ionicons name="help-buoy-outline" size={22} color={colors.primary} />
       </Pressable>
     </View>
   );
