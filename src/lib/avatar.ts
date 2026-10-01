@@ -1,48 +1,12 @@
-import { Alert } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
 import { supabase } from './supabase';
-
-type Source = 'camera' | 'library';
-
-function askSource(): Promise<Source | null> {
-  return new Promise((resolve) => {
-    Alert.alert('Фото профиля', undefined, [
-      { text: 'Сделать фото', onPress: () => resolve('camera') },
-      { text: 'Выбрать из галереи', onPress: () => resolve('library') },
-      { text: 'Отмена', style: 'cancel', onPress: () => resolve(null) },
-    ]);
-  });
-}
-
-async function pickImage(source: Source): Promise<ImagePicker.ImagePickerAsset | null> {
-  const permission =
-    source === 'camera'
-      ? await ImagePicker.requestCameraPermissionsAsync()
-      : await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (!permission.granted) {
-    Alert.alert(source === 'camera' ? 'Нужен доступ к камере' : 'Нужен доступ к галерее');
-    return null;
-  }
-  const options: ImagePicker.ImagePickerOptions = {
-    mediaTypes: ['images'],
-    quality: 0.8,
-    allowsEditing: true,
-    aspect: [1, 1],
-  };
-  const result =
-    source === 'camera'
-      ? await ImagePicker.launchCameraAsync(options)
-      : await ImagePicker.launchImageLibraryAsync(options);
-  if (result.canceled || !result.assets[0]) return null;
-  return result.assets[0];
-}
+import { askImageSource, pickImage } from './pickImage';
 
 /**
  * Спрашивает, откуда взять фото, загружает его в бакет avatars и возвращает
  * публичную ссылку. null — если пользователь передумал.
  */
 export async function pickAndUploadAvatar(profileId: string): Promise<string | null> {
-  const source = await askSource();
+  const source = await askImageSource('Фото профиля');
   if (!source) return null;
   const asset = await pickImage(source);
   if (!asset) return null;

@@ -1,3 +1,4 @@
+import type { ImagePickerAsset } from 'expo-image-picker';
 import { supabase } from './supabase';
 import type { PostCardData } from '../components/PostCard';
 
@@ -79,4 +80,46 @@ export async function toggleLike(postId: string, userId: string, currentlyLiked:
   } else {
     await supabase.from('post_likes').insert({ post_id: postId, user_id: userId });
   }
+}
+
+// Загружает фото в бакет portfolio и создаёт публикацию. Публикация попадает
+// в общую ленту после проверки сотрудником (статус pending по умолчанию).
+export async function publishPost(params: {
+  authorId: string;
+  asset: ImagePickerAsset;
+  caption?: string | null;
+  title?: string | null;
+  technique?: string | null;
+  artworkYear?: number | null;
+}) {
+  const { authorId, asset } = params;
+  const ext = asset.uri.split('.').pop()?.toLowerCase() || 'jpg';
+  const path = `${authorId}/${Date.now()}.${ext}`;
+  const response = await fetch(asset.uri);
+  const arrayBuffer = await response.arrayBuffer();
+
+  const { error: uploadError } = await supabase.storage
+    .from('portfolio')
+    .upload(path, arrayBuffer, { contentType: asset.mimeType ?? 'image/jpeg' });
+  if (uploadError) throw uploadError;
+
+  const { data: publicUrlData } = supabase.storage.from('portfolio').getPublicUrl(path);
+
+  const { data: post, error: postError } = await supabase
+    .from('posts')
+    .insert({
+      author_id: authorId,
+      caption: params.caption?.trim() || null,
+      title: params.title?.trim() || null,
+      technique: params.technique?.trim() || null,
+      artwork_year: params.artworkYear ?? null,
+    })
+    .select()
+    .single();
+  if (postError) throw postError;
+
+  const { error: imageError } = await supabase
+    .from('post_images')
+    .insert({ post_id: post.id, image_url: publicUrlData.publicUrl, position: 0 });
+  if (imageError) throw imageError;
 }

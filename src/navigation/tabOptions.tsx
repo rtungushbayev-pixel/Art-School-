@@ -55,7 +55,7 @@ function HeaderActions({ showFriends, showMarket }: HeaderActionsProps) {
   );
 }
 
-// Лента — главный раздел: стоит по центру, иконка крупнее и на круглой
+// Комьюнити — главный раздел: стоит по центру, иконка крупнее и на круглой
 // полупрозрачной подложке.
 function FeedIcon({ focused }: { focused: boolean }) {
   return (

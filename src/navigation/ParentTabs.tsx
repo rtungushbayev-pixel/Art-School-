@@ -20,7 +20,7 @@ export function ParentTabs() {
   return (
     <Tab.Navigator initialRouteName="FeedTab" screenOptions={makeTabScreenOptions(TAB_CONFIG, { showFriends: false, showMarket: false })}>
       <Tab.Screen name="ScheduleTab" component={ScheduleScreen} options={{ title: 'Расписание' }} />
-      <Tab.Screen name="FeedTab" component={FeedScreen} options={{ title: 'Лента' }} />
+      <Tab.Screen name="FeedTab" component={FeedScreen} options={{ title: 'Комьюнити' }} />
       <Tab.Screen name="ProfileTab" component={ParentProfileScreen} options={{ title: 'Профиль' }} />
     </Tab.Navigator>
   );

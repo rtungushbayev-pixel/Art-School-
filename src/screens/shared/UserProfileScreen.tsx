@@ -24,6 +24,14 @@ import { Card } from '../../components/Card';
 import { Avatar } from '../../components/Avatar';
 import { ProgressNoteCard } from '../../components/ProgressNoteCard';
 import { useAuth } from '../../hooks/useAuth';
+import {
+  acceptFriendRequest,
+  fetchFriendsData,
+  friendStateOf,
+  sendFriendRequest,
+  unblockUser,
+  type FriendState,
+} from '../../lib/friends';
 import { useStudentPortfolio } from '../../hooks/useStudentPortfolio';
 import { colors, spacing } from '../../theme/colors';
 import type { Profile, UserRole } from '../../types/database';
@@ -47,6 +55,14 @@ const ROLE_CHANGE: Record<UserRole, { button: string; question: (name: string) =
   },
 };
 
+const FRIEND_BUTTON: Record<FriendState, string> = {
+  none: 'Пригласить в друзья',
+  outgoing: 'Приглашение отправлено',
+  incoming: 'Принять приглашение в друзья',
+  friends: 'Вы друзья',
+  blocked: 'Разблокировать',
+};
+
 const ROLE_ORDER: UserRole[] = ['student', 'parent', 'staff'];
 
 export function UserProfileScreen() {
@@ -59,6 +75,8 @@ export function UserProfileScreen() {
   const [parents, setParents] = useState<Profile[]>([]);
   const [notes, setNotes] = useState<ProgressNoteWithAuthor[]>([]);
   const [photos, setPhotos] = useState<StudentPhotoWithUrl[]>([]);
+  const [friendState, setFriendState] = useState<FriendState | null>(null);
+  const [friendBusy, setFriendBusy] = useState(false);
 
   const userId = route.params.userId;
   const viewerIsStaff = viewer?.role === 'staff';
@@ -68,6 +86,17 @@ export function UserProfileScreen() {
     const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
     const loaded = data as Profile;
     setProfile(loaded);
+    // Друзья — между учениками и преподавателями.
+    const friendRoles = ['student', 'staff'];
+    if (viewer && loaded && viewer.id !== loaded.id && friendRoles.includes(viewer.role) && friendRoles.includes(loaded.role)) {
+      try {
+        setFriendState(friendStateOf(await fetchFriendsData(viewer.id), loaded.id));
+      } catch {
+        setFriendState(null);
+      }
+    } else {
+      setFriendState(null);
+    }
     // Блоки «Дети» и «Прогресс» — инструмент сотрудника; RLS всё равно не
     // отдаст эти данные посторонним.
     if (viewerIsStaff && loaded) {
@@ -87,7 +116,7 @@ export function UserProfileScreen() {
         setPhotos([]);
       }
     }
-  }, [userId, viewer?.id, viewerIsStaff]);
+  }, [userId, viewer, viewerIsStaff]);
 
   useFocusEffect(
     useCallback(() => {
@@ -172,6 +201,20 @@ export function UserProfileScreen() {
     ]);
   };
 
+  const onFriendPress = async () => {
+    if (!viewer || !profile || !friendState) return;
+    setFriendBusy(true);
+    try {
+      if (friendState === 'none') await sendFriendRequest(viewer.id, profile.id);
+      else if (friendState === 'incoming') await acceptFriendRequest(viewer.id, profile.id);
+      else if (friendState === 'blocked') await unblockUser(viewer.id, profile.id);
+      await load();
+    } catch (e) {
+      Alert.alert('Не получилось', e instanceof Error ? e.message : undefined);
+    }
+    setFriendBusy(false);
+  };
+
   if (!profile) {
     return (
       <Screen>
@@ -183,6 +226,26 @@ export function UserProfileScreen() {
   return (
     <Screen scroll>
       <ProfileHeader profile={profile} groups={groups} />
+      {friendState ? (
+        <View style={styles.friendAction}>
+          <Button
+            title={FRIEND_BUTTON[friendState]}
+            variant={friendState === 'none' || friendState === 'incoming' ? 'primary' : 'secondary'}
+            disabled={friendState === 'friends' || friendState === 'outgoing'}
+            loading={friendBusy}
+            onPress={onFriendPress}
+          />
+        </View>
+      ) : null}
+      {profile.role !== 'parent' ? (
+        <View style={styles.friendAction}>
+          <Button
+            title="Все публикации"
+            variant="secondary"
+            onPress={() => navigation.navigate('Portfolio', { userId: profile.id })}
+          />
+        </View>
+      ) : null}
       {viewerIsStaff && viewer?.id !== profile.id ? (
         <View style={styles.roleAction}>
           {ROLE_ORDER.filter((role) => role !== profile.role).map((role) => (
@@ -297,6 +360,7 @@ export function UserProfileScreen() {
 }
 
 const styles = StyleSheet.create({
+  friendAction: { marginBottom: spacing.sm },
   roleAction: { marginBottom: spacing.md, gap: spacing.sm },
   sectionHeader: {
     flexDirection: 'row',

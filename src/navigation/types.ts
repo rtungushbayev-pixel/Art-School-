@@ -79,6 +79,7 @@ export type ParentTabParamList = {
 
 export type ParentStackParamList = {
   ParentTabs: NavigatorScreenParams<ParentTabParamList> | undefined;
+  Portfolio: { userId: string };
   Messages: undefined;
   Children: undefined;
   ChildDetail: { childId: string };
