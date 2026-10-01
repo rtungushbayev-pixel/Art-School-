@@ -23,6 +23,9 @@ import { ScheduleScreen } from '../screens/shared/ScheduleScreen';
 import { StudentBalancesScreen } from '../screens/staff/StudentBalancesScreen';
 import { BillingEntryFormScreen } from '../screens/staff/BillingEntryFormScreen';
 import { LessonChangeScreen } from '../screens/staff/LessonChangeScreen';
+import { SupportScreen } from '../screens/shared/SupportScreen';
+import { NewSupportTicketScreen } from '../screens/shared/NewSupportTicketScreen';
+import { SupportTicketScreen } from '../screens/shared/SupportTicketScreen';
 import { colors } from '../theme/colors';
 
 const Stack = createNativeStackNavigator<StaffStackParamList>();
@@ -70,6 +73,13 @@ export function StaffNavigator() {
       <Stack.Screen name="BillingEntryForm" component={BillingEntryFormScreen} options={{ title: 'Начисление' }} />
       <Stack.Screen name="Schedule" component={ScheduleScreen} options={{ title: 'Расписание школы' }} />
       <Stack.Screen name="LessonChange" component={LessonChangeScreen} options={{ title: 'Изменение занятия' }} />
+      <Stack.Screen name="Support" component={SupportScreen} options={{ title: 'Обращения' }} />
+      <Stack.Screen
+        name="NewSupportTicket"
+        component={NewSupportTicketScreen}
+        options={{ title: 'Новое обращение' }}
+      />
+      <Stack.Screen name="SupportTicket" component={SupportTicketScreen} options={{ title: 'Обращение' }} />
     </Stack.Navigator>
   );
 }

@@ -7,6 +7,8 @@ export type ListingStatus = 'pending' | 'approved' | 'rejected';
 export type BillingKind = 'charge' | 'payment';
 export type PaymentMethod = 'cash' | 'card' | 'transfer';
 export type AchievementKind = 'competition' | 'exhibition' | 'award' | 'other';
+export type SupportCategory = 'bug' | 'question' | 'other';
+export type SupportStatus = 'open' | 'answered' | 'closed';
 
 export interface Profile {
   id: string;
@@ -21,6 +23,7 @@ export interface Profile {
   notify_announcements: boolean;
   notify_comments: boolean;
   notify_moderation: boolean;
+  notify_support: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -188,6 +191,26 @@ export interface MarketplaceListingImage {
   position: number;
 }
 
+// Обращение в «Помощь»: переписка пользователя с сотрудниками школы.
+export interface SupportTicket {
+  id: string;
+  author_id: string;
+  category: SupportCategory;
+  subject: string;
+  status: SupportStatus;
+  device_info: string | null;
+  created_at: string;
+  last_message_at: string;
+}
+
+export interface SupportMessage {
+  id: string;
+  ticket_id: string;
+  author_id: string;
+  body: string;
+  created_at: string;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -218,6 +241,8 @@ export interface Database {
         Insert: Partial<MarketplaceListing>;
         Update: Partial<MarketplaceListing>;
       };
+      support_tickets: { Row: SupportTicket; Insert: Partial<SupportTicket>; Update: Partial<SupportTicket> };
+      support_messages: { Row: SupportMessage; Insert: Partial<SupportMessage>; Update: Partial<SupportMessage> };
       marketplace_listing_images: {
         Row: MarketplaceListingImage;
         Insert: Partial<MarketplaceListingImage>;

@@ -55,7 +55,8 @@
    `0004_homework_attachments.sql`, `0005_security_fixes.sql`,
    `0006_notification_settings.sql`, `0007_push_security.sql`,
    `0008_staff_role_assignment.sql`, `0009_private_data.sql`,
-   `0010_student_portfolio.sql`, `0011_payments_schedule.sql`.
+   `0010_student_portfolio.sql`, `0011_payments_schedule.sql`,
+   `0013_support.sql` (раздел «Помощь»).
 3. Скопируйте `.env.example` в `.env` и укажите `EXPO_PUBLIC_SUPABASE_URL`
    и `EXPO_PUBLIC_SUPABASE_ANON_KEY` из настроек вашего проекта Supabase.
 4. Установите зависимости и запустите:

@@ -11,7 +11,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { colors, spacing } from '../../theme/colors';
 import type { Profile } from '../../types/database';
 
-type SettingKey = 'notify_announcements' | 'notify_comments' | 'notify_moderation';
+type SettingKey = 'notify_announcements' | 'notify_comments' | 'notify_moderation' | 'notify_support';
 
 const SETTINGS: { key: SettingKey; title: string; description: string }[] = [
   {
@@ -29,6 +29,11 @@ const SETTINGS: { key: SettingKey; title: string; description: string }[] = [
     title: 'Модерация',
     description: 'Решение по вашей публикации или объявлению о продаже',
   },
+  {
+    key: 'notify_support',
+    title: 'Помощь',
+    description: 'Ответ сотрудника на ваше обращение (сотрудникам — новые обращения)',
+  },
 ];
 
 // null — статус ещё не известен или недоступен на этой платформе.
@@ -42,6 +47,7 @@ export function NotificationSettingsScreen() {
           notify_announcements: profile.notify_announcements,
           notify_comments: profile.notify_comments,
           notify_moderation: profile.notify_moderation,
+          notify_support: profile.notify_support,
         }
       : null
   );

@@ -42,6 +42,12 @@ export function ProfileScreen() {
         <Button title="Мои оплаты" variant="secondary" onPress={() => navigation.navigate('Payments')} />
       )}
       <View style={{ height: spacing.sm }} />
+      <Button
+        title={profile.role === 'staff' ? 'Обращения пользователей' : 'Помощь'}
+        variant="secondary"
+        onPress={() => navigation.navigate('Support')}
+      />
+      <View style={{ height: spacing.sm }} />
       <Button title="Выйти" variant="danger" onPress={signOut} />
 
       <View style={{ height: spacing.md }} />

@@ -27,6 +27,9 @@ export type StudentStackParamList = {
   ListingDetail: { listingId: string };
   CreateListing: undefined;
   Payments: { studentId?: string } | undefined;
+  Support: undefined;
+  NewSupportTicket: undefined;
+  SupportTicket: { ticketId: string };
 };
 
 export type StaffTabParamList = {
@@ -64,4 +67,7 @@ export type StaffStackParamList = {
     | { groupId: string; kind: 'charge' };
   Schedule: undefined;
   LessonChange: { lessonId: string; date: string };
+  Support: undefined;
+  NewSupportTicket: undefined;
+  SupportTicket: { ticketId: string };
 };
