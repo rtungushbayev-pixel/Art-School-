@@ -10,12 +10,35 @@ const STATUS_LABELS: Record<EnrollmentStatus, string> = {
   enrolled: 'Поступил(а)',
 };
 
-export function ProfileHeader({ profile }: { profile: Profile }) {
+interface ProfileHeaderProps {
+  profile: Profile;
+  // Группы (студии) ученика — показываются пилюлями под описанием
+  groups?: { id: string; name: string }[];
+}
+
+export function ProfileHeader({ profile, groups }: ProfileHeaderProps) {
+  const studyLine = [
+    profile.specialization,
+    profile.study_since ? `в школе с ${profile.study_since} года` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
   return (
     <View style={styles.wrapper}>
       <Avatar uri={profile.avatar_url} name={profile.full_name} size={84} />
       <Text style={styles.name}>{profile.full_name || 'Без имени'}</Text>
       <Text style={styles.role}>{profile.role === 'staff' ? 'Сотрудник школы' : 'Ученик'}</Text>
+      {studyLine ? <Text style={styles.study}>{studyLine}</Text> : null}
+      {groups && groups.length > 0 ? (
+        <View style={styles.groups}>
+          {groups.map((group) => (
+            <View key={group.id} style={styles.groupPill}>
+              <Text style={styles.groupText}>{group.name}</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
       {profile.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
 
       {profile.target_institution ? (
@@ -34,6 +57,15 @@ const styles = StyleSheet.create({
   wrapper: { alignItems: 'center', marginBottom: spacing.lg },
   name: { fontSize: 20, fontWeight: '700', color: colors.text, marginTop: spacing.sm },
   role: { color: colors.textMuted, marginTop: 2 },
+  study: { color: colors.primary, fontWeight: '600', marginTop: spacing.xs, textAlign: 'center' },
+  groups: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.xs, marginTop: spacing.sm },
+  groupPill: {
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: 3,
+  },
+  groupText: { fontSize: 12, fontWeight: '600', color: colors.text },
   bio: { color: colors.text, textAlign: 'center', marginTop: spacing.sm, paddingHorizontal: spacing.lg },
   institutionBadge: {
     marginTop: spacing.md,

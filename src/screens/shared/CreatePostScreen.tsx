@@ -7,6 +7,7 @@ import { Screen } from '../../components/Screen';
 import { Button } from '../../components/Button';
 import { TextField } from '../../components/TextField';
 import { supabase } from '../../lib/supabase';
+import { parseYear } from '../../lib/portfolio';
 import { useAuth } from '../../hooks/useAuth';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { StaffStackParamList, StudentStackParamList } from '../../navigation/types';
@@ -18,6 +19,9 @@ export function CreatePostScreen() {
   const { profile } = useAuth();
   const [asset, setAsset] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [caption, setCaption] = useState('');
+  const [title, setTitle] = useState('');
+  const [technique, setTechnique] = useState('');
+  const [year, setYear] = useState('');
   const [uploading, setUploading] = useState(false);
 
   const pickImage = async () => {
@@ -43,6 +47,11 @@ export function CreatePostScreen() {
       Alert.alert('Выберите фото работы');
       return;
     }
+    const artworkYear = parseYear(year);
+    if (artworkYear === 'invalid') {
+      Alert.alert('Проверьте год', 'Укажите год четырьмя цифрами, например 2026.');
+      return;
+    }
     setUploading(true);
     try {
       const ext = asset.uri.split('.').pop()?.toLowerCase() || 'jpg';
@@ -59,7 +68,13 @@ export function CreatePostScreen() {
 
       const { data: post, error: postError } = await supabase
         .from('posts')
-        .insert({ author_id: profile.id, caption: caption.trim() || null })
+        .insert({
+          author_id: profile.id,
+          caption: caption.trim() || null,
+          title: title.trim() || null,
+          technique: technique.trim() || null,
+          artwork_year: artworkYear,
+        })
         .select()
         .single();
       if (postError) throw postError;
@@ -97,6 +112,27 @@ export function CreatePostScreen() {
         </Text>
       ) : null}
 
+      <TextField label="Название" placeholder="Например: «Осенний этюд»" value={title} onChangeText={setTitle} />
+      <View style={styles.row}>
+        <View style={styles.rowWide}>
+          <TextField
+            label="Техника и материалы"
+            placeholder="Акварель, бумага"
+            value={technique}
+            onChangeText={setTechnique}
+          />
+        </View>
+        <View style={styles.rowNarrow}>
+          <TextField
+            label="Год"
+            placeholder={String(new Date().getFullYear())}
+            value={year}
+            onChangeText={setYear}
+            keyboardType="number-pad"
+            maxLength={4}
+          />
+        </View>
+      </View>
       <TextField
         label="Подпись"
         placeholder="Расскажите о своей работе…"
@@ -126,5 +162,8 @@ const styles = StyleSheet.create({
   },
   preview: { width: '100%', height: '100%' },
   pickText: { color: colors.textMuted, textAlign: 'center', paddingHorizontal: spacing.lg },
+  row: { flexDirection: 'row', gap: spacing.sm },
+  rowWide: { flex: 2 },
+  rowNarrow: { flex: 1 },
   changePhoto: { color: colors.primary, textAlign: 'center', marginBottom: spacing.md, fontWeight: '600' },
 });

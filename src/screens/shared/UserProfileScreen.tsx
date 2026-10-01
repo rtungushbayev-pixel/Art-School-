@@ -1,18 +1,17 @@
 import React, { useCallback, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Image } from 'expo-image';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { ProfileHeader } from '../../components/ProfileHeader';
 import { Button } from '../../components/Button';
+import { PortfolioSections } from '../../components/PortfolioSections';
 import { supabase } from '../../lib/supabase';
-import { fetchUserPosts } from '../../lib/posts';
 import { useAuth } from '../../hooks/useAuth';
+import { useStudentPortfolio } from '../../hooks/useStudentPortfolio';
 import { colors, spacing } from '../../theme/colors';
 import type { Profile, UserRole } from '../../types/database';
-import type { PostCardData } from '../../components/PostCard';
 import type { StaffStackParamList, StudentStackParamList } from '../../navigation/types';
 
 type NavParamList = StudentStackParamList & StaffStackParamList;
@@ -22,16 +21,15 @@ export function UserProfileScreen() {
   const route = useRoute<RouteProp<NavParamList, 'UserProfile'>>();
   const { profile: viewer } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [posts, setPosts] = useState<PostCardData[]>([]);
   const [changingRole, setChangingRole] = useState(false);
 
   const userId = route.params.userId;
+  const { posts, achievements, groups } = useStudentPortfolio(userId, viewer?.id);
 
   const load = useCallback(async () => {
     const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
     setProfile(data as Profile);
-    setPosts(await fetchUserPosts(userId, viewer?.id));
-  }, [userId, viewer?.id]);
+  }, [userId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -64,8 +62,6 @@ export function UserProfileScreen() {
     ]);
   };
 
-  const visiblePosts = posts.filter((p) => p.status === 'approved' || p.author?.id === viewer?.id);
-
   if (!profile) {
     return (
       <Screen>
@@ -76,7 +72,7 @@ export function UserProfileScreen() {
 
   return (
     <Screen scroll>
-      <ProfileHeader profile={profile} />
+      <ProfileHeader profile={profile} groups={groups} />
       {viewer?.role === 'staff' && viewer.id !== profile.id ? (
         <View style={styles.roleAction}>
           {profile.role === 'staff' ? (
@@ -96,32 +92,25 @@ export function UserProfileScreen() {
           )}
         </View>
       ) : null}
-      <Text style={styles.sectionTitle}>Работы</Text>
-      <View style={styles.grid}>
-        {visiblePosts.map((post) => (
-          <Pressable
-            key={post.id}
-            style={styles.gridItem}
-            onPress={() => navigation.navigate('PostDetail', { postId: post.id })}
-          >
-            {post.images[0] ? (
-              <Image source={{ uri: post.images[0].image_url }} style={styles.gridImage} contentFit="cover" />
-            ) : (
-              <View style={styles.gridImage} />
-            )}
-          </Pressable>
-        ))}
-      </View>
-      {visiblePosts.length === 0 ? <Text style={styles.empty}>Пока нет публикаций</Text> : null}
+      <PortfolioSections
+        posts={posts}
+        achievements={achievements}
+        isStudent={profile.role === 'student'}
+        isOwner={viewer?.id === profile.id}
+        canEditAchievements={viewer?.role === 'staff' || viewer?.id === profile.id}
+        onOpenPost={(postId) => navigation.navigate('PostDetail', { postId })}
+        onOpenPortfolio={() => navigation.navigate('Portfolio', { userId: profile.id })}
+        onAddAchievement={() => navigation.navigate('EditAchievement', { studentId: profile.id })}
+        onEditAchievement={(a) =>
+          navigation.navigate('EditAchievement', { studentId: profile.id, achievementId: a.id })
+        }
+      />
+      <View style={{ height: spacing.xl }} />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   roleAction: { marginBottom: spacing.md },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.primary, marginBottom: spacing.sm },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
-  gridItem: { width: '32%', aspectRatio: 1 },
-  gridImage: { width: '100%', height: '100%', borderRadius: 6, backgroundColor: colors.border },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.md },
 });

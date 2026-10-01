@@ -7,6 +7,9 @@ import { CreatePostScreen } from '../screens/shared/CreatePostScreen';
 import { EditProfileScreen } from '../screens/shared/EditProfileScreen';
 import { NotificationSettingsScreen } from '../screens/shared/NotificationSettingsScreen';
 import { UserProfileScreen } from '../screens/shared/UserProfileScreen';
+import { PortfolioScreen } from '../screens/shared/PortfolioScreen';
+import { EditArtworkScreen } from '../screens/shared/EditArtworkScreen';
+import { EditAchievementScreen } from '../screens/shared/EditAchievementScreen';
 import { ListingDetailScreen } from '../screens/shared/ListingDetailScreen';
 import { CreateListingScreen } from '../screens/shared/CreateListingScreen';
 import { colors } from '../theme/colors';
@@ -32,6 +35,9 @@ export function StudentNavigator() {
         options={{ title: 'Уведомления' }}
       />
       <Stack.Screen name="UserProfile" component={UserProfileScreen} options={{ title: 'Профиль' }} />
+      <Stack.Screen name="Portfolio" component={PortfolioScreen} options={{ title: 'Портфолио' }} />
+      <Stack.Screen name="EditArtwork" component={EditArtworkScreen} options={{ title: 'О работе' }} />
+      <Stack.Screen name="EditAchievement" component={EditAchievementScreen} options={{ title: 'Достижение' }} />
       <Stack.Screen name="ListingDetail" component={ListingDetailScreen} options={{ title: 'Объявление' }} />
       <Stack.Screen name="CreateListing" component={CreateListingScreen} options={{ title: 'Продажа работы' }} />
     </Stack.Navigator>
