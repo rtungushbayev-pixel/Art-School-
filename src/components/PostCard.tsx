@@ -7,6 +7,10 @@ import { colors, radius, shadow, spacing } from '../theme/colors';
 export interface PostCardData {
   id: string;
   caption: string | null;
+  title: string | null;
+  technique: string | null;
+  artwork_year: number | null;
+  featured: boolean;
   created_at: string;
   status: 'pending' | 'approved' | 'rejected';
   author: { id: string; full_name: string; avatar_url: string | null } | null;
@@ -41,6 +45,7 @@ export function PostCard({ post, onPress, onToggleLike, onAuthorPress, showModer
 
         {cover ? <Image source={{ uri: cover.image_url }} style={styles.image} contentFit="cover" /> : null}
 
+        {post.title ? <Text style={styles.title}>{post.title}</Text> : null}
         {post.caption ? <Text style={styles.caption}>{post.caption}</Text> : null}
 
         <View style={styles.footer}>
@@ -79,6 +84,7 @@ const styles = StyleSheet.create({
   badgeRejected: { backgroundColor: colors.danger },
   badgeText: { color: colors.white, fontSize: 11, fontWeight: '700' },
   image: { width: '100%', aspectRatio: 1, backgroundColor: colors.border },
+  title: { paddingHorizontal: spacing.sm, paddingTop: spacing.sm, fontWeight: '700', color: colors.text },
   caption: { padding: spacing.sm, color: colors.text },
   footer: { flexDirection: 'row', padding: spacing.sm, gap: spacing.lg },
   footerItem: { flexDirection: 'row', alignItems: 'center' },

@@ -10,6 +10,7 @@ import { TextField } from '../../components/TextField';
 import { Button } from '../../components/Button';
 import { supabase } from '../../lib/supabase';
 import { toggleLike } from '../../lib/posts';
+import { artworkMeta } from '../../lib/portfolio';
 import { sendPushNotification } from '../../lib/notifications';
 import { useAuth } from '../../hooks/useAuth';
 import { colors, radius, spacing } from '../../theme/colors';
@@ -108,6 +109,7 @@ export function PostDetailScreen() {
   };
 
   const canDelete = profile && (profile.role === 'staff' || profile.id === post?.author_id);
+  const isAuthor = !!profile && profile.id === post?.author_id;
 
   const onDelete = () => {
     Alert.alert('Удалить публикацию?', undefined, [
@@ -145,16 +147,25 @@ export function PostDetailScreen() {
             {images[0] ? (
               <Image source={{ uri: images[0].image_url }} style={styles.image} contentFit="cover" />
             ) : null}
+            {post.title ? <Text style={styles.title}>{post.title}</Text> : null}
+            {artworkMeta(post) ? <Text style={styles.meta}>{artworkMeta(post)}</Text> : null}
             {post.caption ? <Text style={styles.caption}>{post.caption}</Text> : null}
             <View style={styles.actionsRow}>
               <Text onPress={onToggleLike} style={[styles.like, likedByMe && styles.liked]}>
                 {likedByMe ? '♥' : '♡'} {likeCount}
               </Text>
-              {canDelete ? (
-                <Text onPress={onDelete} style={styles.delete}>
-                  Удалить
-                </Text>
-              ) : null}
+              <View style={styles.ownerActions}>
+                {isAuthor ? (
+                  <Text onPress={() => navigation.navigate('EditArtwork', { postId })} style={styles.edit}>
+                    {post.featured ? '★ ' : ''}Изменить
+                  </Text>
+                ) : null}
+                {canDelete ? (
+                  <Text onPress={onDelete} style={styles.delete}>
+                    Удалить
+                  </Text>
+                ) : null}
+              </View>
             </View>
             <Text style={styles.commentsTitle}>Комментарии</Text>
           </View>
@@ -189,10 +200,14 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
   authorName: { fontWeight: '700', color: colors.text },
   image: { width: '100%', aspectRatio: 1, borderRadius: radius.md, backgroundColor: colors.border },
+  title: { marginTop: spacing.sm, fontSize: 17, fontWeight: '700', color: colors.text },
+  meta: { marginTop: 2, fontSize: 13, color: colors.textMuted },
   caption: { marginTop: spacing.sm, color: colors.text },
   actionsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginVertical: spacing.sm },
   like: { fontSize: 16, fontWeight: '700', color: colors.textMuted },
   liked: { color: colors.primary },
+  ownerActions: { flexDirection: 'row', gap: spacing.md },
+  edit: { color: colors.primary, fontWeight: '600' },
   delete: { color: colors.danger, fontWeight: '600' },
   commentsTitle: { fontWeight: '700', color: colors.primary, marginTop: spacing.sm, marginBottom: spacing.xs },
   comment: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm },

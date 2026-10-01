@@ -9,6 +9,9 @@ import { CreatePostScreen } from '../screens/shared/CreatePostScreen';
 import { EditProfileScreen } from '../screens/shared/EditProfileScreen';
 import { NotificationSettingsScreen } from '../screens/shared/NotificationSettingsScreen';
 import { UserProfileScreen } from '../screens/shared/UserProfileScreen';
+import { PortfolioScreen } from '../screens/shared/PortfolioScreen';
+import { EditArtworkScreen } from '../screens/shared/EditArtworkScreen';
+import { EditAchievementScreen } from '../screens/shared/EditAchievementScreen';
 import { CreateGroupScreen } from '../screens/staff/CreateGroupScreen';
 import { GroupDetailScreen } from '../screens/staff/GroupDetailScreen';
 import { AddStudentToGroupScreen } from '../screens/staff/AddStudentToGroupScreen';
@@ -49,6 +52,9 @@ export function StaffNavigator() {
         options={{ title: 'Уведомления' }}
       />
       <Stack.Screen name="UserProfile" component={UserProfileScreen} options={{ title: 'Профиль' }} />
+      <Stack.Screen name="Portfolio" component={PortfolioScreen} options={{ title: 'Портфолио' }} />
+      <Stack.Screen name="EditArtwork" component={EditArtworkScreen} options={{ title: 'О работе' }} />
+      <Stack.Screen name="EditAchievement" component={EditAchievementScreen} options={{ title: 'Достижение' }} />
       <Stack.Screen name="CreateGroup" component={CreateGroupScreen} options={{ title: 'Новая группа' }} />
       <Stack.Screen name="GroupDetail" component={GroupDetailScreen} options={{ title: 'Группа' }} />
       <Stack.Screen
