@@ -27,6 +27,8 @@ const STRINGS = {
 // Адрес нужно добавить в Supabase → Authentication → URL Configuration →
 // Redirect URLs, иначе Supabase отправит на Site URL (по умолчанию localhost).
 export const AUTH_REDIRECT_URL = 'kasteyevschool://auth-callback';
+// Ссылка из письма «Сбросить пароль»: после входа по ней — экран нового пароля.
+export const PASSWORD_RESET_URL = 'kasteyevschool://reset-password';
 
 // Supabase передаёт токены во фрагменте после «#» (а ошибки иногда в query).
 function parseParams(url: string): Record<string, string> {
@@ -42,9 +44,10 @@ function parseParams(url: string): Record<string, string> {
   return params;
 }
 
-async function handleAuthUrl(url: string | null) {
-  if (!url || !url.startsWith(AUTH_REDIRECT_URL)) return;
+async function handleAuthUrl(url: string | null, onRecovery: () => void) {
+  if (!url || !(url.startsWith(AUTH_REDIRECT_URL) || url.startsWith(PASSWORD_RESET_URL))) return;
   const params = parseParams(url);
+  const isRecovery = url.startsWith(PASSWORD_RESET_URL) || params.type === 'recovery';
   const s = pick(STRINGS);
   if (params.error_description || params.error) {
     Alert.alert(s.linkFailed, s.linkFailedText);
@@ -56,16 +59,21 @@ async function handleAuthUrl(url: string | null) {
       refresh_token: params.refresh_token,
     });
     if (error) {
-      Alert.alert(s.emailConfirmed, s.emailConfirmedText);
+      Alert.alert(isRecovery ? s.linkFailed : s.emailConfirmed, isRecovery ? s.linkFailedText : s.emailConfirmedText);
+    } else if (isRecovery) {
+      onRecovery();
     }
   }
 }
 
 // Обрабатывает ссылку, которой открыли приложение, и ссылки, пришедшие, пока оно работает.
-export function listenForAuthLinks(): () => void {
-  Linking.getInitialURL().then(handleAuthUrl).catch(() => {});
+// onRecovery вызывается, когда пользователь вошёл по ссылке сброса пароля.
+export function listenForAuthLinks(onRecovery: () => void): () => void {
+  Linking.getInitialURL()
+    .then((url) => handleAuthUrl(url, onRecovery))
+    .catch(() => {});
   const subscription = Linking.addEventListener('url', ({ url }) => {
-    handleAuthUrl(url);
+    handleAuthUrl(url, onRecovery);
   });
   return () => subscription.remove();
 }

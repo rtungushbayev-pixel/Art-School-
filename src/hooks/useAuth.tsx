@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { clearPushToken, syncPushToken } from '../lib/notifications';
-import { AUTH_REDIRECT_URL, listenForAuthLinks } from '../lib/authLinks';
+import { AUTH_REDIRECT_URL, PASSWORD_RESET_URL, listenForAuthLinks } from '../lib/authLinks';
 import type { Profile } from '../types/database';
 
 interface AuthContextValue {
@@ -19,6 +19,10 @@ interface AuthContextValue {
   }) => Promise<SignUpResult>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  // Восстановление пароля: письмо со ссылкой, затем ввод нового пароля.
+  requestPasswordReset: (email: string) => Promise<string | null>;
+  passwordRecovery: boolean;
+  updatePassword: (password: string) => Promise<string | null>;
 }
 
 // needsConfirmation: Supabase ждёт подтверждения почты; иначе пользователь
@@ -74,7 +78,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // Вход по ссылке подтверждения из письма.
-  useEffect(() => listenForAuthLinks(), []);
+  const [passwordRecovery, setPasswordRecovery] = useState(false);
+  useEffect(() => listenForAuthLinks(() => setPasswordRecovery(true)), []);
 
   useEffect(() => {
     if (profile) {
@@ -111,13 +116,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         await supabase.auth.signOut();
       },
+      requestPasswordReset: async (email) => {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: PASSWORD_RESET_URL });
+        return error?.message ?? null;
+      },
+      passwordRecovery,
+      updatePassword: async (password) => {
+        const { error } = await supabase.auth.updateUser({ password });
+        if (!error) setPasswordRecovery(false);
+        return error?.message ?? null;
+      },
       refreshProfile: async () => {
         if (session?.user) {
           await loadProfile(session.user.id);
         }
       },
     }),
-    [session, profile, loading]
+    [session, profile, loading, passwordRecovery]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

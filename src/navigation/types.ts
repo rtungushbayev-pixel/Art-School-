@@ -4,6 +4,7 @@ import type { BillingKind, SupportCategory } from '../types/database';
 export type AuthStackParamList = {
   Login: undefined;
   SignUp: undefined;
+  ForgotPassword: undefined;
 };
 
 export type StudentTabParamList = {

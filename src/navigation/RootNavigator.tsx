@@ -6,6 +6,7 @@ import { AuthNavigator } from './AuthNavigator';
 import { StudentNavigator } from './StudentNavigator';
 import { StaffNavigator } from './StaffNavigator';
 import { ParentNavigator } from './ParentNavigator';
+import { NewPasswordScreen } from '../screens/auth/NewPasswordScreen';
 import { colors } from '../theme/colors';
 import { useNotificationNavigation } from '../lib/notificationRouting';
 import type { ParentStackParamList, StaffStackParamList, StudentStackParamList } from './types';
@@ -13,7 +14,7 @@ import type { ParentStackParamList, StaffStackParamList, StudentStackParamList }
 const navigationRef = createNavigationContainerRef<StudentStackParamList & StaffStackParamList & ParentStackParamList>();
 
 export function RootNavigator() {
-  const { session, profile, loading } = useAuth();
+  const { session, profile, loading, passwordRecovery } = useAuth();
   const signedInRole = session && profile ? profile.role : null;
   const flushNotificationNavigation = useNotificationNavigation(navigationRef, signedInRole);
 
@@ -31,7 +32,10 @@ export function RootNavigator() {
       onReady={flushNotificationNavigation}
       onStateChange={flushNotificationNavigation}
     >
-      {!session || !profile ? (
+      {session && passwordRecovery ? (
+        // Вошли по ссылке из письма «Сбросить пароль» — сначала новый пароль.
+        <NewPasswordScreen />
+      ) : !session || !profile ? (
         <AuthNavigator />
       ) : profile.role === 'staff' ? (
         <StaffNavigator />

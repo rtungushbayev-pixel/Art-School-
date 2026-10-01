@@ -25,6 +25,7 @@ const STRINGS = {
     signIn: 'Войти',
     noAccount: 'Нет аккаунта?',
     signUp: 'Зарегистрироваться',
+    forgot: 'Забыли пароль?',
   },
   kk: {
     fillAll: 'Барлық өрістерді толтырыңыз',
@@ -35,6 +36,7 @@ const STRINGS = {
     signIn: 'Кіру',
     noAccount: 'Аккаунтыңыз жоқ па?',
     signUp: 'Тіркелу',
+    forgot: 'Құпиясөзді ұмыттыңыз ба?',
   },
   en: {
     fillAll: 'Please fill in all fields',
@@ -45,6 +47,7 @@ const STRINGS = {
     signIn: 'Sign in',
     noAccount: 'No account?',
     signUp: 'Sign up',
+    forgot: 'Forgot password?',
   },
 };
 
@@ -101,6 +104,10 @@ export function LoginScreen({ navigation }: Props) {
         placeholder="••••••••"
       />
 
+      <Text style={styles.forgot} onPress={() => navigation.navigate('ForgotPassword')}>
+        {s.forgot}
+      </Text>
+
       <Button title={s.signIn} onPress={onSubmit} loading={loading} />
 
       <View style={styles.footer}>
@@ -121,4 +128,5 @@ const styles = StyleSheet.create({
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: spacing.lg },
   footerText: { color: colors.textMuted },
   link: { color: colors.primary, fontWeight: '700' },
+  forgot: { color: colors.primary, fontWeight: '600', textAlign: 'right', marginTop: -spacing.sm, marginBottom: spacing.md },
 });
