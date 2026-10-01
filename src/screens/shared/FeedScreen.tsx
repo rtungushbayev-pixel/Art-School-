@@ -4,6 +4,10 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { CommunityComposer } from '../../components/CommunityComposer';
+import { Avatar } from '../../components/Avatar';
+import { Ionicons } from '@expo/vector-icons';
+import { fetchFriendsData } from '../../lib/friends';
+import type { Profile } from '../../types/database';
 import { PostCard, PostCardData } from '../../components/PostCard';
 import { fetchFeedPosts, fetchUserPosts, toggleLike } from '../../lib/posts';
 import { useAuth } from '../../hooks/useAuth';
@@ -21,6 +25,9 @@ export function FeedScreen() {
   const [view, setView] = useState<FeedView>('all');
   // Родитель смотрит Комьюнити, но сам не публикует.
   const canPost = !!profile && profile.role !== 'parent';
+  // Друзья — у учеников и сотрудников.
+  const hasFriends = canPost;
+  const [friends, setFriends] = useState<Profile[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -29,10 +36,15 @@ export function FeedScreen() {
       const data =
         view === 'mine' && profile ? await fetchUserPosts(profile.id, profile.id) : await fetchFeedPosts(profile?.id);
       setPosts(data);
+      if (hasFriends && profile) {
+        fetchFriendsData(profile.id)
+          .then((d) => setFriends(d.friends))
+          .catch(() => {});
+      }
     } finally {
       setLoading(false);
     }
-  }, [profile?.id, view]);
+  }, [profile, view, hasFriends]);
 
   useFocusEffect(
     useCallback(() => {
@@ -56,6 +68,27 @@ export function FeedScreen() {
     <Screen scroll refreshing={loading} onRefresh={load}>
       {canPost && profile ? (
         <>
+          <View style={styles.topRow}>
+            <Pressable style={styles.search} onPress={() => navigation.navigate('Friends', { focusSearch: true })}>
+              <Ionicons name="search" size={18} color={colors.textMuted} />
+              <Text style={styles.searchText}>Поиск по участникам</Text>
+            </Pressable>
+            <Pressable style={styles.friends} onPress={() => navigation.navigate('Friends')}>
+              <Text style={styles.friendsLabel}>Друзья</Text>
+              <View style={styles.avatars}>
+                {friends.slice(0, 2).map((f, i) => (
+                  <View key={f.id} style={[styles.stackAvatar, i > 0 && styles.stackOverlap]}>
+                    <Avatar uri={f.avatar_url} name={f.full_name} size={30} />
+                  </View>
+                ))}
+                {friends.length > 2 ? (
+                  <View style={[styles.more, styles.stackOverlap]}>
+                    <Text style={styles.moreText}>+{friends.length - 2}</Text>
+                  </View>
+                ) : null}
+              </View>
+            </Pressable>
+          </View>
           <CommunityComposer authorId={profile.id} onPublished={load} />
           <View style={styles.segment}>
             {(
@@ -90,6 +123,7 @@ export function FeedScreen() {
           onAuthorPress={() => post.author && navigation.navigate('UserProfile', { userId: post.author.id })}
           onToggleLike={() => onToggleLike(post)}
           showModerationBadge={view === 'mine'}
+          viewer={profile}
         />
       ))}
     </Screen>
@@ -97,6 +131,37 @@ export function FeedScreen() {
 }
 
 const styles = StyleSheet.create({
+  topRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.md },
+  search: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 2,
+  },
+  searchText: { color: colors.textMuted, fontSize: 15 },
+  friends: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  friendsLabel: { fontSize: 15, fontWeight: '600', color: colors.text },
+  avatars: { flexDirection: 'row', alignItems: 'center' },
+  stackAvatar: { borderRadius: 17, borderWidth: 2, borderColor: colors.background },
+  stackOverlap: { marginLeft: -10 },
+  more: {
+    height: 34,
+    minWidth: 34,
+    paddingHorizontal: 6,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 2,
+    borderColor: colors.background,
+  },
+  moreText: { fontSize: 13, fontWeight: '700', color: colors.text },
   segment: {
     flexDirection: 'row',
     backgroundColor: colors.surfaceAlt,

@@ -118,3 +118,23 @@ export async function unblockUser(userId: string, otherId: string) {
   const { error } = await supabase.from('user_blocks').delete().eq('blocker_id', userId).eq('blocked_id', otherId);
   if (error) throw error;
 }
+
+export interface FriendSuggestion {
+  profile: Profile;
+  mutualFriends: number;
+  sameGroup: boolean;
+}
+
+// «Возможно, вы их знаете»: одногруппники, преподаватель группы и друзья друзей.
+export async function fetchFriendSuggestions(limit = 20): Promise<FriendSuggestion[]> {
+  const { data, error } = await supabase.rpc('friend_suggestions', { p_limit: limit });
+  if (error) throw error;
+  const rows = (data as { user_id: string; mutual_friends: number; same_group: boolean }[]) ?? [];
+  const profiles = await fetchProfiles(rows.map((r) => r.user_id));
+  return rows
+    .map((r) => {
+      const profile = profiles.get(r.user_id);
+      return profile ? { profile, mutualFriends: r.mutual_friends, sameGroup: r.same_group } : null;
+    })
+    .filter((s): s is FriendSuggestion => !!s);
+}
