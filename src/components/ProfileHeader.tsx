@@ -84,7 +84,7 @@ export function ProfileHeader({ profile, groups, onAvatarPress, avatarUploading 
       {studyLine ? <Text style={styles.study}>{studyLine}</Text> : null}
       {profile.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
 
-      {profile.target_institution ? (
+      {profile.role === 'student' && profile.target_institution ? (
         <View style={styles.institutionBadge}>
           <Text style={styles.institutionStatus}>
             {profile.target_institution_status ? STATUS_LABELS[profile.target_institution_status] : 'Цель'}

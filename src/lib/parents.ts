@@ -176,3 +176,41 @@ export async function deleteStudentPhoto(photo: StudentPhoto) {
   if (error) throw error;
   await supabase.storage.from(PHOTOS_BUCKET).remove([photo.storage_path]);
 }
+
+// Заявки родителей на привязку ребёнка (подтверждает сотрудник).
+export interface ParentLinkRequest {
+  id: string;
+  created_at: string;
+  parent: Profile | null;
+  student: Profile | null;
+}
+
+export async function fetchParentLinkRequests(parentId?: string): Promise<ParentLinkRequest[]> {
+  let request = supabase
+    .from('parent_link_requests')
+    .select('id, created_at, parent:parent_id ( * ), student:student_id ( * )')
+    .order('created_at', { ascending: true });
+  if (parentId) request = request.eq('parent_id', parentId);
+  const { data, error } = await request;
+  if (error) throw error;
+  return (data as unknown as ParentLinkRequest[]) ?? [];
+}
+
+export async function requestChildLink(parentId: string, studentId: string) {
+  const { error } = await supabase.from('parent_link_requests').insert({ parent_id: parentId, student_id: studentId });
+  if (error) {
+    if (error.code === '23505') throw new Error('Заявка на этого ребёнка уже отправлена.');
+    if (error.message.includes('child_already_linked')) throw new Error('Этот ребёнок уже привязан к вам.');
+    throw error;
+  }
+}
+
+export async function cancelChildLinkRequest(requestId: string) {
+  const { error } = await supabase.from('parent_link_requests').delete().eq('id', requestId);
+  if (error) throw error;
+}
+
+export async function approveChildLinkRequest(requestId: string) {
+  const { error } = await supabase.rpc('approve_parent_link_request', { p_request_id: requestId });
+  if (error) throw error;
+}

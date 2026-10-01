@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
@@ -8,12 +8,19 @@ import { ListingCard } from '../../components/ListingCard';
 import { fetchPendingPosts } from '../../lib/posts';
 import { fetchPendingListings, ListingCardData } from '../../lib/marketplace';
 import { supabase } from '../../lib/supabase';
+import { Avatar } from '../../components/Avatar';
+import {
+  approveChildLinkRequest,
+  cancelChildLinkRequest,
+  fetchParentLinkRequests,
+  type ParentLinkRequest,
+} from '../../lib/parents';
 import { sendPushNotification } from '../../lib/notifications';
 import { useAuth } from '../../hooks/useAuth';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { StaffStackParamList } from '../../navigation/types';
 
-type ModerationScope = 'posts' | 'listings';
+type ModerationScope = 'posts' | 'listings' | 'parents';
 
 export function ModerationScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<StaffStackParamList>>();
@@ -21,6 +28,7 @@ export function ModerationScreen() {
   const [scope, setScope] = useState<ModerationScope>('posts');
   const [posts, setPosts] = useState<PostCardData[]>([]);
   const [listings, setListings] = useState<ListingCardData[]>([]);
+  const [linkRequests, setLinkRequests] = useState<ParentLinkRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -28,8 +36,10 @@ export function ModerationScreen() {
     try {
       if (scope === 'posts') {
         setPosts(await fetchPendingPosts(profile?.id));
-      } else {
+      } else if (scope === 'listings') {
         setListings(await fetchPendingListings());
+      } else {
+        setLinkRequests(await fetchParentLinkRequests());
       }
     } finally {
       setLoading(false);
@@ -62,6 +72,16 @@ export function ModerationScreen() {
     sendPushNotification({ event: 'listing_moderated', id: listing.id });
   };
 
+  const resolveLinkRequest = async (request: ParentLinkRequest, approve: boolean) => {
+    try {
+      if (approve) await approveChildLinkRequest(request.id);
+      else await cancelChildLinkRequest(request.id);
+      setLinkRequests((prev) => prev.filter((r) => r.id !== request.id));
+    } catch (e) {
+      Alert.alert('Не получилось', e instanceof Error ? e.message : undefined);
+    }
+  };
+
   return (
     <Screen scroll refreshing={loading} onRefresh={load}>
 
@@ -70,13 +90,19 @@ export function ModerationScreen() {
           onPress={() => setScope('posts')}
           style={[styles.scopeOption, scope === 'posts' && styles.scopeOptionActive]}
         >
-          <Text style={[styles.scopeText, scope === 'posts' && styles.scopeTextActive]}>Работы в ленте</Text>
+          <Text style={[styles.scopeText, scope === 'posts' && styles.scopeTextActive]}>Работы</Text>
         </Pressable>
         <Pressable
           onPress={() => setScope('listings')}
           style={[styles.scopeOption, scope === 'listings' && styles.scopeOptionActive]}
         >
-          <Text style={[styles.scopeText, scope === 'listings' && styles.scopeTextActive]}>Товары на продажу</Text>
+          <Text style={[styles.scopeText, scope === 'listings' && styles.scopeTextActive]}>Продажа</Text>
+        </Pressable>
+        <Pressable
+          onPress={() => setScope('parents')}
+          style={[styles.scopeOption, scope === 'parents' && styles.scopeOptionActive]}
+        >
+          <Text style={[styles.scopeText, scope === 'parents' && styles.scopeTextActive]}>Родители</Text>
         </Pressable>
       </View>
 
@@ -103,6 +129,41 @@ export function ModerationScreen() {
                 <Pressable
                   style={[styles.actionButton, styles.reject]}
                   onPress={() => moderatePost(post, 'rejected')}
+                >
+                  <Text style={styles.actionText}>Отклонить</Text>
+                </Pressable>
+              </View>
+            </View>
+          ))}
+        </>
+      ) : scope === 'parents' ? (
+        <>
+          {linkRequests.length === 0 && !loading ? (
+            <Text style={styles.empty}>Новых заявок от родителей нет</Text>
+          ) : null}
+          {linkRequests.map((request) => (
+            <View key={request.id} style={styles.linkCard}>
+              <Text style={styles.linkText}>
+                <Text style={styles.linkName}>{request.parent?.full_name ?? 'Родитель'}</Text> просит привязать ребёнка:
+              </Text>
+              <Pressable
+                style={styles.linkChild}
+                onPress={() => request.student && navigation.navigate('UserProfile', { userId: request.student.id })}
+              >
+                <Avatar uri={request.student?.avatar_url} name={request.student?.full_name} size={40} />
+                <Text style={styles.linkName}>{request.student?.full_name ?? 'Ученик'}</Text>
+              </Pressable>
+              <Text style={styles.linkHint}>Подтвердите, только если уверены, что это родитель этого ребёнка.</Text>
+              <View style={styles.linkActions}>
+                <Pressable
+                  style={[styles.actionButton, styles.approve]}
+                  onPress={() => resolveLinkRequest(request, true)}
+                >
+                  <Text style={styles.actionText}>Подтвердить</Text>
+                </Pressable>
+                <Pressable
+                  style={[styles.actionButton, styles.reject]}
+                  onPress={() => resolveLinkRequest(request, false)}
                 >
                   <Text style={styles.actionText}>Отклонить</Text>
                 </Pressable>
@@ -165,4 +226,18 @@ const styles = StyleSheet.create({
   approve: { backgroundColor: colors.success },
   reject: { backgroundColor: colors.danger },
   actionText: { color: colors.white, fontWeight: '700' },
+  linkCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    gap: spacing.sm,
+  },
+  linkText: { color: colors.text },
+  linkName: { fontWeight: '700', color: colors.text },
+  linkChild: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  linkHint: { color: colors.textMuted, fontSize: 12 },
+  linkActions: { flexDirection: 'row', gap: spacing.sm },
 });

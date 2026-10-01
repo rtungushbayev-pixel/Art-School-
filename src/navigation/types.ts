@@ -82,6 +82,7 @@ export type ParentStackParamList = {
   Portfolio: { userId: string };
   Messages: undefined;
   Children: undefined;
+  AddChild: undefined;
   ChildDetail: { childId: string };
   PhotoView: { uri: string; caption?: string | null };
   PostDetail: { postId: string };

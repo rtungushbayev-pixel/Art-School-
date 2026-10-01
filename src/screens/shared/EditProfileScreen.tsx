@@ -110,6 +110,8 @@ export function EditProfileScreen() {
         </View>
       ) : null}
 
+      {isStudent ? (
+        <>
       <Text style={styles.sectionLabel}>Куда поступил(а) / планирую поступать</Text>
       <TextField
         placeholder="Например: КазНАИ им. Т. Жургенова"
@@ -129,6 +131,9 @@ export function EditProfileScreen() {
             </Pressable>
           ))}
         </View>
+      ) : null}
+
+        </>
       ) : null}
 
       <Button title="Сохранить" onPress={onSave} loading={saving} />
