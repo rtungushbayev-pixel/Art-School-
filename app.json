@@ -28,6 +28,17 @@
       "eas": {
         "projectId": "eedb2f91-e2cb-459b-9a3a-a6b004003629"
       }
-    }
+    },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-native.png",
+          "imageWidth": 300,
+          "resizeMode": "contain",
+          "backgroundColor": "#FAF7F2"
+        }
+      ]
+    ]
   }
 }
