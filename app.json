@@ -22,6 +22,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "owner": "rtungushbayev-pixel",
+    "extra": {
+      "eas": {
+        "projectId": "eedb2f91-e2cb-459b-9a3a-a6b004003629"
+      }
     }
   }
 }
