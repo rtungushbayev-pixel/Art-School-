@@ -64,4 +64,26 @@ export type StaffStackParamList = {
     | { groupId: string; kind: 'charge' };
   Schedule: undefined;
   LessonChange: { lessonId: string; date: string };
+  People: undefined;
+  LinkChild: { parentId: string };
+  AddProgressNote: { studentId: string; studentName: string };
+  AddStudentPhoto: { studentId: string; studentName: string };
+  PhotoView: { uri: string; caption?: string | null };
+};
+
+export type ParentTabParamList = {
+  ChildrenTab: undefined;
+  FeedTab: undefined;
+  AnnouncementsTab: undefined;
+  ProfileTab: undefined;
+};
+
+export type ParentStackParamList = {
+  ParentTabs: NavigatorScreenParams<ParentTabParamList> | undefined;
+  ChildDetail: { childId: string };
+  PhotoView: { uri: string; caption?: string | null };
+  PostDetail: { postId: string };
+  EditProfile: undefined;
+  NotificationSettings: undefined;
+  UserProfile: { userId: string };
 };

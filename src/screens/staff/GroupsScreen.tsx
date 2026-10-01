@@ -34,6 +34,7 @@ export function GroupsScreen() {
       <Button title="+ Новая группа" onPress={() => navigation.navigate('CreateGroup')} />
       <View style={{ height: spacing.sm }} />
       <Button title="Расписание школы" variant="secondary" onPress={() => navigation.navigate('Schedule')} />
+      <Button title="Ученики и родители" variant="secondary" onPress={() => navigation.navigate('People')} />
       <View style={{ height: spacing.md }} />
 
       {groups.length === 0 && !loading ? <Text style={styles.empty}>Группы ещё не созданы</Text> : null}
