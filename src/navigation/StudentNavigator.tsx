@@ -12,6 +12,7 @@ import { EditArtworkScreen } from '../screens/shared/EditArtworkScreen';
 import { EditAchievementScreen } from '../screens/shared/EditAchievementScreen';
 import { ListingDetailScreen } from '../screens/shared/ListingDetailScreen';
 import { CreateListingScreen } from '../screens/shared/CreateListingScreen';
+import { PaymentsScreen } from '../screens/shared/PaymentsScreen';
 import { colors } from '../theme/colors';
 
 const Stack = createNativeStackNavigator<StudentStackParamList>();
@@ -40,6 +41,7 @@ export function StudentNavigator() {
       <Stack.Screen name="EditAchievement" component={EditAchievementScreen} options={{ title: 'Достижение' }} />
       <Stack.Screen name="ListingDetail" component={ListingDetailScreen} options={{ title: 'Объявление' }} />
       <Stack.Screen name="CreateListing" component={CreateListingScreen} options={{ title: 'Продажа работы' }} />
+      <Stack.Screen name="Payments" component={PaymentsScreen} options={{ title: 'Оплаты' }} />
     </Stack.Navigator>
   );
 }

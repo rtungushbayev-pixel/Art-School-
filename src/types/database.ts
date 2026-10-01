@@ -4,6 +4,8 @@ export type PostStatus = 'pending' | 'approved' | 'rejected';
 export type AnnouncementAudience = 'all' | 'students' | 'staff' | 'group';
 export type AttendanceStatus = 'present' | 'absent' | 'late' | 'excused';
 export type ListingStatus = 'pending' | 'approved' | 'rejected';
+export type BillingKind = 'charge' | 'payment';
+export type PaymentMethod = 'cash' | 'card' | 'transfer';
 export type AchievementKind = 'competition' | 'exhibition' | 'award' | 'other';
 
 export interface Profile {
@@ -54,6 +56,43 @@ export interface Lesson {
   end_time: string;
   created_by: string | null;
   created_at: string;
+}
+
+// Разовое изменение регулярного занятия на конкретную дату.
+export interface LessonChange {
+  id: string;
+  lesson_id: string;
+  lesson_date: string; // YYYY-MM-DD
+  cancelled: boolean;
+  start_time: string | null;
+  end_time: string | null;
+  room: string | null;
+  note: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
+// Запись учёта оплат: начисление (charge) или принятая оплата (payment).
+export interface BillingEntry {
+  id: string;
+  student_id: string;
+  kind: BillingKind;
+  amount: number;
+  currency: string;
+  description: string;
+  method: PaymentMethod | null;
+  entry_date: string; // YYYY-MM-DD
+  created_by: string | null;
+  created_at: string;
+}
+
+// Баланс ученика (view student_balances): оплачено минус начислено.
+export interface StudentBalance {
+  student_id: string;
+  currency: string;
+  charged: number;
+  paid: number;
+  balance: number;
 }
 
 export interface Post {
@@ -161,6 +200,8 @@ export interface Database {
       groups: { Row: Group; Insert: Partial<Group>; Update: Partial<Group> };
       group_members: { Row: GroupMember; Insert: GroupMember; Update: Partial<GroupMember> };
       lessons: { Row: Lesson; Insert: Partial<Lesson>; Update: Partial<Lesson> };
+      lesson_changes: { Row: LessonChange; Insert: Partial<LessonChange>; Update: Partial<LessonChange> };
+      billing_entries: { Row: BillingEntry; Insert: Partial<BillingEntry>; Update: Partial<BillingEntry> };
       posts: { Row: Post; Insert: Partial<Post>; Update: Partial<Post> };
       post_images: { Row: PostImage; Insert: Partial<PostImage>; Update: Partial<PostImage> };
       post_likes: { Row: PostLike; Insert: PostLike; Update: Partial<PostLike> };

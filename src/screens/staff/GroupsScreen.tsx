@@ -32,6 +32,8 @@ export function GroupsScreen() {
     <Screen scroll refreshing={loading} onRefresh={load}>
       <Text style={styles.header}>Группы</Text>
       <Button title="+ Новая группа" onPress={() => navigation.navigate('CreateGroup')} />
+      <View style={{ height: spacing.sm }} />
+      <Button title="Расписание школы" variant="secondary" onPress={() => navigation.navigate('Schedule')} />
       <View style={{ height: spacing.md }} />
 
       {groups.length === 0 && !loading ? <Text style={styles.empty}>Группы ещё не созданы</Text> : null}

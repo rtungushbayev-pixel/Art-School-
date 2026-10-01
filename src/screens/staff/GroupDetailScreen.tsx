@@ -82,14 +82,21 @@ export function GroupDetailScreen({ route }: Props) {
       </View>
       {members.length === 0 ? <Text style={styles.empty}>В группе пока нет учеников</Text> : null}
       {members.map((m) => (
-        <Card key={m.id} style={styles.memberRow}>
-          <Avatar uri={m.avatar_url} name={m.full_name} size={36} />
-          <Text style={styles.memberName}>{m.full_name}</Text>
-          <Pressable onPress={() => onRemoveMember(m)}>
-            <Text style={styles.remove}>Убрать</Text>
-          </Pressable>
-        </Card>
+        <Pressable key={m.id} onPress={() => navigation.navigate('Payments', { studentId: m.id })}>
+          <Card style={styles.memberRow}>
+            <Avatar uri={m.avatar_url} name={m.full_name} size={36} />
+            <Text style={styles.memberName}>{m.full_name}</Text>
+            <Pressable onPress={() => onRemoveMember(m)} hitSlop={8}>
+              <Text style={styles.remove}>Убрать</Text>
+            </Pressable>
+          </Card>
+        </Pressable>
       ))}
+      {members.length > 0 ? (
+        <Pressable onPress={() => navigation.navigate('BillingEntryForm', { groupId, kind: 'charge' })}>
+          <Text style={styles.addLink}>₸ Начислить оплату всей группе</Text>
+        </Pressable>
+      ) : null}
 
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Расписание</Text>
