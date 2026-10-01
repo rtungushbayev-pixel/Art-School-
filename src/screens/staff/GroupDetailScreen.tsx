@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import { FEATURES } from '../../lib/features';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -95,7 +96,7 @@ export function GroupDetailScreen({ route }: Props) {
           </Pressable>
         </Card>
       ))}
-      {members.length > 0 ? (
+      {FEATURES.payments && members.length > 0 ? (
         <Pressable onPress={() => navigation.navigate('BillingEntryForm', { groupId, kind: 'charge' })}>
           <Text style={styles.addLink}>₸ Начислить оплату всей группе</Text>
         </Pressable>

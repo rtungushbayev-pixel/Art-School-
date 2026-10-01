@@ -25,6 +25,7 @@ import { Card } from '../../components/Card';
 import { Avatar } from '../../components/Avatar';
 import { ProgressNoteCard } from '../../components/ProgressNoteCard';
 import { useAuth } from '../../hooks/useAuth';
+import { FEATURES } from '../../lib/features';
 import {
   acceptFriendRequest,
   fetchFriendsData,
@@ -277,12 +278,16 @@ export function UserProfileScreen() {
 
       {viewerIsStaff && profile.role === 'student' ? (
         <>
-          <Button
-            title="Оплаты ученика"
-            variant="secondary"
-            onPress={() => navigation.navigate('Payments', { studentId: profile.id })}
-          />
-          <View style={{ height: spacing.sm }} />
+          {FEATURES.payments ? (
+            <>
+              <Button
+                title="Оплаты ученика"
+                variant="secondary"
+                onPress={() => navigation.navigate('Payments', { studentId: profile.id })}
+              />
+              <View style={{ height: spacing.sm }} />
+            </>
+          ) : null}
           {parents.length > 0 ? (
             <Text style={styles.parents}>Родители: {parents.map((p) => p.full_name).join(', ')}</Text>
           ) : null}

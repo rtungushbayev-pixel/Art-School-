@@ -8,6 +8,7 @@ import { ProfileHeader } from '../../components/ProfileHeader';
 import { PortfolioSections } from '../../components/PortfolioSections';
 import { ProfileTabs, type ProfileTab } from '../../components/ProfileTabs';
 import { useAuth } from '../../hooks/useAuth';
+import { FEATURES } from '../../lib/features';
 import { changeProfileAvatar } from '../../lib/avatar';
 import { useStudentPortfolio } from '../../hooks/useStudentPortfolio';
 import { spacing } from '../../theme/colors';
@@ -72,16 +73,20 @@ export function ProfileScreen() {
             variant="secondary"
             onPress={() => navigation.navigate('NotificationSettings')}
           />
-          <View style={{ height: spacing.sm }} />
-          {profile.role === 'staff' ? (
-            <Button
-              title="Оплаты учеников"
-              variant="secondary"
-              onPress={() => navigation.navigate('StudentBalances')}
-            />
-          ) : (
-            <Button title="Мои оплаты" variant="secondary" onPress={() => navigation.navigate('Payments')} />
-          )}
+          {FEATURES.payments ? (
+            <>
+              <View style={{ height: spacing.sm }} />
+              {profile.role === 'staff' ? (
+                <Button
+                  title="Оплаты учеников"
+                  variant="secondary"
+                  onPress={() => navigation.navigate('StudentBalances')}
+                />
+              ) : (
+                <Button title="Мои оплаты" variant="secondary" onPress={() => navigation.navigate('Payments')} />
+              )}
+            </>
+          ) : null}
           <View style={{ height: spacing.sm }} />
           <Button title="Выйти" variant="danger" onPress={signOut} />
         </>
