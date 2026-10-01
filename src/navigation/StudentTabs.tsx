@@ -3,7 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, paint } from '../theme/colors';
 import type { StudentTabParamList } from './types';
-import { ScheduleScreen } from '../screens/student/ScheduleScreen';
+import { ScheduleScreen } from '../screens/shared/ScheduleScreen';
 import { FeedScreen } from '../screens/shared/FeedScreen';
 import { AnnouncementsScreen } from '../screens/student/AnnouncementsScreen';
 import { MarketplaceScreen } from '../screens/shared/MarketplaceScreen';

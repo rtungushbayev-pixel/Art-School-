@@ -1,4 +1,5 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
+import type { BillingKind } from '../types/database';
 
 export type AuthStackParamList = {
   Login: undefined;
@@ -22,6 +23,7 @@ export type StudentStackParamList = {
   UserProfile: { userId: string };
   ListingDetail: { listingId: string };
   CreateListing: undefined;
+  Payments: { studentId?: string } | undefined;
 };
 
 export type StaffTabParamList = {
@@ -49,4 +51,11 @@ export type StaffStackParamList = {
   CreateLesson: { groupId: string; lessonId?: string };
   ListingDetail: { listingId: string };
   CreateListing: undefined;
+  Payments: { studentId?: string } | undefined;
+  StudentBalances: undefined;
+  BillingEntryForm:
+    | { studentId: string; kind: BillingKind }
+    | { groupId: string; kind: 'charge' };
+  Schedule: undefined;
+  LessonChange: { lessonId: string; date: string };
 };

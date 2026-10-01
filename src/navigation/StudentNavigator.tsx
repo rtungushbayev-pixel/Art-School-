@@ -9,6 +9,7 @@ import { NotificationSettingsScreen } from '../screens/shared/NotificationSettin
 import { UserProfileScreen } from '../screens/shared/UserProfileScreen';
 import { ListingDetailScreen } from '../screens/shared/ListingDetailScreen';
 import { CreateListingScreen } from '../screens/shared/CreateListingScreen';
+import { PaymentsScreen } from '../screens/shared/PaymentsScreen';
 import { colors } from '../theme/colors';
 
 const Stack = createNativeStackNavigator<StudentStackParamList>();
@@ -34,6 +35,7 @@ export function StudentNavigator() {
       <Stack.Screen name="UserProfile" component={UserProfileScreen} options={{ title: 'Профиль' }} />
       <Stack.Screen name="ListingDetail" component={ListingDetailScreen} options={{ title: 'Объявление' }} />
       <Stack.Screen name="CreateListing" component={CreateListingScreen} options={{ title: 'Продажа работы' }} />
+      <Stack.Screen name="Payments" component={PaymentsScreen} options={{ title: 'Оплаты' }} />
     </Stack.Navigator>
   );
 }

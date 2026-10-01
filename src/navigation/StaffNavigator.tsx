@@ -15,6 +15,11 @@ import { AddStudentToGroupScreen } from '../screens/staff/AddStudentToGroupScree
 import { CreateLessonScreen } from '../screens/staff/CreateLessonScreen';
 import { ListingDetailScreen } from '../screens/shared/ListingDetailScreen';
 import { CreateListingScreen } from '../screens/shared/CreateListingScreen';
+import { PaymentsScreen } from '../screens/shared/PaymentsScreen';
+import { ScheduleScreen } from '../screens/shared/ScheduleScreen';
+import { StudentBalancesScreen } from '../screens/staff/StudentBalancesScreen';
+import { BillingEntryFormScreen } from '../screens/staff/BillingEntryFormScreen';
+import { LessonChangeScreen } from '../screens/staff/LessonChangeScreen';
 import { colors } from '../theme/colors';
 
 const Stack = createNativeStackNavigator<StaffStackParamList>();
@@ -54,6 +59,11 @@ export function StaffNavigator() {
       <Stack.Screen name="CreateLesson" component={CreateLessonScreen} options={{ title: 'Новое занятие' }} />
       <Stack.Screen name="ListingDetail" component={ListingDetailScreen} options={{ title: 'Объявление' }} />
       <Stack.Screen name="CreateListing" component={CreateListingScreen} options={{ title: 'Продажа работы' }} />
+      <Stack.Screen name="Payments" component={PaymentsScreen} options={{ title: 'Оплаты ученика' }} />
+      <Stack.Screen name="StudentBalances" component={StudentBalancesScreen} options={{ title: 'Оплаты учеников' }} />
+      <Stack.Screen name="BillingEntryForm" component={BillingEntryFormScreen} options={{ title: 'Начисление' }} />
+      <Stack.Screen name="Schedule" component={ScheduleScreen} options={{ title: 'Расписание школы' }} />
+      <Stack.Screen name="LessonChange" component={LessonChangeScreen} options={{ title: 'Изменение занятия' }} />
     </Stack.Navigator>
   );
 }
