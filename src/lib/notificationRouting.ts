@@ -52,13 +52,8 @@ function navigateToTarget(navigation: AppNavigationRef, role: UserRole, target: 
       }
       break;
     case 'Announcements':
-      if (role === 'staff') {
-        navigation.navigate('StaffTabs', { screen: 'AnnouncementsTab' });
-      } else if (role === 'parent') {
-        navigation.navigate('ParentTabs', { screen: 'AnnouncementsTab' });
-      } else {
-        navigation.navigate('StudentTabs', { screen: 'AnnouncementsTab' });
-      }
+      // «Сообщения» есть в стеке каждой роли.
+      navigation.navigate('Messages');
       break;
   }
 }

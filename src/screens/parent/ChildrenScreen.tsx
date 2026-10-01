@@ -45,7 +45,6 @@ export function ChildrenScreen() {
 
   return (
     <Screen scroll refreshing={loading} onRefresh={load}>
-      <Text style={styles.header}>Мои дети</Text>
       {children.length === 0 && !loading ? (
         <Text style={styles.empty}>
           Пока ни один ребёнок не привязан к вашему аккаунту. Обратитесь к администрации школы.

@@ -19,6 +19,8 @@ export function ParentProfileScreen() {
   return (
     <Screen scroll>
       <ProfileHeader profile={profile} />
+      <Button title="Мои дети" onPress={() => navigation.navigate('Children')} />
+      <View style={{ height: spacing.sm }} />
       <Button title="Редактировать профиль" variant="secondary" onPress={() => navigation.navigate('EditProfile')} />
       <View style={{ height: spacing.sm }} />
       <Button

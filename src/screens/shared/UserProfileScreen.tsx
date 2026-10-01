@@ -34,7 +34,7 @@ type NavParamList = StudentStackParamList & StaffStackParamList;
 const ROLE_CHANGE: Record<UserRole, { button: string; question: (name: string) => string }> = {
   staff: {
     button: 'Сделать сотрудником',
-    question: (name) => `${name} получит права сотрудника: модерация, оценки, посещаемость и объявления.`,
+    question: (name) => `${name} получит права сотрудника: модерация, группы, расписание и сообщения.`,
   },
   student: {
     button: 'Сделать учеником',

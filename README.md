@@ -55,7 +55,8 @@
    `0004_homework_attachments.sql`, `0005_security_fixes.sql`,
    `0006_notification_settings.sql`, `0007_push_security.sql`,
    `0008_staff_role_assignment.sql`, `0009_private_data.sql`,
-   `0010_student_portfolio.sql`, `0011_payments_schedule.sql`.
+   `0010_student_portfolio.sql`, `0011_payments_schedule.sql`,
+   `0012_parents_progress.sql`, `0014_signup_account_type.sql`.
 3. Скопируйте `.env.example` в `.env` и укажите `EXPO_PUBLIC_SUPABASE_URL`
    и `EXPO_PUBLIC_SUPABASE_ANON_KEY` из настроек вашего проекта Supabase.
 4. Установите зависимости и запустите:
@@ -89,8 +90,11 @@ supabase/
 
 ## Роли и данные
 
-Роль (`student` / `staff`) хранится в `profiles.role`. Все новые
-пользователи регистрируются учениками. Сотрудником человека делает другой
+Роль (`student` / `parent` / `staff`) хранится в `profiles.role`. При
+регистрации человек выбирает «Ученик» или «Родитель» и группу: ученик сразу
+попадает в группу (`group_members`), родитель видит расписание и сообщения
+выбранной группы (`parent_groups`). Доступ родителя к данным конкретного
+ребёнка открывает сотрудник, привязав ребёнка. Сотрудником человека делает другой
 сотрудник кнопкой «Сделать сотрудником» на экране его профиля (RPC
 `set_user_role`). Первого сотрудника нужно назначить один раз в SQL Editor:
 

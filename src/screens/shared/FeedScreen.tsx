@@ -48,7 +48,6 @@ export function FeedScreen() {
 
   return (
     <Screen scroll refreshing={loading} onRefresh={load}>
-      <Text style={styles.header}>Лента достижений</Text>
       {profile?.role !== 'parent' ? (
         <>
           <Button title="+ Поделиться работой" onPress={() => navigation.navigate('CreatePost')} />

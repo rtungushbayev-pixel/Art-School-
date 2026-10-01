@@ -11,6 +11,7 @@ import {
   changeKey,
   fetchLessonChanges,
   fetchScheduleLessons,
+  fetchParentGroupIds,
   fetchStudentGroupIds,
   formatDayMonth,
   formatTime,
@@ -44,7 +45,11 @@ export function ScheduleScreen() {
     if (!profile) return;
     setLoading(true);
     try {
-      const groupIds = isStaff ? null : await fetchStudentGroupIds(profile.id);
+      const groupIds = isStaff
+        ? null
+        : profile.role === 'parent'
+          ? await fetchParentGroupIds(profile.id)
+          : await fetchStudentGroupIds(profile.id);
       const lessonRows = await fetchScheduleLessons(groupIds);
       const changeRows = await fetchLessonChanges(
         lessonRows.map((l) => l.id),
@@ -84,7 +89,6 @@ export function ScheduleScreen() {
 
   return (
     <Screen scroll refreshing={loading} onRefresh={load}>
-      <Text style={styles.header}>Расписание занятий</Text>
 
       <View style={styles.weekNav}>
         <Pressable hitSlop={12} onPress={() => setWeekOffset((w) => w - 1)}>
@@ -113,7 +117,9 @@ export function ScheduleScreen() {
       {visibleLessons.length === 0 && !loading ? (
         <Card>
           <Text style={styles.empty}>
-            {isStaff ? 'Пока нет занятий в расписании' : 'Вы пока не записаны в группу, или у группы нет занятий'}
+            {isStaff ? 'Пока нет занятий в расписании' : profile?.role === 'parent'
+                ? 'Группа не выбрана, или у группы пока нет занятий'
+                : 'Вы пока не записаны в группу, или у группы нет занятий'}
           </Text>
         </Card>
       ) : null}

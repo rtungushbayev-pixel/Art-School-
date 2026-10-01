@@ -5,13 +5,11 @@ import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { Avatar } from '../../components/Avatar';
-import { AttendanceSummary } from '../../components/AttendanceSummary';
 import { ProgressNoteCard } from '../../components/ProgressNoteCard';
 import { supabase } from '../../lib/supabase';
 import { fetchUserPosts } from '../../lib/posts';
 import {
   fetchProgressNotes,
-  fetchStudentAttendance,
   fetchStudentGroupNames,
   fetchStudentPhotos,
   type ProgressNoteWithAuthor,
@@ -19,7 +17,7 @@ import {
 } from '../../lib/parents';
 import { useAuth } from '../../hooks/useAuth';
 import { colors, radius, spacing } from '../../theme/colors';
-import type { Attendance, Profile } from '../../types/database';
+import type { Profile } from '../../types/database';
 import type { PostCardData } from '../../components/PostCard';
 import type { ParentStackParamList } from '../../navigation/types';
 
@@ -32,21 +30,12 @@ type GalleryItem =
   | { kind: 'post'; id: string; created_at: string; imageUrl: string | null; post: PostCardData }
   | { kind: 'photo'; id: string; created_at: string; imageUrl: string | null; photo: StudentPhotoWithUrl };
 
-const ATTENDANCE_DAYS = 30;
-
-function daysAgoISO(days: number) {
-  const date = new Date();
-  date.setDate(date.getDate() - days);
-  return date.toISOString().slice(0, 10);
-}
-
 export function ChildDetailScreen({ route, navigation }: Props) {
   const { childId } = route.params;
   const { profile: viewer } = useAuth();
   const [tab, setTab] = useState<Tab>('progress');
   const [child, setChild] = useState<Profile | null>(null);
   const [groups, setGroups] = useState<string[]>([]);
-  const [attendance, setAttendance] = useState<Attendance[]>([]);
   const [notes, setNotes] = useState<ProgressNoteWithAuthor[]>([]);
   const [gallery, setGallery] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,15 +45,13 @@ export function ChildDetailScreen({ route, navigation }: Props) {
     try {
       const { data } = await supabase.from('profiles').select('*').eq('id', childId).single();
       setChild(data as Profile);
-      const [groupNames, attendanceRows, progress, works, photos] = await Promise.all([
+      const [groupNames, progress, works, photos] = await Promise.all([
         fetchStudentGroupNames(childId),
-        fetchStudentAttendance(childId, daysAgoISO(ATTENDANCE_DAYS)),
         fetchProgressNotes(childId),
         fetchUserPosts(childId, viewer?.id),
         fetchStudentPhotos(childId),
       ]);
       setGroups(groupNames);
-      setAttendance(attendanceRows);
       setNotes(progress);
       const items: GalleryItem[] = [
         ...works.map((post) => ({
@@ -124,7 +111,6 @@ export function ChildDetailScreen({ route, navigation }: Props) {
 
       {tab === 'progress' ? (
         <>
-          <AttendanceSummary rows={attendance} periodLabel={`за ${ATTENDANCE_DAYS} дней`} />
           <Text style={styles.sectionTitle}>Отзывы преподавателей</Text>
           {notes.length === 0 && !loading ? (
             <Text style={styles.empty}>Преподаватели ещё не оставляли отзывов</Text>

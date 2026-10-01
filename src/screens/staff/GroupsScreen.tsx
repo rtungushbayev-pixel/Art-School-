@@ -30,10 +30,8 @@ export function GroupsScreen() {
 
   return (
     <Screen scroll refreshing={loading} onRefresh={load}>
-      <Text style={styles.header}>Группы</Text>
       <Button title="+ Новая группа" onPress={() => navigation.navigate('CreateGroup')} />
       <View style={{ height: spacing.sm }} />
-      <Button title="Расписание школы" variant="secondary" onPress={() => navigation.navigate('Schedule')} />
       <Button title="Ученики и родители" variant="secondary" onPress={() => navigation.navigate('People')} />
       <View style={{ height: spacing.md }} />
 

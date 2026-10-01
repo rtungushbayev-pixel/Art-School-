@@ -8,6 +8,8 @@ import { EditProfileScreen } from '../screens/shared/EditProfileScreen';
 import { NotificationSettingsScreen } from '../screens/shared/NotificationSettingsScreen';
 import { UserProfileScreen } from '../screens/shared/UserProfileScreen';
 import { PhotoViewScreen } from '../screens/shared/PhotoViewScreen';
+import { AnnouncementsScreen } from '../screens/student/AnnouncementsScreen';
+import { ChildrenScreen } from '../screens/parent/ChildrenScreen';
 import { colors } from '../theme/colors';
 
 const Stack = createNativeStackNavigator<ParentStackParamList>();
@@ -22,6 +24,8 @@ export function ParentNavigator() {
       }}
     >
       <Stack.Screen name="ParentTabs" component={ParentTabs} options={{ headerShown: false }} />
+      <Stack.Screen name="Messages" component={AnnouncementsScreen} options={{ title: 'Сообщения' }} />
+      <Stack.Screen name="Children" component={ChildrenScreen} options={{ title: 'Мои дети' }} />
       <Stack.Screen name="ChildDetail" component={ChildDetailScreen} options={{ title: 'Успехи ребёнка' }} />
       <Stack.Screen name="PostDetail" component={PostDetailScreen} options={{ title: 'Публикация' }} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Редактирование профиля' }} />

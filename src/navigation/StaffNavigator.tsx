@@ -3,7 +3,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { StaffStackParamList } from './types';
 import { StaffTabs } from './StaffTabs';
 import { ComposeAnnouncementScreen } from '../screens/staff/ComposeAnnouncementScreen';
-import { AttendanceGroupScreen } from '../screens/staff/AttendanceGroupScreen';
+import { StaffAnnouncementsScreen } from '../screens/staff/AnnouncementsScreen';
+import { MarketplaceScreen } from '../screens/shared/MarketplaceScreen';
 import { PostDetailScreen } from '../screens/shared/PostDetailScreen';
 import { CreatePostScreen } from '../screens/shared/CreatePostScreen';
 import { EditProfileScreen } from '../screens/shared/EditProfileScreen';
@@ -19,7 +20,6 @@ import { CreateLessonScreen } from '../screens/staff/CreateLessonScreen';
 import { ListingDetailScreen } from '../screens/shared/ListingDetailScreen';
 import { CreateListingScreen } from '../screens/shared/CreateListingScreen';
 import { PaymentsScreen } from '../screens/shared/PaymentsScreen';
-import { ScheduleScreen } from '../screens/shared/ScheduleScreen';
 import { StudentBalancesScreen } from '../screens/staff/StudentBalancesScreen';
 import { BillingEntryFormScreen } from '../screens/staff/BillingEntryFormScreen';
 import { LessonChangeScreen } from '../screens/staff/LessonChangeScreen';
@@ -42,12 +42,13 @@ export function StaffNavigator() {
       }}
     >
       <Stack.Screen name="StaffTabs" component={StaffTabs} options={{ headerShown: false }} />
+      <Stack.Screen name="Messages" component={StaffAnnouncementsScreen} options={{ title: 'Сообщения' }} />
+      <Stack.Screen name="Market" component={MarketplaceScreen} options={{ title: 'Продажа работ' }} />
       <Stack.Screen
         name="ComposeAnnouncement"
         component={ComposeAnnouncementScreen}
         options={{ title: 'Новое объявление' }}
       />
-      <Stack.Screen name="AttendanceGroup" component={AttendanceGroupScreen} options={{ title: 'Посещаемость' }} />
       <Stack.Screen name="PostDetail" component={PostDetailScreen} options={{ title: 'Публикация' }} />
       <Stack.Screen name="CreatePost" component={CreatePostScreen} options={{ title: 'Новая работа' }} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Редактирование профиля' }} />
@@ -73,7 +74,6 @@ export function StaffNavigator() {
       <Stack.Screen name="Payments" component={PaymentsScreen} options={{ title: 'Оплаты ученика' }} />
       <Stack.Screen name="StudentBalances" component={StudentBalancesScreen} options={{ title: 'Оплаты учеников' }} />
       <Stack.Screen name="BillingEntryForm" component={BillingEntryFormScreen} options={{ title: 'Начисление' }} />
-      <Stack.Screen name="Schedule" component={ScheduleScreen} options={{ title: 'Расписание школы' }} />
       <Stack.Screen name="LessonChange" component={LessonChangeScreen} options={{ title: 'Изменение занятия' }} />
       <Stack.Screen name="People" component={PeopleScreen} options={{ title: 'Ученики и родители' }} />
       <Stack.Screen name="LinkChild" component={LinkChildScreen} options={{ title: 'Привязать ребёнка' }} />

@@ -27,7 +27,6 @@ export function AnnouncementsScreen() {
 
   return (
     <Screen scroll refreshing={loading} onRefresh={load}>
-      <Text style={styles.header}>Объявления</Text>
       {items.length === 0 && !loading ? <Text style={styles.empty}>Объявлений пока нет</Text> : null}
       {items.map((item) => (
         <AnnouncementCard key={item.id} announcement={item} />
