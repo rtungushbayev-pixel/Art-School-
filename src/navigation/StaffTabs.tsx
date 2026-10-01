@@ -8,6 +8,31 @@ import { GroupsScreen } from '../screens/staff/GroupsScreen';
 import { ModerationScreen } from '../screens/staff/ModerationScreen';
 import { FeedScreen } from '../screens/shared/FeedScreen';
 import { ProfileScreen } from '../screens/shared/ProfileScreen';
+import { useStrings } from '../i18n';
+
+const STRINGS = {
+  ru: {
+    schedule: 'Расписание',
+    groups: 'Группы',
+    community: 'Комьюнити',
+    review: 'Проверка',
+    profile: 'Профиль',
+  },
+  kk: {
+    schedule: 'Кесте',
+    groups: 'Топтар',
+    community: 'Қауымдастық',
+    review: 'Тексеру',
+    profile: 'Профиль',
+  },
+  en: {
+    schedule: 'Schedule',
+    groups: 'Groups',
+    community: 'Community',
+    review: 'Review',
+    profile: 'Profile',
+  },
+};
 
 const Tab = createBottomTabNavigator<StaffTabParamList>();
 
@@ -23,13 +48,14 @@ const TAB_CONFIG: Record<keyof StaffTabParamList, TabConfig> = {
 };
 
 export function StaffTabs() {
+  const s = useStrings(STRINGS);
   return (
     <Tab.Navigator initialRouteName="FeedTab" screenOptions={makeTabScreenOptions(TAB_CONFIG, { showFriends: true, showMarket: true })}>
-      <Tab.Screen name="ScheduleTab" component={ScheduleScreen} options={{ title: 'Расписание' }} />
-      <Tab.Screen name="GroupsTab" component={GroupsScreen} options={{ title: 'Группы' }} />
-      <Tab.Screen name="FeedTab" component={FeedScreen} options={{ title: 'Комьюнити' }} />
-      <Tab.Screen name="ModerationTab" component={ModerationScreen} options={{ title: 'Проверка' }} />
-      <Tab.Screen name="ProfileTab" component={ProfileScreen} options={{ title: 'Профиль' }} />
+      <Tab.Screen name="ScheduleTab" component={ScheduleScreen} options={{ title: s.schedule }} />
+      <Tab.Screen name="GroupsTab" component={GroupsScreen} options={{ title: s.groups }} />
+      <Tab.Screen name="FeedTab" component={FeedScreen} options={{ title: s.community }} />
+      <Tab.Screen name="ModerationTab" component={ModerationScreen} options={{ title: s.review }} />
+      <Tab.Screen name="ProfileTab" component={ProfileScreen} options={{ title: s.profile }} />
     </Tab.Navigator>
   );
 }

@@ -4,6 +4,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, paint, radius, spacing } from '../theme/colors';
 import { ACHIEVEMENT_KIND_LABELS } from '../lib/portfolio';
 import type { AchievementKind, StudentAchievement } from '../types/database';
+import { useStrings } from '../i18n';
+
+const STRINGS = {
+  ru: { school: 'Школа' },
+  kk: { school: 'Мектеп' },
+  en: { school: 'School' },
+};
 
 const KIND_ICONS: Record<AchievementKind, keyof typeof Ionicons.glyphMap> = {
   competition: 'trophy-outline',
@@ -32,6 +39,7 @@ interface AchievementListProps {
 }
 
 export function AchievementList({ achievements, onPress }: AchievementListProps) {
+  const s = useStrings(STRINGS);
   return (
     <View style={styles.list}>
       {achievements.map((item) => {
@@ -55,7 +63,7 @@ export function AchievementList({ achievements, onPress }: AchievementListProps)
             {item.verified ? (
               <View style={styles.verified}>
                 <Ionicons name="checkmark-circle" size={14} color={colors.success} />
-                <Text style={styles.verifiedText}>Школа</Text>
+                <Text style={styles.verifiedText}>{s.school}</Text>
               </View>
             ) : null}
           </Pressable>

@@ -7,18 +7,47 @@ import { colorFromSeed, colors, radius, shadow, spacing } from '../theme/colors'
 import type { EnrollmentStatus, Profile, UserRole } from '../types/database';
 
 const AVATAR_SIZE = 168;
+import { useStrings } from '../i18n';
 
-const ROLE_LABELS: Record<UserRole, string> = {
-  student: 'Ученик',
-  staff: 'Сотрудник школы',
-  parent: 'Родитель',
+const STRINGS = {
+  ru: {
+    roles: { student: 'Ученик', staff: 'Сотрудник школы', parent: 'Родитель' } as Record<UserRole, string>,
+    statuses: {
+      planning: 'Планирует поступать',
+      applied: 'Подал документы',
+      enrolled: 'Поступил(а)',
+    } as Record<EnrollmentStatus, string>,
+    studySince: (year: string | number) => `в школе с ${year} года`,
+    noName: 'Без имени',
+    changePhoto: 'Изменить фото',
+    goal: 'Цель',
+  },
+  kk: {
+    roles: { student: 'Оқушы', staff: 'Мектеп қызметкері', parent: 'Ата-ана' } as Record<UserRole, string>,
+    statuses: {
+      planning: 'Түсуді жоспарлап жүр',
+      applied: 'Құжат тапсырды',
+      enrolled: 'Оқуға түсті',
+    } as Record<EnrollmentStatus, string>,
+    studySince: (year: string | number) => `мектепте ${year} жылдан бері`,
+    noName: 'Аты жоқ',
+    changePhoto: 'Фотоны өзгерту',
+    goal: 'Мақсат',
+  },
+  en: {
+    roles: { student: 'Student', staff: 'School staff', parent: 'Parent' } as Record<UserRole, string>,
+    statuses: {
+      planning: 'Planning to apply',
+      applied: 'Applied',
+      enrolled: 'Enrolled',
+    } as Record<EnrollmentStatus, string>,
+    studySince: (year: string | number) => `at the school since ${year}`,
+    noName: 'No name',
+    changePhoto: 'Change photo',
+    goal: 'Goal',
+  },
 };
 
-const STATUS_LABELS: Record<EnrollmentStatus, string> = {
-  planning: 'Планирует поступать',
-  applied: 'Подал документы',
-  enrolled: 'Поступил(а)',
-};
 
 interface ProfileHeaderProps {
   profile: Profile;
@@ -30,9 +59,10 @@ interface ProfileHeaderProps {
 }
 
 export function ProfileHeader({ profile, groups, onAvatarPress, avatarUploading }: ProfileHeaderProps) {
+  const s = useStrings(STRINGS);
   const studyLine = [
     profile.specialization,
-    profile.study_since ? `в школе с ${profile.study_since} года` : null,
+    profile.study_since ? s.studySince(profile.study_since) : null,
   ]
     .filter(Boolean)
     .join(' · ');
@@ -41,7 +71,7 @@ export function ProfileHeader({ profile, groups, onAvatarPress, avatarUploading 
   // Бледное и уходит в фон экрана, поэтому не спорит с фото на аватаре,
   // а белая рамка отделяет снимок от фона.
   const glow = colorFromSeed(profile.full_name?.trim() || profile.id);
-  const subtitle = [ROLE_LABELS[profile.role], ...(groups ?? []).map((g) => g.name)].join(' · ');
+  const subtitle = [s.roles[profile.role], ...(groups ?? []).map((g) => g.name)].join(' · ');
 
   const avatar = (
     <View style={styles.avatarRing}>
@@ -62,12 +92,12 @@ export function ProfileHeader({ profile, groups, onAvatarPress, avatarUploading 
           </Defs>
           <Rect x="0" y="0" width="100%" height="100%" fill="url(#glow)" />
         </Svg>
-        <Text style={styles.name}>{profile.full_name || 'Без имени'}</Text>
+        <Text style={styles.name}>{profile.full_name || s.noName}</Text>
         <Text style={styles.subtitle} numberOfLines={2}>
           {subtitle}
         </Text>
       {onAvatarPress ? (
-        <Pressable onPress={onAvatarPress} disabled={avatarUploading} accessibilityLabel="Изменить фото">
+        <Pressable onPress={onAvatarPress} disabled={avatarUploading} accessibilityLabel={s.changePhoto}>
           {avatar}
           <View style={styles.cameraBadge}>
             {avatarUploading ? (
@@ -87,7 +117,7 @@ export function ProfileHeader({ profile, groups, onAvatarPress, avatarUploading 
       {profile.role === 'student' && profile.target_institution ? (
         <View style={styles.institutionBadge}>
           <Text style={styles.institutionStatus}>
-            {profile.target_institution_status ? STATUS_LABELS[profile.target_institution_status] : 'Цель'}
+            {profile.target_institution_status ? s.statuses[profile.target_institution_status] : s.goal}
           </Text>
           <Text style={styles.institutionName}>{profile.target_institution}</Text>
         </View>

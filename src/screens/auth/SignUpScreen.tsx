@@ -4,20 +4,98 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { TextField } from '../../components/TextField';
 import { Button } from '../../components/Button';
+import { LanguageSwitcher } from '../../components/LanguageSwitcher';
 import { useAuth, type SignUpAccountType } from '../../hooks/useAuth';
 import { fetchSignupGroups, type SignupGroup } from '../../lib/schedule';
+import { useStrings } from '../../i18n';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { AuthStackParamList } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'SignUp'>;
 
-const ACCOUNT_TYPES: { value: SignUpAccountType; label: string }[] = [
-  { value: 'student', label: 'Ученик' },
-  { value: 'parent', label: 'Родитель' },
-];
+const ACCOUNT_TYPES: SignUpAccountType[] = ['student', 'parent'];
+
+const STRINGS = {
+  ru: {
+    student: 'Ученик',
+    parent: 'Родитель',
+    fillAll: 'Заполните все поля',
+    passwordShort: 'Пароль должен быть не короче 6 символов',
+    chooseGroup: 'Выберите свою группу',
+    signUpFailed: 'Не удалось зарегистрироваться',
+    confirmEmail: 'Подтвердите почту',
+    confirmEmailText: (email: string) =>
+      `Мы отправили письмо на ${email}. Откройте ссылку из письма на этом телефоне. Если письма нет, проверьте папку «Спам».`,
+    title: 'Регистрация',
+    signUpAs: 'Зарегистрироваться как',
+    yourFullName: 'Ваше полное имя',
+    fullName: 'Полное имя',
+    namePlaceholder: 'Иванов Иван',
+    password: 'Пароль',
+    yourGroup: 'Ваша группа',
+    noGroups: 'Группы пока не созданы. Группу назначит администрация школы.',
+    parentHint: 'После регистрации добавьте ребёнка в Профиль → «Мои дети»: появятся его расписание, успехи и работы.',
+    studentHint: 'Расписание вашей группы появится автоматически.',
+    staffHint: 'Преподавателей и сотрудников добавляет администрация школы.',
+    signUp: 'Зарегистрироваться',
+    haveAccount: 'Уже есть аккаунт?',
+    signIn: 'Войти',
+  },
+  kk: {
+    student: 'Оқушы',
+    parent: 'Ата-ана',
+    fillAll: 'Барлық өрістерді толтырыңыз',
+    passwordShort: 'Құпиясөз кемінде 6 таңбадан тұруы керек',
+    chooseGroup: 'Өз тобыңызды таңдаңыз',
+    signUpFailed: 'Тіркелу мүмкін болмады',
+    confirmEmail: 'Поштаңызды растаңыз',
+    confirmEmailText: (email: string) =>
+      `Біз ${email} мекенжайына хат жібердік. Хаттағы сілтемені осы телефонда ашыңыз. Хат келмесе, «Спам» қалтасын тексеріңіз.`,
+    title: 'Тіркелу',
+    signUpAs: 'Кім ретінде тіркелесіз',
+    yourFullName: 'Толық аты-жөніңіз',
+    fullName: 'Толық аты-жөні',
+    namePlaceholder: 'Асанов Асан',
+    password: 'Құпиясөз',
+    yourGroup: 'Сіздің тобыңыз',
+    noGroups: 'Топтар әлі құрылмаған. Топты мектеп әкімшілігі тағайындайды.',
+    parentHint: 'Тіркелгеннен кейін баланы Профиль → «Менің балаларым» бөліміне қосыңыз: оның кестесі, жетістіктері мен жұмыстары пайда болады.',
+    studentHint: 'Тобыңыздың кестесі автоматты түрде пайда болады.',
+    staffHint: 'Мұғалімдер мен қызметкерлерді мектеп әкімшілігі қосады.',
+    signUp: 'Тіркелу',
+    haveAccount: 'Аккаунтыңыз бар ма?',
+    signIn: 'Кіру',
+  },
+  en: {
+    student: 'Student',
+    parent: 'Parent',
+    fillAll: 'Please fill in all fields',
+    passwordShort: 'Password must be at least 6 characters',
+    chooseGroup: 'Choose your group',
+    signUpFailed: 'Could not sign up',
+    confirmEmail: 'Confirm your email',
+    confirmEmailText: (email: string) =>
+      `We sent an email to ${email}. Open the link from the email on this phone. If you don't see it, check your Spam folder.`,
+    title: 'Sign up',
+    signUpAs: 'Sign up as',
+    yourFullName: 'Your full name',
+    fullName: 'Full name',
+    namePlaceholder: 'John Smith',
+    password: 'Password',
+    yourGroup: 'Your group',
+    noGroups: 'No groups have been created yet. The school administration will assign your group.',
+    parentHint: 'After signing up, add your child in Profile → "My children" to see their schedule, progress and artworks.',
+    studentHint: "Your group's schedule will appear automatically.",
+    staffHint: 'Teachers and staff are added by the school administration.',
+    signUp: 'Sign up',
+    haveAccount: 'Already have an account?',
+    signIn: 'Sign in',
+  },
+};
 
 export function SignUpScreen({ navigation }: Props) {
   const { signUp } = useAuth();
+  const s = useStrings(STRINGS);
   const [accountType, setAccountType] = useState<SignUpAccountType>('student');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -38,15 +116,15 @@ export function SignUpScreen({ navigation }: Props) {
 
   const onSubmit = async () => {
     if (!fullName || !email || !password) {
-      Alert.alert('Заполните все поля');
+      Alert.alert(s.fillAll);
       return;
     }
     if (password.length < 6) {
-      Alert.alert('Пароль должен быть не короче 6 символов');
+      Alert.alert(s.passwordShort);
       return;
     }
     if (!isParent && groups.length > 0 && !groupId) {
-      Alert.alert('Выберите свою группу');
+      Alert.alert(s.chooseGroup);
       return;
     }
     setLoading(true);
@@ -60,12 +138,9 @@ export function SignUpScreen({ navigation }: Props) {
     });
     setLoading(false);
     if (error) {
-      Alert.alert('Не удалось зарегистрироваться', error);
+      Alert.alert(s.signUpFailed, error);
     } else if (needsConfirmation) {
-      Alert.alert(
-        'Подтвердите почту',
-        `Мы отправили письмо на ${email.trim()}. Откройте ссылку из письма на этом телефоне. Если письма нет, проверьте папку «Спам».`
-      );
+      Alert.alert(s.confirmEmail, s.confirmEmailText(email.trim()));
       navigation.navigate('Login');
     }
     // Иначе пользователь уже вошёл, и приложение само откроет главный экран.
@@ -73,26 +148,27 @@ export function SignUpScreen({ navigation }: Props) {
 
   return (
     <Screen scroll>
-      <Text style={styles.title}>Регистрация</Text>
+      <LanguageSwitcher compact />
+      <Text style={styles.title}>{s.title}</Text>
 
-      <Text style={styles.label}>Зарегистрироваться как</Text>
+      <Text style={styles.label}>{s.signUpAs}</Text>
       <View style={styles.segment}>
-        {ACCOUNT_TYPES.map(({ value, label }) => (
+        {ACCOUNT_TYPES.map((value) => (
           <Pressable
             key={value}
             onPress={() => setAccountType(value)}
             style={[styles.segmentItem, accountType === value && styles.segmentItemActive]}
           >
-            <Text style={[styles.segmentText, accountType === value && styles.segmentTextActive]}>{label}</Text>
+            <Text style={[styles.segmentText, accountType === value && styles.segmentTextActive]}>{s[value]}</Text>
           </Pressable>
         ))}
       </View>
 
       <TextField
-        label={isParent ? 'Ваше полное имя' : 'Полное имя'}
+        label={isParent ? s.yourFullName : s.fullName}
         value={fullName}
         onChangeText={setFullName}
-        placeholder="Иванов Иван"
+        placeholder={s.namePlaceholder}
       />
       <TextField
         label="Email"
@@ -102,13 +178,13 @@ export function SignUpScreen({ navigation }: Props) {
         keyboardType="email-address"
         placeholder="you@example.com"
       />
-      <TextField label="Пароль" value={password} onChangeText={setPassword} secureTextEntry placeholder="••••••••" />
+      <TextField label={s.password} value={password} onChangeText={setPassword} secureTextEntry placeholder="••••••••" />
 
-      {isParent ? null : <Text style={styles.label}>Ваша группа</Text>}
+      {isParent ? null : <Text style={styles.label}>{s.yourGroup}</Text>}
       {isParent ? null : groupsLoading ? (
         <ActivityIndicator color={colors.primary} style={styles.groupsLoading} />
       ) : groups.length === 0 ? (
-        <Text style={styles.hint}>Группы пока не созданы. Группу назначит администрация школы.</Text>
+        <Text style={styles.hint}>{s.noGroups}</Text>
       ) : (
         <View style={styles.groups}>
           {groups.map((group) => (
@@ -125,18 +201,18 @@ export function SignUpScreen({ navigation }: Props) {
 
       <Text style={styles.hint}>
         {isParent
-          ? 'После регистрации добавьте ребёнка в Профиль → «Мои дети»: появятся его расписание, успехи и работы.'
-          : 'Расписание вашей группы появится автоматически.'}{' '}
-        Преподавателей и сотрудников добавляет администрация школы.
+          ? s.parentHint
+          : s.studentHint}{' '}
+        {s.staffHint}
       </Text>
 
-      <Button title="Зарегистрироваться" onPress={onSubmit} loading={loading} />
+      <Button title={s.signUp} onPress={onSubmit} loading={loading} />
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>Уже есть аккаунт?</Text>
+        <Text style={styles.footerText}>{s.haveAccount}</Text>
         <Text style={styles.link} onPress={() => navigation.navigate('Login')}>
           {' '}
-          Войти
+          {s.signIn}
         </Text>
       </View>
     </Screen>

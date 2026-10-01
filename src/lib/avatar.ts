@@ -1,12 +1,19 @@
 import { supabase } from './supabase';
 import { askImageSource, pickImage } from './pickImage';
+import { pick } from '../i18n';
+
+const STRINGS = {
+  ru: { profilePhoto: 'Фото профиля' },
+  kk: { profilePhoto: 'Профиль фотосы' },
+  en: { profilePhoto: 'Profile photo' },
+};
 
 /**
  * Спрашивает, откуда взять фото, загружает его в бакет avatars и возвращает
  * публичную ссылку. null — если пользователь передумал.
  */
 export async function pickAndUploadAvatar(profileId: string): Promise<string | null> {
-  const source = await askImageSource('Фото профиля');
+  const source = await askImageSource(pick(STRINGS).profilePhoto);
   if (!source) return null;
   const asset = await pickImage(source);
   if (!asset) return null;

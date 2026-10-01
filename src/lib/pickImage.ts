@@ -1,14 +1,40 @@
 import { Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { pick } from '../i18n';
+
+const STRINGS = {
+  ru: {
+    takePhoto: 'Сделать фото',
+    chooseFromGallery: 'Выбрать из галереи',
+    cancel: 'Отмена',
+    cameraAccess: 'Нужен доступ к камере',
+    galleryAccess: 'Нужен доступ к галерее',
+  },
+  kk: {
+    takePhoto: 'Суретке түсіру',
+    chooseFromGallery: 'Галереядан таңдау',
+    cancel: 'Болдырмау',
+    cameraAccess: 'Камераға рұқсат қажет',
+    galleryAccess: 'Галереяға рұқсат қажет',
+  },
+  en: {
+    takePhoto: 'Take photo',
+    chooseFromGallery: 'Choose from gallery',
+    cancel: 'Cancel',
+    cameraAccess: 'Camera access is required',
+    galleryAccess: 'Photo library access is required',
+  },
+};
 
 export type ImageSource = 'camera' | 'library';
 
 export function askImageSource(title: string): Promise<ImageSource | null> {
+  const s = pick(STRINGS);
   return new Promise((resolve) => {
     Alert.alert(title, undefined, [
-      { text: 'Сделать фото', onPress: () => resolve('camera') },
-      { text: 'Выбрать из галереи', onPress: () => resolve('library') },
-      { text: 'Отмена', style: 'cancel', onPress: () => resolve(null) },
+      { text: s.takePhoto, onPress: () => resolve('camera') },
+      { text: s.chooseFromGallery, onPress: () => resolve('library') },
+      { text: s.cancel, style: 'cancel', onPress: () => resolve(null) },
     ]);
   });
 }
@@ -20,7 +46,8 @@ export async function pickImage(source: ImageSource): Promise<ImagePicker.ImageP
       ? await ImagePicker.requestCameraPermissionsAsync()
       : await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!permission.granted) {
-    Alert.alert(source === 'camera' ? 'Нужен доступ к камере' : 'Нужен доступ к галерее');
+    const s = pick(STRINGS);
+    Alert.alert(source === 'camera' ? s.cameraAccess : s.galleryAccess);
     return null;
   }
   const options: ImagePicker.ImagePickerOptions = {

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { colors } from '../theme/colors';
+import { pick } from '../i18n';
 
 // Короткая заставка при запуске: логотип с лицом основателя «пульсирует»
 // цветными кругами из его же палитры, затем появляется название школы.
@@ -11,6 +12,12 @@ const LOGO_SIZE = 200;
 const SHOW_MS = 2600;
 const RING_COLORS = ['#EF457A', '#FBB21E', '#4A2F91', '#34C3F1'];
 
+const STRINGS = {
+  ru: { subtitle: 'Школа искусств и дизайна им. А. Кастеева' },
+  kk: { subtitle: 'Ә. Қастеев атындағы өнер және дизайн мектебі' },
+  en: { subtitle: 'A. Kasteyev School of Art and Design' },
+};
+
 export function AnimatedSplash({ onFinish }: { onFinish: () => void }) {
   const logoScale = useRef(new Animated.Value(0.85)).current;
   const titleOpacity = useRef(new Animated.Value(0)).current;
@@ -19,6 +26,8 @@ export function AnimatedSplash({ onFinish }: { onFinish: () => void }) {
   const rings = useRef(RING_COLORS.map(() => new Animated.Value(0))).current;
   const [started, setStarted] = useState(false);
   const finishing = useRef(false);
+  // Заставка стоит вне LanguageProvider, поэтому язык берётся напрямую.
+  const s = pick(STRINGS);
 
   const finish = () => {
     if (finishing.current) return;
@@ -100,7 +109,7 @@ export function AnimatedSplash({ onFinish }: { onFinish: () => void }) {
           KasteyevSchool
         </Animated.Text>
         <Animated.Text style={[styles.subtitle, { opacity: titleOpacity }]}>
-          Школа искусств и дизайна им. А. Кастеева
+          {s.subtitle}
         </Animated.Text>
       </Pressable>
     </Animated.View>
