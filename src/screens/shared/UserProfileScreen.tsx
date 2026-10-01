@@ -8,6 +8,7 @@ import { Screen } from '../../components/Screen';
 import { ProfileHeader } from '../../components/ProfileHeader';
 import { Button } from '../../components/Button';
 import { PortfolioSections } from '../../components/PortfolioSections';
+import { ProfileTabs, type ProfileTab } from '../../components/ProfileTabs';
 import { supabase } from '../../lib/supabase';
 import {
   deleteProgressNote,
@@ -77,6 +78,7 @@ export function UserProfileScreen() {
   const [photos, setPhotos] = useState<StudentPhotoWithUrl[]>([]);
   const [friendState, setFriendState] = useState<FriendState | null>(null);
   const [friendBusy, setFriendBusy] = useState(false);
+  const [tab, setTab] = useState<ProfileTab>('profile');
 
   const userId = route.params.userId;
   const viewerIsStaff = viewer?.role === 'staff';
@@ -237,15 +239,6 @@ export function UserProfileScreen() {
           />
         </View>
       ) : null}
-      {profile.role !== 'parent' ? (
-        <View style={styles.friendAction}>
-          <Button
-            title="Все публикации"
-            variant="secondary"
-            onPress={() => navigation.navigate('Portfolio', { userId: profile.id })}
-          />
-        </View>
-      ) : null}
       {viewerIsStaff && viewer?.id !== profile.id ? (
         <View style={styles.roleAction}>
           {ROLE_ORDER.filter((role) => role !== profile.role).map((role) => (
@@ -341,7 +334,9 @@ export function UserProfileScreen() {
           )}
         </>
       ) : null}
+      <ProfileTabs value={tab} onChange={setTab} />
       <PortfolioSections
+        show={tab}
         posts={posts}
         achievements={achievements}
         isStudent={profile.role === 'student'}

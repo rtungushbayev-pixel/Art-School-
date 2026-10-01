@@ -22,6 +22,8 @@ interface PortfolioSectionsProps {
   onOpenPortfolio: () => void;
   onAddAchievement: () => void;
   onEditAchievement: (achievement: StudentAchievement) => void;
+  // Вкладки профиля: «Профиль» — цифры и достижения, «Публикации» — работы.
+  show?: 'all' | 'profile' | 'posts';
 }
 
 export function PortfolioSections({
@@ -34,15 +36,20 @@ export function PortfolioSections({
   onOpenPortfolio,
   onAddAchievement,
   onEditAchievement,
+  show = 'all',
 }: PortfolioSectionsProps) {
+  const showProfile = show !== 'posts';
+  const showPosts = show !== 'profile';
   const sorted = sortPortfolio(posts);
   const preview = sorted.slice(0, PREVIEW_COUNT);
 
   return (
     <View>
-      <ProfileStats stats={portfolioStats(posts, achievements)} showAchievements={isStudent} />
+      {showProfile ? (
+        <ProfileStats stats={portfolioStats(posts, achievements)} showAchievements={isStudent} />
+      ) : null}
 
-      {isStudent ? (
+      {showProfile && isStudent ? (
         <>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Достижения</Text>
@@ -65,6 +72,8 @@ export function PortfolioSections({
         </>
       ) : null}
 
+      {showPosts ? (
+        <>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>{isOwner ? 'Моё портфолио' : 'Портфолио'}</Text>
         {posts.length > 0 ? (
@@ -75,6 +84,8 @@ export function PortfolioSections({
       </View>
       <PortfolioGrid posts={preview} onPressPost={onOpenPost} showStatus={isOwner} />
       {posts.length === 0 ? <Text style={styles.empty}>Пока нет публикаций</Text> : null}
+        </>
+      ) : null}
     </View>
   );
 }

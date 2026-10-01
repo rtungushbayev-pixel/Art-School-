@@ -6,6 +6,7 @@ import { Screen } from '../../components/Screen';
 import { Button } from '../../components/Button';
 import { ProfileHeader } from '../../components/ProfileHeader';
 import { PortfolioSections } from '../../components/PortfolioSections';
+import { ProfileTabs, type ProfileTab } from '../../components/ProfileTabs';
 import { useAuth } from '../../hooks/useAuth';
 import { changeProfileAvatar } from '../../lib/avatar';
 import { useStudentPortfolio } from '../../hooks/useStudentPortfolio';
@@ -19,6 +20,7 @@ export function ProfileScreen() {
   const { profile, signOut, refreshProfile } = useAuth();
   const { posts, achievements, groups } = useStudentPortfolio(profile?.id, profile?.id);
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [tab, setTab] = useState<ProfileTab>('profile');
 
   const onAvatarPress = async () => {
     if (!profile) return;
@@ -43,28 +45,12 @@ export function ProfileScreen() {
         avatarUploading={avatarUploading}
       />
 
-      <Button title="Редактировать профиль" variant="secondary" onPress={() => navigation.navigate('EditProfile')} />
-      <View style={{ height: spacing.sm }} />
-      <Button
-        title="Уведомления"
-        variant="secondary"
-        onPress={() => navigation.navigate('NotificationSettings')}
-      />
-      <View style={{ height: spacing.sm }} />
-      {profile.role === 'staff' ? (
-        <Button
-          title="Оплаты учеников"
-          variant="secondary"
-          onPress={() => navigation.navigate('StudentBalances')}
-        />
-      ) : (
-        <Button title="Мои оплаты" variant="secondary" onPress={() => navigation.navigate('Payments')} />
-      )}
-      <View style={{ height: spacing.sm }} />
-      <Button title="Выйти" variant="danger" onPress={signOut} />
+      <Button title="Редактировать профиль" onPress={() => navigation.navigate('EditProfile')} />
 
-      <View style={{ height: spacing.md }} />
+      <ProfileTabs value={tab} onChange={setTab} />
+
       <PortfolioSections
+        show={tab}
         posts={posts}
         achievements={achievements}
         isStudent={profile.role === 'student'}
@@ -77,6 +63,29 @@ export function ProfileScreen() {
           navigation.navigate('EditAchievement', { studentId: profile.id, achievementId: a.id })
         }
       />
+
+      {tab === 'profile' ? (
+        <>
+          <View style={{ height: spacing.lg }} />
+          <Button
+            title="Уведомления"
+            variant="secondary"
+            onPress={() => navigation.navigate('NotificationSettings')}
+          />
+          <View style={{ height: spacing.sm }} />
+          {profile.role === 'staff' ? (
+            <Button
+              title="Оплаты учеников"
+              variant="secondary"
+              onPress={() => navigation.navigate('StudentBalances')}
+            />
+          ) : (
+            <Button title="Мои оплаты" variant="secondary" onPress={() => navigation.navigate('Payments')} />
+          )}
+          <View style={{ height: spacing.sm }} />
+          <Button title="Выйти" variant="danger" onPress={signOut} />
+        </>
+      ) : null}
       <View style={{ height: spacing.xl }} />
     </Screen>
   );
