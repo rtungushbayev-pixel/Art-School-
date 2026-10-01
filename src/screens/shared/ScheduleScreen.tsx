@@ -150,6 +150,15 @@ export function ScheduleScreen() {
                   : 'Добавьте ребёнка в Профиль → «Мои дети», и здесь появится его расписание'
                 : 'Вы пока не записаны в группу, или у группы нет занятий'}
           </Text>
+          {isParent && children.length === 0 ? (
+            <Pressable
+              style={styles.addChild}
+              // AddChild есть только в стеке родителя.
+              onPress={() => (navigation as any).navigate('AddChild')}
+            >
+              <Text style={styles.addChildText}>+ Добавить ребёнка</Text>
+            </Pressable>
+          ) : null}
         </Card>
       ) : null}
 
@@ -237,6 +246,15 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
 const styles = StyleSheet.create({
   header: { fontSize: 22, fontWeight: '700', color: colors.text, marginBottom: spacing.md },
   empty: { color: colors.textMuted, textAlign: 'center' },
+  addChild: {
+    alignSelf: 'center',
+    marginTop: spacing.md,
+    backgroundColor: colors.primary,
+    borderRadius: 999,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm + 2,
+  },
+  addChildText: { color: colors.white, fontWeight: '700' },
   weekNav: {
     flexDirection: 'row',
     alignItems: 'center',

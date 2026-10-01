@@ -45,8 +45,8 @@ export function SignUpScreen({ navigation }: Props) {
       Alert.alert('Пароль должен быть не короче 6 символов');
       return;
     }
-    if (groups.length > 0 && !groupId) {
-      Alert.alert(isParent ? 'Выберите группу ребёнка' : 'Выберите свою группу');
+    if (!isParent && groups.length > 0 && !groupId) {
+      Alert.alert('Выберите свою группу');
       return;
     }
     setLoading(true);
@@ -55,7 +55,8 @@ export function SignUpScreen({ navigation }: Props) {
       password,
       fullName: fullName.trim(),
       accountType,
-      groupId,
+      // Родитель группу не выбирает: она берётся из групп ребёнка.
+      groupId: isParent ? null : groupId,
     });
     setLoading(false);
     if (error) {
@@ -103,8 +104,8 @@ export function SignUpScreen({ navigation }: Props) {
       />
       <TextField label="Пароль" value={password} onChangeText={setPassword} secureTextEntry placeholder="••••••••" />
 
-      <Text style={styles.label}>{isParent ? 'Группа, в которой учится ребёнок' : 'Ваша группа'}</Text>
-      {groupsLoading ? (
+      {isParent ? null : <Text style={styles.label}>Ваша группа</Text>}
+      {isParent ? null : groupsLoading ? (
         <ActivityIndicator color={colors.primary} style={styles.groupsLoading} />
       ) : groups.length === 0 ? (
         <Text style={styles.hint}>Группы пока не созданы. Группу назначит администрация школы.</Text>
@@ -124,7 +125,7 @@ export function SignUpScreen({ navigation }: Props) {
 
       <Text style={styles.hint}>
         {isParent
-          ? 'Вы увидите расписание и сообщения группы. Успехи и работы ребёнка станут доступны, когда администрация привяжет его к вашему профилю.'
+          ? 'После регистрации добавьте ребёнка в Профиль → «Мои дети»: появятся его расписание, успехи и работы.'
           : 'Расписание вашей группы появится автоматически.'}{' '}
         Преподавателей и сотрудников добавляет администрация школы.
       </Text>
