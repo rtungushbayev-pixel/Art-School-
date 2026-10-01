@@ -9,7 +9,10 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "kz.kasteyev.artschool"
+      "bundleIdentifier": "kz.kasteyev.artschool",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "kz.kasteyev.artschool",
