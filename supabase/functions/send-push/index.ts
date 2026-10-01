@@ -9,6 +9,8 @@
 //   post_moderated    { id: post_id }         — сотрудник → автору работы
 //   listing_moderated { id: listing_id }      — сотрудник → продавцу
 //   announcement      { id: announcement_id } — сотрудник → аудитории объявления
+//   support_message   { id: message_id }      — автор обращения → всем сотрудникам,
+//                                               сотрудник → автору обращения
 //
 // Каждое событие рассылается не более одного раза (таблица push_events).
 // Получатели, отключившие категорию в настройках (profiles.notify_*),
@@ -23,8 +25,8 @@
 
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
 
-type PushEvent = 'post_comment' | 'post_moderated' | 'listing_moderated' | 'announcement';
-type NotificationCategory = 'announcements' | 'comments' | 'moderation';
+type PushEvent = 'post_comment' | 'post_moderated' | 'listing_moderated' | 'announcement' | 'support_message';
+type NotificationCategory = 'announcements' | 'comments' | 'moderation' | 'support';
 
 interface RequestBody {
   event: PushEvent;
@@ -59,6 +61,7 @@ const CATEGORY_COLUMNS: Record<NotificationCategory, string> = {
   announcements: 'notify_announcements',
   comments: 'notify_comments',
   moderation: 'notify_moderation',
+  support: 'notify_support',
 };
 
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
@@ -186,6 +189,45 @@ async function buildMessage(admin: SupabaseClient, caller: Caller, { event, id }
         title: announcement.title,
         body: truncate(announcement.body),
         data: { type: 'announcement' },
+      };
+    }
+
+    case 'support_message': {
+      const { data: message } = await admin
+        .from('support_messages')
+        .select('id, ticket_id, author_id, body, ticket:ticket_id ( author_id, subject )')
+        .eq('id', id)
+        .single();
+      if (!message) throw new HttpError(404, 'Сообщение не найдено');
+      if (message.author_id !== caller.id) throw new HttpError(403, 'Это не ваше сообщение');
+      const ticket = message.ticket as unknown as { author_id: string; subject: string } | null;
+      if (!ticket) return null;
+      const data = { type: 'support_ticket', ticketId: message.ticket_id };
+
+      // Написал автор обращения — сообщаем всем сотрудникам.
+      if (ticket.author_id === caller.id) {
+        const { data: staff, error } = await admin.from('profiles').select('id').eq('role', 'staff');
+        if (error) throw error;
+        return {
+          dedupKey: `support_message:${message.id}`,
+          category: 'support',
+          recipientIds: (staff ?? []).map((row: { id: string }) => row.id),
+          title: `Обращение от ${caller.full_name}: ${ticket.subject}`,
+          body: truncate(message.body),
+          data,
+        };
+      }
+
+      // Иначе отвечает сотрудник (RLS не даст написать в чужое обращение
+      // никому другому) — сообщаем автору.
+      requireStaff(caller);
+      return {
+        dedupKey: `support_message:${message.id}`,
+        category: 'support',
+        recipientIds: [ticket.author_id],
+        title: `Ответ по обращению «${ticket.subject}»`,
+        body: truncate(message.body),
+        data,
       };
     }
 
