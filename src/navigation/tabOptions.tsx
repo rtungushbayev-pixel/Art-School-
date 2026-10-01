@@ -13,11 +13,26 @@ export interface TabConfig {
 
 // Иконки в правом верхнем углу: разделы, которые открывают не каждый день,
 // поэтому они не занимают место в нижней панели.
-function HeaderActions({ showMarket }: { showMarket: boolean }) {
-  // Экраны Market и Messages есть в стеке каждой роли, у которой показана иконка.
+interface HeaderActionsProps {
+  showFriends: boolean;
+  showMarket: boolean;
+}
+
+function HeaderActions({ showFriends, showMarket }: HeaderActionsProps) {
+  // Экраны Friends, Market и Messages есть в стеке каждой роли, у которой показана иконка.
   const navigation = useNavigation<any>();
   return (
     <View style={styles.actions}>
+      {showFriends ? (
+        <Pressable
+          hitSlop={8}
+          onPress={() => navigation.navigate('Friends')}
+          accessibilityLabel="Друзья"
+          style={styles.action}
+        >
+          <Ionicons name="people-outline" size={22} color={colors.primary} />
+        </Pressable>
+      ) : null}
       {showMarket ? (
         <Pressable
           hitSlop={8}
@@ -56,7 +71,7 @@ function FeedIcon({ focused }: { focused: boolean }) {
 
 export function makeTabScreenOptions(
   configs: Record<string, TabConfig>,
-  { showMarket }: { showMarket: boolean }
+  actions: HeaderActionsProps
 ) {
   return ({ route }: { route: { name: string } }): BottomTabNavigationOptions => {
     const config = configs[route.name];
@@ -65,7 +80,7 @@ export function makeTabScreenOptions(
       headerStyle: { backgroundColor: colors.surface },
       headerTitleStyle: { color: colors.text, fontWeight: '700' },
       headerShadowVisible: false,
-      headerRight: () => <HeaderActions showMarket={showMarket} />,
+      headerRight: () => <HeaderActions {...actions} />,
       tabBarActiveTintColor: colors.primary,
       tabBarInactiveTintColor: colors.textMuted,
       tabBarIcon: ({ focused, size }) =>

@@ -19,7 +19,7 @@ const TAB_CONFIG: Record<keyof StudentTabParamList, TabConfig> = {
 
 export function StudentTabs() {
   return (
-    <Tab.Navigator initialRouteName="FeedTab" screenOptions={makeTabScreenOptions(TAB_CONFIG, { showMarket: true })}>
+    <Tab.Navigator initialRouteName="FeedTab" screenOptions={makeTabScreenOptions(TAB_CONFIG, { showFriends: true, showMarket: true })}>
       <Tab.Screen name="ScheduleTab" component={ScheduleScreen} options={{ title: 'Расписание' }} />
       <Tab.Screen name="FeedTab" component={FeedScreen} options={{ title: 'Лента' }} />
       <Tab.Screen name="ProfileTab" component={ProfileScreen} options={{ title: 'Профиль' }} />

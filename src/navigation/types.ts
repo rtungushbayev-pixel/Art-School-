@@ -16,6 +16,7 @@ export type StudentStackParamList = {
   StudentTabs: NavigatorScreenParams<StudentTabParamList> | undefined;
   Messages: undefined;
   Market: undefined;
+  Friends: undefined;
   PostDetail: { postId: string };
   CreatePost: undefined;
   EditProfile: undefined;
@@ -41,6 +42,7 @@ export type StaffStackParamList = {
   StaffTabs: NavigatorScreenParams<StaffTabParamList> | undefined;
   Messages: undefined;
   Market: undefined;
+  Friends: undefined;
   ComposeAnnouncement: { announcementId?: string } | undefined;
   PostDetail: { postId: string };
   CreatePost: undefined;

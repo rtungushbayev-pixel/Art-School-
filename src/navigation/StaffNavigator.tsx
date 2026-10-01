@@ -5,6 +5,7 @@ import { StaffTabs } from './StaffTabs';
 import { ComposeAnnouncementScreen } from '../screens/staff/ComposeAnnouncementScreen';
 import { StaffAnnouncementsScreen } from '../screens/staff/AnnouncementsScreen';
 import { MarketplaceScreen } from '../screens/shared/MarketplaceScreen';
+import { FriendsScreen } from '../screens/shared/FriendsScreen';
 import { PostDetailScreen } from '../screens/shared/PostDetailScreen';
 import { CreatePostScreen } from '../screens/shared/CreatePostScreen';
 import { EditProfileScreen } from '../screens/shared/EditProfileScreen';
@@ -44,6 +45,7 @@ export function StaffNavigator() {
       <Stack.Screen name="StaffTabs" component={StaffTabs} options={{ headerShown: false }} />
       <Stack.Screen name="Messages" component={StaffAnnouncementsScreen} options={{ title: 'Сообщения' }} />
       <Stack.Screen name="Market" component={MarketplaceScreen} options={{ title: 'Продажа работ' }} />
+      <Stack.Screen name="Friends" component={FriendsScreen} options={{ title: 'Друзья' }} />
       <Stack.Screen
         name="ComposeAnnouncement"
         component={ComposeAnnouncementScreen}

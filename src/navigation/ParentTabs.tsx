@@ -15,10 +15,10 @@ const TAB_CONFIG: Record<keyof ParentTabParamList, TabConfig> = {
   ProfileTab: { color: colors.primary, icon: 'person-circle', iconOutline: 'person-circle-outline' },
 };
 
-// У родителя нет раздела продажи работ, поэтому вверху только «Сообщения».
+// У родителя нет продажи работ и друзей, поэтому вверху только «Сообщения».
 export function ParentTabs() {
   return (
-    <Tab.Navigator initialRouteName="FeedTab" screenOptions={makeTabScreenOptions(TAB_CONFIG, { showMarket: false })}>
+    <Tab.Navigator initialRouteName="FeedTab" screenOptions={makeTabScreenOptions(TAB_CONFIG, { showFriends: false, showMarket: false })}>
       <Tab.Screen name="ScheduleTab" component={ScheduleScreen} options={{ title: 'Расписание' }} />
       <Tab.Screen name="FeedTab" component={FeedScreen} options={{ title: 'Лента' }} />
       <Tab.Screen name="ProfileTab" component={ParentProfileScreen} options={{ title: 'Профиль' }} />
