@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { clearPushToken, syncPushToken } from '../lib/notifications';
+import { AUTH_REDIRECT_URL, listenForAuthLinks } from '../lib/authLinks';
 import type { Profile } from '../types/database';
 
 interface AuthContextValue {
@@ -68,6 +69,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  // Вход по ссылке подтверждения из письма.
+  useEffect(() => listenForAuthLinks(), []);
+
   useEffect(() => {
     if (profile) {
       syncPushToken();
@@ -87,7 +91,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { full_name: fullName, account_type: accountType, group_id: groupId } },
+          options: {
+            emailRedirectTo: AUTH_REDIRECT_URL,
+            data: { full_name: fullName, account_type: accountType, group_id: groupId },
+          },
         });
         return error?.message ?? null;
       },

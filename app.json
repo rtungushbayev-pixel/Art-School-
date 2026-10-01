@@ -2,6 +2,7 @@
   "expo": {
     "name": "KasteyevSchool",
     "slug": "Art-School-",
+    "scheme": "kasteyevschool",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
