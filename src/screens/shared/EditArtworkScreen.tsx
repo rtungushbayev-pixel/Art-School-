@@ -8,17 +8,82 @@ import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { supabase } from '../../lib/supabase';
 import { MAX_FEATURED_WORKS, parseYear, setPostFeatured, updateArtworkDetails } from '../../lib/portfolio';
+import { useStrings } from '../../i18n';
 import { colors, spacing } from '../../theme/colors';
 import type { Post } from '../../types/database';
 import type { StaffStackParamList, StudentStackParamList } from '../../navigation/types';
 
 type NavParamList = StudentStackParamList & StaffStackParamList;
 
+const STRINGS = {
+  ru: {
+    loading: 'Загрузка…',
+    checkYear: 'Проверьте год',
+    yearHint: 'Укажите год четырьмя цифрами, например 2026.',
+    tooManyFeatured: 'Слишком много избранных',
+    tooManyFeaturedText: (max: number) =>
+      `В начале портфолио можно закрепить до ${max} работ. Снимите отметку с другой работы.`,
+    saveFailed: 'Не удалось сохранить',
+    titleLabel: 'Название',
+    titlePlaceholder: 'Например: «Осенний этюд»',
+    technique: 'Техника и материалы',
+    techniquePlaceholder: 'Например: акварель, бумага',
+    year: 'Год создания',
+    caption: 'Подпись',
+    featured: 'Избранная работа',
+    featuredHint: 'Показывается первой в портфолио',
+    remoderation:
+      'После изменения названия, техники или подписи работа снова пройдёт модерацию и временно пропадёт из ленты.',
+    save: 'Сохранить',
+  },
+  kk: {
+    loading: 'Жүктелуде…',
+    checkYear: 'Жылды тексеріңіз',
+    yearHint: 'Жылды төрт цифрмен көрсетіңіз, мысалы 2026.',
+    tooManyFeatured: 'Таңдаулылар тым көп',
+    tooManyFeaturedText: (max: number) =>
+      `Портфолионың басында ${max} жұмысқа дейін бекітуге болады. Басқа жұмыстан белгіні алып тастаңыз.`,
+    saveFailed: 'Сақтау мүмкін болмады',
+    titleLabel: 'Атауы',
+    titlePlaceholder: 'Мысалы: «Күзгі этюд»',
+    technique: 'Техника және материалдар',
+    techniquePlaceholder: 'Мысалы: акварель, қағаз',
+    year: 'Жасалған жылы',
+    caption: 'Сипаттама',
+    featured: 'Таңдаулы жұмыс',
+    featuredHint: 'Портфолиода бірінші көрсетіледі',
+    remoderation:
+      'Атауын, техникасын немесе сипаттамасын өзгерткеннен кейін жұмыс қайтадан модерациядан өтеді және таспадан уақытша жоғалады.',
+    save: 'Сақтау',
+  },
+  en: {
+    loading: 'Loading…',
+    checkYear: 'Check the year',
+    yearHint: 'Enter the year as four digits, e.g. 2026.',
+    tooManyFeatured: 'Too many featured works',
+    tooManyFeaturedText: (max: number) =>
+      `You can pin up to ${max} works at the top of your portfolio. Unmark another work first.`,
+    saveFailed: 'Could not save',
+    titleLabel: 'Title',
+    titlePlaceholder: 'E.g. “Autumn study”',
+    technique: 'Technique and materials',
+    techniquePlaceholder: 'E.g. watercolor, paper',
+    year: 'Year created',
+    caption: 'Caption',
+    featured: 'Featured work',
+    featuredHint: 'Shown first in the portfolio',
+    remoderation:
+      'After you change the title, technique or caption, the work will go through moderation again and temporarily disappear from the feed.',
+    save: 'Save',
+  },
+};
+
 // Автор правит сведения о своей работе для портфолио.
 export function EditArtworkScreen() {
   const navigation = useNavigation();
   const route = useRoute<RouteProp<NavParamList, 'EditArtwork'>>();
   const { postId } = route.params;
+  const s = useStrings(STRINGS);
 
   const [post, setPost] = useState<Post | null>(null);
   const [title, setTitle] = useState('');
@@ -49,7 +114,7 @@ export function EditArtworkScreen() {
   if (!post) {
     return (
       <Screen>
-        <Text style={styles.muted}>Загрузка…</Text>
+        <Text style={styles.muted}>{s.loading}</Text>
       </Screen>
     );
   }
@@ -62,7 +127,7 @@ export function EditArtworkScreen() {
   const onSave = async () => {
     const artworkYear = parseYear(year);
     if (artworkYear === 'invalid') {
-      Alert.alert('Проверьте год', 'Укажите год четырьмя цифрами, например 2026.');
+      Alert.alert(s.checkYear, s.yearHint);
       return;
     }
 
@@ -75,10 +140,7 @@ export function EditArtworkScreen() {
           .eq('author_id', post.author_id)
           .eq('featured', true);
         if ((count ?? 0) >= MAX_FEATURED_WORKS) {
-          Alert.alert(
-            'Слишком много избранных',
-            `В начале портфолио можно закрепить до ${MAX_FEATURED_WORKS} работ. Снимите отметку с другой работы.`
-          );
+          Alert.alert(s.tooManyFeatured, s.tooManyFeaturedText(MAX_FEATURED_WORKS));
           return;
         }
       }
@@ -94,7 +156,7 @@ export function EditArtworkScreen() {
       }
       navigation.goBack();
     } catch (e) {
-      Alert.alert('Не удалось сохранить', e instanceof Error ? e.message : undefined);
+      Alert.alert(s.saveFailed, e instanceof Error ? e.message : undefined);
     } finally {
       setSaving(false);
     }
@@ -102,27 +164,27 @@ export function EditArtworkScreen() {
 
   return (
     <Screen scroll>
-      <TextField label="Название" placeholder="Например: «Осенний этюд»" value={title} onChangeText={setTitle} />
+      <TextField label={s.titleLabel} placeholder={s.titlePlaceholder} value={title} onChangeText={setTitle} />
       <TextField
-        label="Техника и материалы"
-        placeholder="Например: акварель, бумага"
+        label={s.technique}
+        placeholder={s.techniquePlaceholder}
         value={technique}
         onChangeText={setTechnique}
       />
       <TextField
-        label="Год создания"
+        label={s.year}
         placeholder={String(new Date().getFullYear())}
         value={year}
         onChangeText={setYear}
         keyboardType="number-pad"
         maxLength={4}
       />
-      <TextField label="Подпись" value={caption} onChangeText={setCaption} multiline />
+      <TextField label={s.caption} value={caption} onChangeText={setCaption} multiline />
 
       <Card style={styles.featuredRow}>
         <View style={styles.featuredText}>
-          <Text style={styles.featuredTitle}>Избранная работа</Text>
-          <Text style={styles.muted}>Показывается первой в портфолио</Text>
+          <Text style={styles.featuredTitle}>{s.featured}</Text>
+          <Text style={styles.muted}>{s.featuredHint}</Text>
         </View>
         <Switch
           value={featured}
@@ -134,13 +196,10 @@ export function EditArtworkScreen() {
       </Card>
 
       {textChanged && post.status !== 'pending' ? (
-        <Text style={styles.warning}>
-          После изменения названия, техники или подписи работа снова пройдёт модерацию и временно
-          пропадёт из ленты.
-        </Text>
+        <Text style={styles.warning}>{s.remoderation}</Text>
       ) : null}
 
-      <Button title="Сохранить" onPress={onSave} loading={saving} />
+      <Button title={s.save} onPress={onSave} loading={saving} />
     </Screen>
   );
 }

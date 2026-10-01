@@ -10,6 +10,7 @@ import { supabase } from '../../lib/supabase';
 import { fetchUserPosts } from '../../lib/posts';
 import { artworkMeta, sortPortfolio } from '../../lib/portfolio';
 import { useAuth } from '../../hooks/useAuth';
+import { useStrings } from '../../i18n';
 import { colors, radius, shadow, spacing } from '../../theme/colors';
 import type { PostCardData } from '../../components/PostCard';
 import type { StaffStackParamList, StudentStackParamList } from '../../navigation/types';
@@ -18,11 +19,42 @@ type NavParamList = StudentStackParamList & StaffStackParamList;
 
 const ALL = '__all__';
 
+const STRINGS = {
+  ru: {
+    myPortfolio: 'Моё портфолио',
+    works: (n: number) => `${n} ${pluralWorks(n)}`,
+    all: 'Все',
+    untitled: 'Без названия',
+    pending: 'На модерации',
+    rejected: 'Отклонено',
+    empty: 'Пока нет работ',
+  },
+  kk: {
+    myPortfolio: 'Менің портфолиом',
+    works: (n: number) => `${n} жұмыс`,
+    all: 'Барлығы',
+    untitled: 'Атауы жоқ',
+    pending: 'Модерацияда',
+    rejected: 'Қабылданбады',
+    empty: 'Әзірге жұмыстар жоқ',
+  },
+  en: {
+    myPortfolio: 'My portfolio',
+    works: (n: number) => (n === 1 ? '1 work' : `${n} works`),
+    all: 'All',
+    untitled: 'Untitled',
+    pending: 'Under review',
+    rejected: 'Rejected',
+    empty: 'No works yet',
+  },
+};
+
 export function PortfolioScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<NavParamList>>();
   const route = useRoute<RouteProp<NavParamList, 'Portfolio'>>();
   const { userId } = route.params;
   const { profile: viewer } = useAuth();
+  const s = useStrings(STRINGS);
   const isOwner = viewer?.id === userId;
 
   const [posts, setPosts] = useState<PostCardData[]>([]);
@@ -74,9 +106,9 @@ export function PortfolioScreen() {
         onRefresh={load}
         ListHeaderComponent={
           <View>
-            <Text style={styles.title}>{isOwner ? 'Моё портфолио' : ownerName}</Text>
+            <Text style={styles.title}>{isOwner ? s.myPortfolio : ownerName}</Text>
             <Text style={styles.subtitle}>
-              {posts.length} {pluralWorks(posts.length)}
+              {s.works(posts.length)}
             </Text>
             {techniques.length > 0 ? (
               <View style={styles.chips}>
@@ -87,7 +119,7 @@ export function PortfolioScreen() {
                     style={[styles.chip, technique === value && styles.chipActive]}
                   >
                     <Text style={[styles.chipText, technique === value && styles.chipTextActive]}>
-                      {value === ALL ? 'Все' : value}
+                      {value === ALL ? s.all : value}
                     </Text>
                   </Pressable>
                 ))}
@@ -114,7 +146,7 @@ export function PortfolioScreen() {
               ) : null}
               <View style={styles.cardBody}>
                 <Text style={styles.cardTitle} numberOfLines={1}>
-                  {item.title || item.caption || 'Без названия'}
+                  {item.title || item.caption || s.untitled}
                 </Text>
                 {meta ? (
                   <Text style={styles.cardMeta} numberOfLines={1}>
@@ -123,7 +155,7 @@ export function PortfolioScreen() {
                 ) : null}
                 {isOwner && item.status !== 'approved' ? (
                   <Text style={[styles.status, item.status === 'rejected' && styles.statusRejected]}>
-                    {item.status === 'pending' ? 'На модерации' : 'Отклонено'}
+                    {item.status === 'pending' ? s.pending : s.rejected}
                   </Text>
                 ) : null}
               </View>
@@ -131,7 +163,7 @@ export function PortfolioScreen() {
           );
         }}
         ListEmptyComponent={
-          loading ? null : <Text style={styles.empty}>Пока нет работ</Text>
+          loading ? null : <Text style={styles.empty}>{s.empty}</Text>
         }
       />
     </Screen>

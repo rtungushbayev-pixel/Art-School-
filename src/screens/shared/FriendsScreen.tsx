@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '../../components/Screen';
 import { Avatar } from '../../components/Avatar';
 import { useAuth } from '../../hooks/useAuth';
+import { useStrings } from '../../i18n';
 import {
   acceptFriendRequest,
   blockUser,
@@ -35,11 +36,113 @@ function pluralFriends(n: number) {
   return `${n} общих друзей`;
 }
 
+const STRINGS = {
+  ru: {
+    blockedTitle: 'Заблокированные',
+    friends: 'Друзья',
+    failed: 'Не получилось',
+    blockQ: 'Заблокировать?',
+    blockText: (name: string) => `${name} не сможет отправлять вам приглашения, а дружба между вами будет удалена.`,
+    cancel: 'Отмена',
+    block: 'Заблокировать',
+    openProfile: 'Открыть профиль',
+    unfriend: 'Удалить из друзей',
+    noName: 'Без имени',
+    teacher: 'Преподаватель',
+    student: 'Ученик',
+    add: 'Добавить',
+    accept: 'Принять',
+    requestSent: 'Заявка отправлена',
+    isFriend: 'В друзьях',
+    unblock: 'Разблокировать',
+    noBlocked: 'Вы никого не блокировали',
+    search: 'Поиск',
+    nothingFound: 'Никого не нашли',
+    requests: 'Запросы',
+    sentYouRequest: 'Отправил(-а) заявку в друзья',
+    decline: 'Отклонить',
+    youSentRequest: 'Вы отправили заявку',
+    cancelRequest: 'Отменить',
+    suggestions: 'Возможно, вы их знаете',
+    sameGroup: 'Из вашей группы',
+    mutualFriends: pluralFriends,
+    noFriends: 'Пока нет друзей. Найдите одноклассников и преподавателей через поиск.',
+    profile: 'Профиль',
+  },
+  kk: {
+    blockedTitle: 'Бұғатталғандар',
+    friends: 'Достар',
+    failed: 'Сәтсіз аяқталды',
+    blockQ: 'Бұғаттау керек пе?',
+    blockText: (name: string) =>
+      `${name} сізге шақыру жібере алмайды, ал араларыңыздағы достық жойылады.`,
+    cancel: 'Бас тарту',
+    block: 'Бұғаттау',
+    openProfile: 'Профильді ашу',
+    unfriend: 'Достардан шығару',
+    noName: 'Аты жоқ',
+    teacher: 'Мұғалім',
+    student: 'Оқушы',
+    add: 'Қосу',
+    accept: 'Қабылдау',
+    requestSent: 'Сұраныс жіберілді',
+    isFriend: 'Достарыңызда',
+    unblock: 'Бұғаттан шығару',
+    noBlocked: 'Сіз ешкімді бұғаттамадыңыз',
+    search: 'Іздеу',
+    nothingFound: 'Ешкім табылмады',
+    requests: 'Сұраныстар',
+    sentYouRequest: 'Достыққа сұраныс жіберді',
+    decline: 'Қабылдамау',
+    youSentRequest: 'Сіз сұраныс жібердіңіз',
+    cancelRequest: 'Болдырмау',
+    suggestions: 'Мүмкін, сіз оларды танитын шығарсыз',
+    sameGroup: 'Сіздің тобыңыздан',
+    mutualFriends: (n: number) => `${n} ортақ дос`,
+    noFriends: 'Әзірге достар жоқ. Сыныптастарыңыз бен мұғалімдерді іздеу арқылы табыңыз.',
+    profile: 'Профиль',
+  },
+  en: {
+    blockedTitle: 'Blocked',
+    friends: 'Friends',
+    failed: 'Something went wrong',
+    blockQ: 'Block?',
+    blockText: (name: string) =>
+      `${name} will not be able to send you invitations, and your friendship will be removed.`,
+    cancel: 'Cancel',
+    block: 'Block',
+    openProfile: 'Open profile',
+    unfriend: 'Remove from friends',
+    noName: 'No name',
+    teacher: 'Teacher',
+    student: 'Student',
+    add: 'Add',
+    accept: 'Accept',
+    requestSent: 'Request sent',
+    isFriend: 'Friends',
+    unblock: 'Unblock',
+    noBlocked: 'You have not blocked anyone',
+    search: 'Search',
+    nothingFound: 'No one found',
+    requests: 'Requests',
+    sentYouRequest: 'Sent you a friend request',
+    decline: 'Decline',
+    youSentRequest: 'You sent a request',
+    cancelRequest: 'Cancel',
+    suggestions: 'People you may know',
+    sameGroup: 'From your group',
+    mutualFriends: (n: number) => (n === 1 ? '1 mutual friend' : `${n} mutual friends`),
+    noFriends: 'No friends yet. Find classmates and teachers using search.',
+    profile: 'Profile',
+  },
+};
+
 export function FriendsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<NavParamList>>();
   const route = useRoute<RouteProp<NavParamList, 'Friends'>>();
   const showBlocked = !!route.params?.showBlocked;
   const { profile } = useAuth();
+  const s = useStrings(STRINGS);
   const [data, setData] = useState<FriendsData>(EMPTY);
   const [suggestions, setSuggestions] = useState<FriendSuggestion[]>([]);
   const [query, setQuery] = useState('');
@@ -49,16 +152,16 @@ export function FriendsScreen() {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      title: showBlocked ? 'Заблокированные' : 'Друзья',
+      title: showBlocked ? s.blockedTitle : s.friends,
       headerRight: showBlocked
         ? undefined
         : () => (
             <Pressable hitSlop={8} onPress={() => navigation.push('Friends', { showBlocked: true })}>
-              <Text style={styles.headerLink}>Заблокированные</Text>
+              <Text style={styles.headerLink}>{s.blockedTitle}</Text>
             </Pressable>
           ),
     });
-  }, [navigation, showBlocked]);
+  }, [navigation, showBlocked, s]);
 
   const load = useCallback(async () => {
     if (!profile) return;
@@ -103,7 +206,7 @@ export function FriendsScreen() {
       await action();
       await load();
     } catch (e) {
-      Alert.alert('Не получилось', e instanceof Error ? e.message : undefined);
+      Alert.alert(s.failed, e instanceof Error ? e.message : undefined);
     }
     setBusyId(null);
   };
@@ -112,12 +215,12 @@ export function FriendsScreen() {
 
   const confirmBlock = (person: Profile) => {
     Alert.alert(
-      'Заблокировать?',
-      `${person.full_name} не сможет отправлять вам приглашения, а дружба между вами будет удалена.`,
+      s.blockQ,
+      s.blockText(person.full_name),
       [
-        { text: 'Отмена', style: 'cancel' },
+        { text: s.cancel, style: 'cancel' },
         {
-          text: 'Заблокировать',
+          text: s.block,
           style: 'destructive',
           onPress: () => run(person.id, () => blockUser(profile.id, person.id)),
         },
@@ -127,10 +230,10 @@ export function FriendsScreen() {
 
   const friendMenu = (person: Profile) => {
     Alert.alert(person.full_name, undefined, [
-      { text: 'Открыть профиль', onPress: () => openProfile(person) },
-      { text: 'Удалить из друзей', onPress: () => run(person.id, () => removeFriendship(profile.id, person.id)) },
-      { text: 'Заблокировать', style: 'destructive', onPress: () => confirmBlock(person) },
-      { text: 'Отмена', style: 'cancel' },
+      { text: s.openProfile, onPress: () => openProfile(person) },
+      { text: s.unfriend, onPress: () => run(person.id, () => removeFriendship(profile.id, person.id)) },
+      { text: s.block, style: 'destructive', onPress: () => confirmBlock(person) },
+      { text: s.cancel, style: 'cancel' },
     ]);
   };
 
@@ -141,7 +244,7 @@ export function FriendsScreen() {
       <Avatar uri={person.avatar_url} name={person.full_name} size={52} />
       <View style={styles.personText}>
         <Text style={styles.name} numberOfLines={1}>
-          {person.full_name || 'Без имени'}
+          {person.full_name || s.noName}
         </Text>
         {note ? (
           <Text style={styles.note} numberOfLines={1}>
@@ -165,18 +268,18 @@ export function FriendsScreen() {
   // Строка результата поиска: действие зависит от того, кто это для меня.
   const searchRow = (person: Profile) => {
     const state = friendStateOf(data, person.id);
-    const note = person.role === 'staff' ? 'Преподаватель' : 'Ученик';
+    const note = person.role === 'staff' ? s.teacher : s.student;
     return (
       <View key={person.id} style={styles.row}>
         {personHead(person, note)}
-        {state === 'none' ? pill('Добавить', () => add(person), 'primary', person.id) : null}
+        {state === 'none' ? pill(s.add, () => add(person), 'primary', person.id) : null}
         {state === 'incoming'
-          ? pill('Принять', () => run(person.id, () => acceptFriendRequest(profile.id, person.id)), 'primary', person.id)
+          ? pill(s.accept, () => run(person.id, () => acceptFriendRequest(profile.id, person.id)), 'primary', person.id)
           : null}
-        {state === 'outgoing' ? <Text style={styles.stateText}>Заявка отправлена</Text> : null}
-        {state === 'friends' ? <Text style={styles.stateText}>В друзьях</Text> : null}
+        {state === 'outgoing' ? <Text style={styles.stateText}>{s.requestSent}</Text> : null}
+        {state === 'friends' ? <Text style={styles.stateText}>{s.isFriend}</Text> : null}
         {state === 'blocked'
-          ? pill('Разблокировать', () => run(person.id, () => unblockUser(profile.id, person.id)), 'muted', person.id)
+          ? pill(s.unblock, () => run(person.id, () => unblockUser(profile.id, person.id)), 'muted', person.id)
           : null}
       </View>
     );
@@ -185,11 +288,11 @@ export function FriendsScreen() {
   if (showBlocked) {
     return (
       <Screen scroll refreshing={loading} onRefresh={load}>
-        {data.blocked.length === 0 && !loading ? <Text style={styles.empty}>Вы никого не блокировали</Text> : null}
+        {data.blocked.length === 0 && !loading ? <Text style={styles.empty}>{s.noBlocked}</Text> : null}
         {data.blocked.map((person) => (
           <View key={person.id} style={styles.row}>
             {personHead(person)}
-            {pill('Разблокировать', () => run(person.id, () => unblockUser(profile.id, person.id)), 'muted', person.id)}
+            {pill(s.unblock, () => run(person.id, () => unblockUser(profile.id, person.id)), 'muted', person.id)}
           </View>
         ))}
       </Screen>
@@ -205,7 +308,7 @@ export function FriendsScreen() {
         <TextInput
           value={query}
           onChangeText={setQuery}
-          placeholder="Поиск"
+          placeholder={s.search}
           placeholderTextColor={colors.textMuted}
           style={styles.searchInput}
           autoFocus={!!route.params?.focusSearch}
@@ -220,21 +323,21 @@ export function FriendsScreen() {
 
       {searching ? (
         <>
-          {results.length === 0 ? <Text style={styles.empty}>Никого не нашли</Text> : null}
+          {results.length === 0 ? <Text style={styles.empty}>{s.nothingFound}</Text> : null}
           {results.map(searchRow)}
         </>
       ) : (
         <>
           {data.incoming.length > 0 || data.outgoing.length > 0 ? (
             <>
-              <Text style={styles.section}>Запросы</Text>
+              <Text style={styles.section}>{s.requests}</Text>
               {data.incoming.map((person) => (
                 <View key={person.id} style={styles.requestRow}>
                   <Avatar uri={person.avatar_url} name={person.full_name} size={52} />
                   <View style={styles.requestBody}>
                     <Pressable onPress={() => openProfile(person)}>
                       <Text style={styles.name}>{person.full_name}</Text>
-                      <Text style={styles.note}>Отправил(-а) заявку в друзья</Text>
+                      <Text style={styles.note}>{s.sentYouRequest}</Text>
                     </Pressable>
                     <View style={styles.requestButtons}>
                       <Pressable
@@ -242,14 +345,14 @@ export function FriendsScreen() {
                         onPress={() => run(person.id, () => acceptFriendRequest(profile.id, person.id))}
                         style={[styles.bigButton, styles.pillPrimary, busyId === person.id && styles.busy]}
                       >
-                        <Text style={[styles.bigButtonText, styles.pillTextPrimary]}>Добавить</Text>
+                        <Text style={[styles.bigButtonText, styles.pillTextPrimary]}>{s.add}</Text>
                       </Pressable>
                       <Pressable
                         disabled={busyId === person.id}
                         onPress={() => run(person.id, () => removeFriendship(profile.id, person.id))}
                         style={[styles.bigButton, styles.pillMuted, busyId === person.id && styles.busy]}
                       >
-                        <Text style={styles.bigButtonText}>Отклонить</Text>
+                        <Text style={styles.bigButtonText}>{s.decline}</Text>
                       </Pressable>
                     </View>
                   </View>
@@ -257,8 +360,8 @@ export function FriendsScreen() {
               ))}
               {data.outgoing.map((person) => (
                 <View key={person.id} style={styles.row}>
-                  {personHead(person, 'Вы отправили заявку')}
-                  {pill('Отменить', () => run(person.id, () => removeFriendship(profile.id, person.id)), 'muted', person.id)}
+                  {personHead(person, s.youSentRequest)}
+                  {pill(s.cancelRequest, () => run(person.id, () => removeFriendship(profile.id, person.id)), 'muted', person.id)}
                 </View>
               ))}
             </>
@@ -266,29 +369,29 @@ export function FriendsScreen() {
 
           {suggestions.length > 0 ? (
             <>
-              <Text style={styles.section}>Возможно, вы их знаете</Text>
+              <Text style={styles.section}>{s.suggestions}</Text>
               {suggestions.map(({ profile: person, mutualFriends, sameGroup }) => (
                 <View key={person.id} style={styles.row}>
                   {personHead(
                     person,
-                    [sameGroup ? 'Из вашей группы' : null, mutualFriends > 0 ? pluralFriends(mutualFriends) : null]
+                    [sameGroup ? s.sameGroup : null, mutualFriends > 0 ? s.mutualFriends(mutualFriends) : null]
                       .filter(Boolean)
                       .join(' · ')
                   )}
-                  {pill('Добавить', () => add(person), 'primary', person.id)}
+                  {pill(s.add, () => add(person), 'primary', person.id)}
                 </View>
               ))}
             </>
           ) : null}
 
-          <Text style={styles.section}>Друзья</Text>
+          <Text style={styles.section}>{s.friends}</Text>
           {data.friends.length === 0 && !loading ? (
-            <Text style={styles.emptyLeft}>Пока нет друзей. Найдите одноклассников и преподавателей через поиск.</Text>
+            <Text style={styles.emptyLeft}>{s.noFriends}</Text>
           ) : null}
           {data.friends.map((person) => (
             <View key={person.id} style={styles.row}>
               {personHead(person)}
-              {pill('Профиль', () => openProfile(person), 'muted', person.id)}
+              {pill(s.profile, () => openProfile(person), 'muted', person.id)}
               <Pressable onPress={() => friendMenu(person)} hitSlop={10} style={styles.more}>
                 <Ionicons name="ellipsis-horizontal" size={22} color={colors.text} />
               </Pressable>

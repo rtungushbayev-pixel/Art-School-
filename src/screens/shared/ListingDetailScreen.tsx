@@ -12,6 +12,7 @@ import { supabase } from '../../lib/supabase';
 import { formatPrice } from '../../lib/marketplace';
 import { sendPushNotification } from '../../lib/notifications';
 import { useAuth } from '../../hooks/useAuth';
+import { useStrings } from '../../i18n';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { MarketplaceListing, MarketplaceListingImage, Profile } from '../../types/database';
 import type { StaffStackParamList, StudentStackParamList } from '../../navigation/types';
@@ -20,11 +21,60 @@ type NavParamList = StudentStackParamList & StaffStackParamList;
 
 const SHOP_URL = 'https://kasteyevshop.kz';
 
+const STRINGS = {
+  ru: {
+    deleteQ: 'Удалить объявление?',
+    cancel: 'Отмена',
+    delete: 'Удалить',
+    notFound: 'Объявление удалено или недоступно',
+    loading: 'Загрузка…',
+    sold: 'Продано',
+    sellerContacts: 'Контакты продавца',
+    openShop: 'Открыть kasteyevshop.kz',
+    approve: 'Одобрить',
+    reject: 'Отклонить',
+    unsell: 'Снять с продажи',
+    markSold: 'Отметить как продано',
+    deleteListing: 'Удалить объявление',
+  },
+  kk: {
+    deleteQ: 'Хабарландыруды жою керек пе?',
+    cancel: 'Бас тарту',
+    delete: 'Жою',
+    notFound: 'Хабарландыру жойылған немесе қолжетімсіз',
+    loading: 'Жүктелуде…',
+    sold: 'Сатылды',
+    sellerContacts: 'Сатушының байланыстары',
+    openShop: 'kasteyevshop.kz сайтын ашу',
+    approve: 'Мақұлдау',
+    reject: 'Қабылдамау',
+    unsell: 'Сатудан алу',
+    markSold: 'Сатылды деп белгілеу',
+    deleteListing: 'Хабарландыруды жою',
+  },
+  en: {
+    deleteQ: 'Delete this listing?',
+    cancel: 'Cancel',
+    delete: 'Delete',
+    notFound: 'This listing has been deleted or is unavailable',
+    loading: 'Loading…',
+    sold: 'Sold',
+    sellerContacts: 'Seller contacts',
+    openShop: 'Open kasteyevshop.kz',
+    approve: 'Approve',
+    reject: 'Reject',
+    unsell: 'Remove from sale',
+    markSold: 'Mark as sold',
+    deleteListing: 'Delete listing',
+  },
+};
+
 export function ListingDetailScreen() {
   const route = useRoute<RouteProp<NavParamList, 'ListingDetail'>>();
   const { listingId } = route.params;
   const navigation = useNavigation<NativeStackNavigationProp<NavParamList>>();
   const { profile } = useAuth();
+  const s = useStrings(STRINGS);
 
   const [listing, setListing] = useState<MarketplaceListing | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -78,10 +128,10 @@ export function ListingDetailScreen() {
   };
 
   const onDelete = () => {
-    Alert.alert('Удалить объявление?', listing?.title, [
-      { text: 'Отмена', style: 'cancel' },
+    Alert.alert(s.deleteQ, listing?.title, [
+      { text: s.cancel, style: 'cancel' },
       {
-        text: 'Удалить',
+        text: s.delete,
         style: 'destructive',
         onPress: async () => {
           await supabase.from('marketplace_listings').delete().eq('id', listingId);
@@ -94,7 +144,7 @@ export function ListingDetailScreen() {
   if (!listing) {
     return (
       <Screen>
-        <Text style={styles.empty}>{notFound ? 'Объявление удалено или недоступно' : 'Загрузка…'}</Text>
+        <Text style={styles.empty}>{notFound ? s.notFound : s.loading}</Text>
       </Screen>
     );
   }
@@ -111,7 +161,7 @@ export function ListingDetailScreen() {
         <Text style={styles.title}>{listing.title}</Text>
         {listing.sold ? (
           <View style={styles.soldBadge}>
-            <Text style={styles.soldBadgeText}>Продано</Text>
+            <Text style={styles.soldBadgeText}>{s.sold}</Text>
           </View>
         ) : null}
       </View>
@@ -129,20 +179,20 @@ export function ListingDetailScreen() {
 
       {listing.contact_info ? (
         <Card>
-          <Text style={styles.sectionTitle}>Контакты продавца</Text>
+          <Text style={styles.sectionTitle}>{s.sellerContacts}</Text>
           <Text style={styles.description}>{listing.contact_info}</Text>
         </Card>
       ) : null}
 
-      <Button title="Открыть kasteyevshop.kz" variant="secondary" onPress={() => Linking.openURL(SHOP_URL)} />
+      <Button title={s.openShop} variant="secondary" onPress={() => Linking.openURL(SHOP_URL)} />
 
       {isStaff && listing.status === 'pending' ? (
         <View style={styles.moderationRow}>
           <View style={styles.moderationButton}>
-            <Button title="Одобрить" onPress={() => moderate('approved')} loading={busy} />
+            <Button title={s.approve} onPress={() => moderate('approved')} loading={busy} />
           </View>
           <View style={styles.moderationButton}>
-            <Button title="Отклонить" variant="danger" onPress={() => moderate('rejected')} loading={busy} />
+            <Button title={s.reject} variant="danger" onPress={() => moderate('rejected')} loading={busy} />
           </View>
         </View>
       ) : null}
@@ -150,13 +200,13 @@ export function ListingDetailScreen() {
       {isOwner || isStaff ? (
         <View style={styles.ownerActions}>
           <Button
-            title={listing.sold ? 'Снять с продажи' : 'Отметить как продано'}
+            title={listing.sold ? s.unsell : s.markSold}
             variant="secondary"
             onPress={toggleSold}
             loading={busy}
           />
           <View style={{ height: spacing.sm }} />
-          <Button title="Удалить объявление" variant="danger" onPress={onDelete} />
+          <Button title={s.deleteListing} variant="danger" onPress={onDelete} />
         </View>
       ) : null}
     </Screen>

@@ -7,14 +7,43 @@ import { Button } from '../../components/Button';
 import { ListingCard } from '../../components/ListingCard';
 import { fetchApprovedListings, fetchMyListings, ListingCardData } from '../../lib/marketplace';
 import { useAuth } from '../../hooks/useAuth';
+import { useStrings } from '../../i18n';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { StaffStackParamList, StudentStackParamList } from '../../navigation/types';
 
 type NavParamList = StudentStackParamList & StaffStackParamList;
 
+const STRINGS = {
+  ru: {
+    shopNote: 'Одобренные работы школа переносит на сайт',
+    postWork: '+ Разместить работу',
+    all: 'Все',
+    myListings: 'Мои объявления',
+    emptyAll: 'Пока нет работ на продажу',
+    emptyMine: 'У вас пока нет объявлений',
+  },
+  kk: {
+    shopNote: 'Мақұлданған жұмыстарды мектеп мына сайтқа көшіреді:',
+    postWork: '+ Жұмыс орналастыру',
+    all: 'Барлығы',
+    myListings: 'Менің хабарландыруларым',
+    emptyAll: 'Әзірге сатылатын жұмыстар жоқ',
+    emptyMine: 'Сізде әзірге хабарландырулар жоқ',
+  },
+  en: {
+    shopNote: 'The school moves approved works to the website',
+    postWork: '+ List a work',
+    all: 'All',
+    myListings: 'My listings',
+    emptyAll: 'No works for sale yet',
+    emptyMine: 'You have no listings yet',
+  },
+};
+
 export function MarketplaceScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<NavParamList>>();
   const { profile } = useAuth();
+  const s = useStrings(STRINGS);
   const [scope, setScope] = useState<'all' | 'mine'>('all');
   const [listings, setListings] = useState<ListingCardData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,11 +67,11 @@ export function MarketplaceScreen() {
   return (
     <Screen scroll refreshing={loading} onRefresh={load}>
       <Text style={styles.subheader}>
-        Одобренные работы школа переносит на сайт{' '}
+        {s.shopNote}{' '}
         <Text style={styles.link}>kasteyevshop.kz</Text>
       </Text>
 
-      <Button title="+ Разместить работу" onPress={() => navigation.navigate('CreateListing')} />
+      <Button title={s.postWork} onPress={() => navigation.navigate('CreateListing')} />
       <View style={{ height: spacing.md }} />
 
       <View style={styles.scopeRow}>
@@ -50,19 +79,19 @@ export function MarketplaceScreen() {
           onPress={() => setScope('all')}
           style={[styles.scopeOption, scope === 'all' && styles.scopeOptionActive]}
         >
-          <Text style={[styles.scopeText, scope === 'all' && styles.scopeTextActive]}>Все</Text>
+          <Text style={[styles.scopeText, scope === 'all' && styles.scopeTextActive]}>{s.all}</Text>
         </Pressable>
         <Pressable
           onPress={() => setScope('mine')}
           style={[styles.scopeOption, scope === 'mine' && styles.scopeOptionActive]}
         >
-          <Text style={[styles.scopeText, scope === 'mine' && styles.scopeTextActive]}>Мои объявления</Text>
+          <Text style={[styles.scopeText, scope === 'mine' && styles.scopeTextActive]}>{s.myListings}</Text>
         </Pressable>
       </View>
 
       {listings.length === 0 && !loading ? (
         <Text style={styles.empty}>
-          {scope === 'all' ? 'Пока нет работ на продажу' : 'У вас пока нет объявлений'}
+          {scope === 'all' ? s.emptyAll : s.emptyMine}
         </Text>
       ) : null}
 

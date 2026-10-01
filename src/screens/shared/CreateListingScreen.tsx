@@ -8,14 +8,85 @@ import { Button } from '../../components/Button';
 import { TextField } from '../../components/TextField';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
+import { useStrings } from '../../i18n';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { StaffStackParamList, StudentStackParamList } from '../../navigation/types';
 
 type NavParamList = StudentStackParamList & StaffStackParamList;
 
+const STRINGS = {
+  ru: {
+    needGallery: 'Нужен доступ к галерее, чтобы выбрать фото работы',
+    choosePhoto: 'Выберите фото работы',
+    needTitle: 'Укажите название работы',
+    needPrice: 'Укажите корректную цену',
+    done: 'Готово',
+    sentForReview: 'Объявление отправлено на проверку администрации школы',
+    publishFailed: 'Не удалось опубликовать объявление',
+    error: 'Ошибка',
+    heading: 'Разместить работу на продажу',
+    hint: 'Объявление пройдёт проверку администрации школы, после чего работу можно будет разместить на kasteyevshop.kz',
+    tapToPick: 'Нажмите, чтобы выбрать фото',
+    otherPhoto: 'Выбрать другое фото',
+    titleLabel: 'Название работы',
+    titlePlaceholder: 'Например: Натюрморт с яблоками',
+    description: 'Описание',
+    descriptionPlaceholder: 'Техника, размер, год создания…',
+    price: 'Цена (₸)',
+    contacts: 'Контакты для связи',
+    contactsPlaceholder: 'Телефон, WhatsApp или Telegram',
+    submit: 'Отправить на проверку',
+  },
+  kk: {
+    needGallery: 'Жұмыстың фотосын таңдау үшін галереяға рұқсат қажет',
+    choosePhoto: 'Жұмыстың фотосын таңдаңыз',
+    needTitle: 'Жұмыстың атауын көрсетіңіз',
+    needPrice: 'Дұрыс бағаны көрсетіңіз',
+    done: 'Дайын',
+    sentForReview: 'Хабарландыру мектеп әкімшілігіне тексеруге жіберілді',
+    publishFailed: 'Хабарландыруды жариялау мүмкін болмады',
+    error: 'Қате',
+    heading: 'Жұмысты сатылымға қою',
+    hint: 'Хабарландыруды мектеп әкімшілігі тексереді, содан кейін жұмысты kasteyevshop.kz сайтына орналастыруға болады',
+    tapToPick: 'Фото таңдау үшін басыңыз',
+    otherPhoto: 'Басқа фото таңдау',
+    titleLabel: 'Жұмыстың атауы',
+    titlePlaceholder: 'Мысалы: Алмалы натюрморт',
+    description: 'Сипаттама',
+    descriptionPlaceholder: 'Техника, өлшемі, жасалған жылы…',
+    price: 'Бағасы (₸)',
+    contacts: 'Байланыс деректері',
+    contactsPlaceholder: 'Телефон, WhatsApp немесе Telegram',
+    submit: 'Тексеруге жіберу',
+  },
+  en: {
+    needGallery: 'Gallery access is needed to choose a photo of your work',
+    choosePhoto: 'Choose a photo of your artwork',
+    needTitle: 'Enter the title of the work',
+    needPrice: 'Enter a valid price',
+    done: 'Done',
+    sentForReview: 'Your listing has been sent to the school administration for review',
+    publishFailed: 'Could not publish the listing',
+    error: 'Error',
+    heading: 'Put a work up for sale',
+    hint: 'The school administration will review the listing, after which the work can be placed on kasteyevshop.kz',
+    tapToPick: 'Tap to choose a photo',
+    otherPhoto: 'Choose another photo',
+    titleLabel: 'Title of the work',
+    titlePlaceholder: 'E.g. Still life with apples',
+    description: 'Description',
+    descriptionPlaceholder: 'Technique, size, year created…',
+    price: 'Price (₸)',
+    contacts: 'Contact details',
+    contactsPlaceholder: 'Phone, WhatsApp or Telegram',
+    submit: 'Submit for review',
+  },
+};
+
 export function CreateListingScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<NavParamList>>();
   const { profile } = useAuth();
+  const s = useStrings(STRINGS);
   const [asset, setAsset] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -39,7 +110,7 @@ export function CreateListingScreen() {
   const pickImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Нужен доступ к галерее, чтобы выбрать фото работы');
+      Alert.alert(s.needGallery);
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -56,16 +127,16 @@ export function CreateListingScreen() {
   const onPublish = async () => {
     if (!profile) return;
     if (!asset) {
-      Alert.alert('Выберите фото работы');
+      Alert.alert(s.choosePhoto);
       return;
     }
     if (!title.trim()) {
-      Alert.alert('Укажите название работы');
+      Alert.alert(s.needTitle);
       return;
     }
     const priceNumber = Number(price.trim().replace(',', '.'));
     if (!price.trim() || Number.isNaN(priceNumber) || priceNumber <= 0) {
-      Alert.alert('Укажите корректную цену');
+      Alert.alert(s.needPrice);
       return;
     }
 
@@ -101,11 +172,11 @@ export function CreateListingScreen() {
         .insert({ listing_id: listing.id, image_url: publicUrlData.publicUrl, position: 0 });
       if (imageError) throw imageError;
 
-      Alert.alert('Готово', 'Объявление отправлено на проверку администрации школы');
+      Alert.alert(s.done, s.sentForReview);
       navigation.goBack();
     } catch (e) {
-      const message = e instanceof Error ? e.message : 'Не удалось опубликовать объявление';
-      Alert.alert('Ошибка', message);
+      const message = e instanceof Error ? e.message : s.publishFailed;
+      Alert.alert(s.error, message);
     } finally {
       setUploading(false);
     }
@@ -113,44 +184,41 @@ export function CreateListingScreen() {
 
   return (
     <Screen scroll>
-      <Text style={styles.title}>Разместить работу на продажу</Text>
-      <Text style={styles.hint}>
-        Объявление пройдёт проверку администрации школы, после чего работу можно будет разместить на
-        kasteyevshop.kz
-      </Text>
+      <Text style={styles.title}>{s.heading}</Text>
+      <Text style={styles.hint}>{s.hint}</Text>
 
       <View style={styles.imagePicker}>
         {asset ? (
           <Image source={{ uri: asset.uri }} style={styles.preview} />
         ) : (
           <Text onPress={pickImage} style={styles.pickText}>
-            Нажмите, чтобы выбрать фото
+            {s.tapToPick}
           </Text>
         )}
       </View>
       {asset ? (
         <Text onPress={pickImage} style={styles.changePhoto}>
-          Выбрать другое фото
+          {s.otherPhoto}
         </Text>
       ) : null}
 
-      <TextField label="Название работы" value={title} onChangeText={setTitle} placeholder="Например: Натюрморт с яблоками" />
+      <TextField label={s.titleLabel} value={title} onChangeText={setTitle} placeholder={s.titlePlaceholder} />
       <TextField
-        label="Описание"
+        label={s.description}
         value={description}
         onChangeText={setDescription}
         multiline
-        placeholder="Техника, размер, год создания…"
+        placeholder={s.descriptionPlaceholder}
       />
-      <TextField label="Цена (₸)" value={price} onChangeText={setPrice} keyboardType="decimal-pad" placeholder="50000" />
+      <TextField label={s.price} value={price} onChangeText={setPrice} keyboardType="decimal-pad" placeholder="50000" />
       <TextField
-        label="Контакты для связи"
+        label={s.contacts}
         value={contactInfo}
         onChangeText={setContactInfo}
-        placeholder="Телефон, WhatsApp или Telegram"
+        placeholder={s.contactsPlaceholder}
       />
 
-      <Button title="Отправить на проверку" onPress={onPublish} loading={uploading} />
+      <Button title={s.submit} onPress={onPublish} loading={uploading} />
     </Screen>
   );
 }

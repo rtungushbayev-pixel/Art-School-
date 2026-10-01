@@ -1,5 +1,21 @@
 import { supabase } from './supabase';
 import type { Profile } from '../types/database';
+import { pick as pickLang } from '../i18n';
+
+const STRINGS = {
+  ru: {
+    blocked: 'Отправить приглашение нельзя: один из вас заблокировал другого.',
+    exists: 'Приглашение уже есть. Проверьте раздел «Заявки».',
+  },
+  kk: {
+    blocked: 'Шақыру жіберу мүмкін емес: сіздердің біреуіңіз екіншісін бұғаттаған.',
+    exists: 'Шақыру бұрыннан бар. «Сұраныстар» бөлімін тексеріңіз.',
+  },
+  en: {
+    blocked: 'Cannot send an invitation: one of you has blocked the other.',
+    exists: 'An invitation already exists. Check the “Requests” section.',
+  },
+};
 
 export type FriendState =
   | 'none'
@@ -80,10 +96,10 @@ export async function sendFriendRequest(userId: string, otherId: string) {
   const { error } = await supabase.from('friendships').insert({ requester_id: userId, addressee_id: otherId });
   if (error) {
     if (error.message.includes('friend_request_blocked')) {
-      throw new Error('Отправить приглашение нельзя: один из вас заблокировал другого.');
+      throw new Error(pickLang(STRINGS).blocked);
     }
     if (error.code === '23505') {
-      throw new Error('Приглашение уже есть. Проверьте раздел «Заявки».');
+      throw new Error(pickLang(STRINGS).exists);
     }
     throw error;
   }

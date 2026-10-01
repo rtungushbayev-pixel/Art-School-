@@ -10,14 +10,76 @@ import { TextField } from '../../components/TextField';
 import { publishPost } from '../../lib/posts';
 import { parseYear } from '../../lib/portfolio';
 import { useAuth } from '../../hooks/useAuth';
+import { useStrings } from '../../i18n';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { StaffStackParamList, StudentStackParamList } from '../../navigation/types';
 
 type NavParamList = StudentStackParamList & StaffStackParamList;
 
+const STRINGS = {
+  ru: {
+    photoTitle: 'Фото работы',
+    choosePhoto: 'Выберите фото работы',
+    checkYear: 'Проверьте год',
+    yearHint: 'Укажите год четырьмя цифрами, например 2026.',
+    publishFailed: 'Не удалось опубликовать работу',
+    error: 'Ошибка',
+    heading: 'Поделиться работой',
+    tapToPick: 'Нажмите, чтобы снять или выбрать фото',
+    otherPhoto: 'Выбрать другое фото',
+    titleLabel: 'Название',
+    titlePlaceholder: 'Например: «Осенний этюд»',
+    technique: 'Техника и материалы',
+    techniquePlaceholder: 'Акварель, бумага',
+    year: 'Год',
+    caption: 'Подпись',
+    captionPlaceholder: 'Расскажите о своей работе…',
+    publish: 'Опубликовать',
+  },
+  kk: {
+    photoTitle: 'Жұмыстың фотосы',
+    choosePhoto: 'Жұмыстың фотосын таңдаңыз',
+    checkYear: 'Жылды тексеріңіз',
+    yearHint: 'Жылды төрт цифрмен көрсетіңіз, мысалы 2026.',
+    publishFailed: 'Жұмысты жариялау мүмкін болмады',
+    error: 'Қате',
+    heading: 'Жұмыспен бөлісу',
+    tapToPick: 'Фото түсіру немесе таңдау үшін басыңыз',
+    otherPhoto: 'Басқа фото таңдау',
+    titleLabel: 'Атауы',
+    titlePlaceholder: 'Мысалы: «Күзгі этюд»',
+    technique: 'Техника және материалдар',
+    techniquePlaceholder: 'Акварель, қағаз',
+    year: 'Жылы',
+    caption: 'Сипаттама',
+    captionPlaceholder: 'Жұмысыңыз туралы айтып беріңіз…',
+    publish: 'Жариялау',
+  },
+  en: {
+    photoTitle: 'Artwork photo',
+    choosePhoto: 'Choose a photo of your artwork',
+    checkYear: 'Check the year',
+    yearHint: 'Enter the year as four digits, e.g. 2026.',
+    publishFailed: 'Could not publish the artwork',
+    error: 'Error',
+    heading: 'Share your work',
+    tapToPick: 'Tap to take or choose a photo',
+    otherPhoto: 'Choose another photo',
+    titleLabel: 'Title',
+    titlePlaceholder: 'E.g. “Autumn study”',
+    technique: 'Technique and materials',
+    techniquePlaceholder: 'Watercolor, paper',
+    year: 'Year',
+    caption: 'Caption',
+    captionPlaceholder: 'Tell us about your work…',
+    publish: 'Publish',
+  },
+};
+
 export function CreatePostScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<NavParamList>>();
   const { profile } = useAuth();
+  const s = useStrings(STRINGS);
   const [asset, setAsset] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [caption, setCaption] = useState('');
   const [title, setTitle] = useState('');
@@ -26,7 +88,7 @@ export function CreatePostScreen() {
   const [uploading, setUploading] = useState(false);
 
   const choosePhoto = async () => {
-    const source = await askImageSource('Фото работы');
+    const source = await askImageSource(s.photoTitle);
     if (!source) return;
     const picked = await pickImage(source);
     if (picked) setAsset(picked);
@@ -35,12 +97,12 @@ export function CreatePostScreen() {
   const onPublish = async () => {
     if (!profile) return;
     if (!asset) {
-      Alert.alert('Выберите фото работы');
+      Alert.alert(s.choosePhoto);
       return;
     }
     const artworkYear = parseYear(year);
     if (artworkYear === 'invalid') {
-      Alert.alert('Проверьте год', 'Укажите год четырьмя цифрами, например 2026.');
+      Alert.alert(s.checkYear, s.yearHint);
       return;
     }
     setUploading(true);
@@ -48,8 +110,8 @@ export function CreatePostScreen() {
       await publishPost({ authorId: profile.id, asset, caption, title, technique, artworkYear });
       navigation.goBack();
     } catch (e) {
-      const message = e instanceof Error ? e.message : 'Не удалось опубликовать работу';
-      Alert.alert('Ошибка', message);
+      const message = e instanceof Error ? e.message : s.publishFailed;
+      Alert.alert(s.error, message);
     } finally {
       setUploading(false);
     }
@@ -57,36 +119,36 @@ export function CreatePostScreen() {
 
   return (
     <Screen scroll>
-      <Text style={styles.title}>Поделиться работой</Text>
+      <Text style={styles.title}>{s.heading}</Text>
 
       <View style={styles.imagePicker}>
         {asset ? (
           <Image source={{ uri: asset.uri }} style={styles.preview} />
         ) : (
           <Text onPress={choosePhoto} style={styles.pickText}>
-            Нажмите, чтобы снять или выбрать фото
+            {s.tapToPick}
           </Text>
         )}
       </View>
       {asset ? (
         <Text onPress={choosePhoto} style={styles.changePhoto}>
-          Выбрать другое фото
+          {s.otherPhoto}
         </Text>
       ) : null}
 
-      <TextField label="Название" placeholder="Например: «Осенний этюд»" value={title} onChangeText={setTitle} />
+      <TextField label={s.titleLabel} placeholder={s.titlePlaceholder} value={title} onChangeText={setTitle} />
       <View style={styles.row}>
         <View style={styles.rowWide}>
           <TextField
-            label="Техника и материалы"
-            placeholder="Акварель, бумага"
+            label={s.technique}
+            placeholder={s.techniquePlaceholder}
             value={technique}
             onChangeText={setTechnique}
           />
         </View>
         <View style={styles.rowNarrow}>
           <TextField
-            label="Год"
+            label={s.year}
             placeholder={String(new Date().getFullYear())}
             value={year}
             onChangeText={setYear}
@@ -96,14 +158,14 @@ export function CreatePostScreen() {
         </View>
       </View>
       <TextField
-        label="Подпись"
-        placeholder="Расскажите о своей работе…"
+        label={s.caption}
+        placeholder={s.captionPlaceholder}
         value={caption}
         onChangeText={setCaption}
         multiline
       />
 
-      <Button title="Опубликовать" onPress={onPublish} loading={uploading} />
+      <Button title={s.publish} onPress={onPublish} loading={uploading} />
     </Screen>
   );
 }

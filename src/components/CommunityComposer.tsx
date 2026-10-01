@@ -6,6 +6,7 @@ import type { ImagePickerAsset } from 'expo-image-picker';
 import { Button } from './Button';
 import { pickImage, type ImageSource } from '../lib/pickImage';
 import { publishPost } from '../lib/posts';
+import { useStrings } from '../i18n';
 import { colors, radius, spacing } from '../theme/colors';
 
 interface Props {
@@ -13,9 +14,43 @@ interface Props {
   onPublished: () => void;
 }
 
+const STRINGS = {
+  ru: {
+    sent: 'Отправлено',
+    sentMessage: 'Публикация появится в Комьюнити после проверки. Пока её видно в «Мои публикации».',
+    publishFailed: 'Не удалось опубликовать',
+    removePhoto: 'Убрать фото',
+    gallery: 'Галерея',
+    camera: 'Камера',
+    placeholder: 'Поделиться впечатлениями...',
+    publish: 'Опубликовать',
+  },
+  kk: {
+    sent: 'Жіберілді',
+    sentMessage: 'Жарияланым тексерілгеннен кейін Қауымдастықта пайда болады. Әзірге оны «Менің жарияланымдарым» бөлімінен көруге болады.',
+    publishFailed: 'Жариялау мүмкін болмады',
+    removePhoto: 'Фотоны алып тастау',
+    gallery: 'Галерея',
+    camera: 'Камера',
+    placeholder: 'Әсерлеріңізбен бөлісіңіз...',
+    publish: 'Жариялау',
+  },
+  en: {
+    sent: 'Sent',
+    sentMessage: 'Your post will appear in the Community after review. For now you can see it in “My posts”.',
+    publishFailed: 'Could not publish',
+    removePhoto: 'Remove photo',
+    gallery: 'Gallery',
+    camera: 'Camera',
+    placeholder: 'Share your impressions...',
+    publish: 'Publish',
+  },
+};
+
 // Быстрая публикация в «Комьюнити»: снять или выбрать фото и написать пару
 // слов. Название и технику работы можно добавить потом в «О работе».
 export function CommunityComposer({ authorId, onPublished }: Props) {
+  const s = useStrings(STRINGS);
   const [asset, setAsset] = useState<ImagePickerAsset | null>(null);
   const [caption, setCaption] = useState('');
   const [publishing, setPublishing] = useState(false);
@@ -32,10 +67,10 @@ export function CommunityComposer({ authorId, onPublished }: Props) {
       await publishPost({ authorId, asset, caption });
       setAsset(null);
       setCaption('');
-      Alert.alert('Отправлено', 'Публикация появится в Комьюнити после проверки. Пока её видно в «Мои публикации».');
+      Alert.alert(s.sent, s.sentMessage);
       onPublished();
     } catch (e) {
-      Alert.alert('Не удалось опубликовать', e instanceof Error ? e.message : undefined);
+      Alert.alert(s.publishFailed, e instanceof Error ? e.message : undefined);
     } finally {
       setPublishing(false);
     }
@@ -46,7 +81,7 @@ export function CommunityComposer({ authorId, onPublished }: Props) {
       {asset ? (
         <View>
           <Image source={{ uri: asset.uri }} style={styles.preview} contentFit="cover" />
-          <Pressable style={styles.remove} onPress={() => setAsset(null)} hitSlop={8} accessibilityLabel="Убрать фото">
+          <Pressable style={styles.remove} onPress={() => setAsset(null)} hitSlop={8} accessibilityLabel={s.removePhoto}>
             <Ionicons name="close" size={18} color={colors.white} />
           </Pressable>
         </View>
@@ -55,24 +90,24 @@ export function CommunityComposer({ authorId, onPublished }: Props) {
       <View style={styles.sources}>
         <Pressable style={styles.source} onPress={() => choose('library')}>
           <Ionicons name="images-outline" size={20} color={colors.primary} />
-          <Text style={styles.sourceText}>Галерея</Text>
+          <Text style={styles.sourceText}>{s.gallery}</Text>
         </Pressable>
         <Pressable style={styles.source} onPress={() => choose('camera')}>
           <Ionicons name="camera-outline" size={20} color={colors.primary} />
-          <Text style={styles.sourceText}>Камера</Text>
+          <Text style={styles.sourceText}>{s.camera}</Text>
         </Pressable>
       </View>
 
       <TextInput
         value={caption}
         onChangeText={setCaption}
-        placeholder="Поделиться впечатлениями..."
+        placeholder={s.placeholder}
         placeholderTextColor="rgba(34, 28, 26, 0.45)"
         multiline
         style={styles.input}
       />
 
-      {asset ? <Button title="Опубликовать" onPress={onPublish} loading={publishing} /> : null}
+      {asset ? <Button title={s.publish} onPress={onPublish} loading={publishing} /> : null}
     </View>
   );
 }

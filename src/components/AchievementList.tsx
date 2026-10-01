@@ -2,9 +2,9 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, paint, radius, spacing } from '../theme/colors';
-import { ACHIEVEMENT_KIND_LABELS } from '../lib/portfolio';
+import { achievementKindLabels } from '../lib/portfolio';
 import type { AchievementKind, StudentAchievement } from '../types/database';
-import { useStrings } from '../i18n';
+import { useLanguage, useStrings } from '../i18n';
 
 const STRINGS = {
   ru: { school: 'Школа' },
@@ -40,10 +40,11 @@ interface AchievementListProps {
 
 export function AchievementList({ achievements, onPress }: AchievementListProps) {
   const s = useStrings(STRINGS);
+  const kindLabels = achievementKindLabels(useLanguage().lang);
   return (
     <View style={styles.list}>
       {achievements.map((item) => {
-        const meta = [ACHIEVEMENT_KIND_LABELS[item.kind], item.result, formatEventDate(item.event_date)]
+        const meta = [kindLabels[item.kind], item.result, formatEventDate(item.event_date)]
           .filter(Boolean)
           .join(' · ');
         return (

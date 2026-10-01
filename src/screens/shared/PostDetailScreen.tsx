@@ -13,6 +13,7 @@ import { toggleLike } from '../../lib/posts';
 import { artworkMeta } from '../../lib/portfolio';
 import { sendPushNotification } from '../../lib/notifications';
 import { useAuth } from '../../hooks/useAuth';
+import { useStrings } from '../../i18n';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { StaffStackParamList, StudentStackParamList } from '../../navigation/types';
 import type { Post, PostImage, Profile } from '../../types/database';
@@ -26,10 +27,53 @@ interface Comment {
   author: Pick<Profile, 'id' | 'full_name' | 'avatar_url'> | null;
 }
 
+const STRINGS = {
+  ru: {
+    commentFailed: 'Не удалось отправить комментарий',
+    deleteConfirm: 'Удалить публикацию?',
+    cancel: 'Отмена',
+    delete: 'Удалить',
+    notFound: 'Публикация удалена или недоступна',
+    loading: 'Загрузка…',
+    edit: 'Изменить',
+    comments: 'Комментарии',
+    noComments: 'Комментариев пока нет',
+    commentPlaceholder: 'Написать комментарий…',
+    send: 'Отправить',
+  },
+  kk: {
+    commentFailed: 'Пікірді жіберу мүмкін болмады',
+    deleteConfirm: 'Жарияланымды жою керек пе?',
+    cancel: 'Бас тарту',
+    delete: 'Жою',
+    notFound: 'Жарияланым жойылған немесе қолжетімсіз',
+    loading: 'Жүктелуде…',
+    edit: 'Өзгерту',
+    comments: 'Пікірлер',
+    noComments: 'Әзірге пікірлер жоқ',
+    commentPlaceholder: 'Пікір жазу…',
+    send: 'Жіберу',
+  },
+  en: {
+    commentFailed: 'Could not send the comment',
+    deleteConfirm: 'Delete this post?',
+    cancel: 'Cancel',
+    delete: 'Delete',
+    notFound: 'This post has been deleted or is unavailable',
+    loading: 'Loading…',
+    edit: 'Edit',
+    comments: 'Comments',
+    noComments: 'No comments yet',
+    commentPlaceholder: 'Write a comment…',
+    send: 'Send',
+  },
+};
+
 export function PostDetailScreen() {
   const route = useRoute<RouteProp<NavParamList, 'PostDetail'>>();
   const { postId } = route.params;
   const { profile } = useAuth();
+  const s = useStrings(STRINGS);
   const navigation = useNavigation<NativeStackNavigationProp<NavParamList>>();
 
   const [post, setPost] = useState<Post | null>(null);
@@ -99,7 +143,7 @@ export function PostDetailScreen() {
       .single();
     setPosting(false);
     if (error) {
-      Alert.alert('Не удалось отправить комментарий', error.message);
+      Alert.alert(s.commentFailed, error.message);
       return;
     }
     setCommentText('');
@@ -112,10 +156,10 @@ export function PostDetailScreen() {
   const isAuthor = !!profile && profile.id === post?.author_id;
 
   const onDelete = () => {
-    Alert.alert('Удалить публикацию?', undefined, [
-      { text: 'Отмена', style: 'cancel' },
+    Alert.alert(s.deleteConfirm, undefined, [
+      { text: s.cancel, style: 'cancel' },
       {
-        text: 'Удалить',
+        text: s.delete,
         style: 'destructive',
         onPress: async () => {
           await supabase.from('posts').delete().eq('id', postId);
@@ -128,7 +172,7 @@ export function PostDetailScreen() {
   if (!post) {
     return (
       <Screen>
-        <Text style={styles.empty}>{notFound ? 'Публикация удалена или недоступна' : 'Загрузка…'}</Text>
+        <Text style={styles.empty}>{notFound ? s.notFound : s.loading}</Text>
       </Screen>
     );
   }
@@ -157,17 +201,18 @@ export function PostDetailScreen() {
               <View style={styles.ownerActions}>
                 {isAuthor ? (
                   <Text onPress={() => navigation.navigate('EditArtwork', { postId })} style={styles.edit}>
-                    {post.featured ? '★ ' : ''}Изменить
+                    {post.featured ? '★ ' : ''}
+                    {s.edit}
                   </Text>
                 ) : null}
                 {canDelete ? (
                   <Text onPress={onDelete} style={styles.delete}>
-                    Удалить
+                    {s.delete}
                   </Text>
                 ) : null}
               </View>
             </View>
-            <Text style={styles.commentsTitle}>Комментарии</Text>
+            <Text style={styles.commentsTitle}>{s.comments}</Text>
           </View>
         }
         renderItem={({ item }) => (
@@ -179,15 +224,15 @@ export function PostDetailScreen() {
             </View>
           </View>
         )}
-        ListEmptyComponent={<Text style={styles.empty}>Комментариев пока нет</Text>}
+        ListEmptyComponent={<Text style={styles.empty}>{s.noComments}</Text>}
         ListFooterComponent={
           <View style={styles.commentForm}>
             <TextField
-              placeholder="Написать комментарий…"
+              placeholder={s.commentPlaceholder}
               value={commentText}
               onChangeText={setCommentText}
             />
-            <Button title="Отправить" onPress={onAddComment} loading={posting} />
+            <Button title={s.send} onPress={onAddComment} loading={posting} />
           </View>
         }
       />

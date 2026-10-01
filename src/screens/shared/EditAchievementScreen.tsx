@@ -9,11 +9,13 @@ import { Card } from '../../components/Card';
 import { formatEventDate } from '../../components/AchievementList';
 import {
   ACHIEVEMENT_KIND_LABELS,
+  achievementKindLabels,
   deleteAchievement,
   fetchAchievement,
   saveAchievement,
 } from '../../lib/portfolio';
 import { useAuth } from '../../hooks/useAuth';
+import { useLanguage, useStrings } from '../../i18n';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { AchievementKind, StudentAchievement } from '../../types/database';
 import type { StaffStackParamList, StudentStackParamList } from '../../navigation/types';
@@ -21,6 +23,78 @@ import type { StaffStackParamList, StudentStackParamList } from '../../navigatio
 type NavParamList = StudentStackParamList & StaffStackParamList;
 
 const KINDS = Object.keys(ACHIEVEMENT_KIND_LABELS) as AchievementKind[];
+
+const STRINGS = {
+  ru: {
+    needTitle: 'Укажите название',
+    needTitleHint: 'Например: городской конкурс детского рисунка.',
+    checkDate: 'Проверьте дату',
+    dateHint: 'Дата в формате ДД.ММ.ГГГГ, например 15.05.2026.',
+    saveFailed: 'Не удалось сохранить',
+    deleteQ: 'Удалить достижение?',
+    cancel: 'Отмена',
+    delete: 'Удалить',
+    deleteFailed: 'Не удалось удалить',
+    type: 'Тип',
+    titleLabel: 'Название',
+    titlePlaceholder: 'Например: Республиканский конкурс «Юный художник»',
+    result: 'Результат',
+    resultPlaceholder: '1 место, Гран-при, участник…',
+    date: 'Дата',
+    datePlaceholder: 'ДД.ММ.ГГГГ',
+    verified: 'Подтверждено школой',
+    verifiedHint: 'Ученик увидит отметку в профиле',
+    verifiedWarning:
+      'Достижение подтверждено школой. После изменения отметка снимется, пока сотрудник не проверит его снова.',
+    save: 'Сохранить',
+  },
+  kk: {
+    needTitle: 'Атауын көрсетіңіз',
+    needTitleHint: 'Мысалы: балалар суретінің қалалық байқауы.',
+    checkDate: 'Күнді тексеріңіз',
+    dateHint: 'Күн КК.АА.ЖЖЖЖ пішімінде, мысалы 15.05.2026.',
+    saveFailed: 'Сақтау мүмкін болмады',
+    deleteQ: 'Жетістікті жою керек пе?',
+    cancel: 'Бас тарту',
+    delete: 'Жою',
+    deleteFailed: 'Жою мүмкін болмады',
+    type: 'Түрі',
+    titleLabel: 'Атауы',
+    titlePlaceholder: 'Мысалы: «Жас суретші» республикалық байқауы',
+    result: 'Нәтиже',
+    resultPlaceholder: '1-орын, Гран-при, қатысушы…',
+    date: 'Күні',
+    datePlaceholder: 'КК.АА.ЖЖЖЖ',
+    verified: 'Мектеп растаған',
+    verifiedHint: 'Оқушы белгіні профилінде көреді',
+    verifiedWarning:
+      'Жетістікті мектеп растаған. Өзгерткеннен кейін қызметкер қайта тексергенше белгі алынып тасталады.',
+    save: 'Сақтау',
+  },
+  en: {
+    needTitle: 'Enter a title',
+    needTitleHint: 'E.g. City children’s drawing competition.',
+    checkDate: 'Check the date',
+    dateHint: 'Use the DD.MM.YYYY format, e.g. 15.05.2026.',
+    saveFailed: 'Could not save',
+    deleteQ: 'Delete this achievement?',
+    cancel: 'Cancel',
+    delete: 'Delete',
+    deleteFailed: 'Could not delete',
+    type: 'Type',
+    titleLabel: 'Title',
+    titlePlaceholder: 'E.g. National competition “Young Artist”',
+    result: 'Result',
+    resultPlaceholder: '1st place, Grand Prix, participant…',
+    date: 'Date',
+    datePlaceholder: 'DD.MM.YYYY',
+    verified: 'Verified by the school',
+    verifiedHint: 'The student will see the mark in their profile',
+    verifiedWarning:
+      'This achievement is verified by the school. After you edit it, the mark will be removed until a staff member checks it again.',
+    save: 'Save',
+  },
+};
 
 // «ДД.ММ.ГГГГ» → «ГГГГ-ММ-ДД»; пусто → null; неверная дата → 'invalid'
 function parseDate(value: string): string | null | 'invalid' {
@@ -41,6 +115,9 @@ export function EditAchievementScreen() {
   const route = useRoute<RouteProp<NavParamList, 'EditAchievement'>>();
   const { studentId, achievementId } = route.params;
   const { profile: viewer } = useAuth();
+  const s = useStrings(STRINGS);
+  const { lang } = useLanguage();
+  const kindLabels = achievementKindLabels(lang);
   const isStaff = viewer?.role === 'staff';
 
   const [existing, setExisting] = useState<StudentAchievement | null>(null);
@@ -68,12 +145,12 @@ export function EditAchievementScreen() {
 
   const onSave = async () => {
     if (!title.trim()) {
-      Alert.alert('Укажите название', 'Например: городской конкурс детского рисунка.');
+      Alert.alert(s.needTitle, s.needTitleHint);
       return;
     }
     const eventDate = parseDate(date);
     if (eventDate === 'invalid') {
-      Alert.alert('Проверьте дату', 'Дата в формате ДД.ММ.ГГГГ, например 15.05.2026.');
+      Alert.alert(s.checkDate, s.dateHint);
       return;
     }
     setSaving(true);
@@ -92,7 +169,7 @@ export function EditAchievementScreen() {
       );
       navigation.goBack();
     } catch (e) {
-      Alert.alert('Не удалось сохранить', e instanceof Error ? e.message : undefined);
+      Alert.alert(s.saveFailed, e instanceof Error ? e.message : undefined);
     } finally {
       setSaving(false);
     }
@@ -100,17 +177,17 @@ export function EditAchievementScreen() {
 
   const onDelete = () => {
     if (!achievementId) return;
-    Alert.alert('Удалить достижение?', undefined, [
-      { text: 'Отмена', style: 'cancel' },
+    Alert.alert(s.deleteQ, undefined, [
+      { text: s.cancel, style: 'cancel' },
       {
-        text: 'Удалить',
+        text: s.delete,
         style: 'destructive',
         onPress: async () => {
           try {
             await deleteAchievement(achievementId);
             navigation.goBack();
           } catch (e) {
-            Alert.alert('Не удалось удалить', e instanceof Error ? e.message : undefined);
+            Alert.alert(s.deleteFailed, e instanceof Error ? e.message : undefined);
           }
         },
       },
@@ -119,7 +196,7 @@ export function EditAchievementScreen() {
 
   return (
     <Screen scroll>
-      <Text style={styles.label}>Тип</Text>
+      <Text style={styles.label}>{s.type}</Text>
       <View style={styles.kindRow}>
         {KINDS.map((value) => (
           <Pressable
@@ -128,22 +205,22 @@ export function EditAchievementScreen() {
             style={[styles.kindOption, kind === value && styles.kindOptionActive]}
           >
             <Text style={[styles.kindText, kind === value && styles.kindTextActive]}>
-              {ACHIEVEMENT_KIND_LABELS[value]}
+              {kindLabels[value]}
             </Text>
           </Pressable>
         ))}
       </View>
 
       <TextField
-        label="Название"
-        placeholder="Например: Республиканский конкурс «Юный художник»"
+        label={s.titleLabel}
+        placeholder={s.titlePlaceholder}
         value={title}
         onChangeText={setTitle}
       />
-      <TextField label="Результат" placeholder="1 место, Гран-при, участник…" value={result} onChangeText={setResult} />
+      <TextField label={s.result} placeholder={s.resultPlaceholder} value={result} onChangeText={setResult} />
       <TextField
-        label="Дата"
-        placeholder="ДД.ММ.ГГГГ"
+        label={s.date}
+        placeholder={s.datePlaceholder}
         value={date}
         onChangeText={setDate}
         keyboardType="numbers-and-punctuation"
@@ -153,8 +230,8 @@ export function EditAchievementScreen() {
       {isStaff ? (
         <Card style={styles.verifyRow}>
           <View style={styles.verifyText}>
-            <Text style={styles.verifyTitle}>Подтверждено школой</Text>
-            <Text style={styles.muted}>Ученик увидит отметку в профиле</Text>
+            <Text style={styles.verifyTitle}>{s.verified}</Text>
+            <Text style={styles.muted}>{s.verifiedHint}</Text>
           </View>
           <Switch
             value={verified}
@@ -165,17 +242,14 @@ export function EditAchievementScreen() {
           />
         </Card>
       ) : existing?.verified ? (
-        <Text style={styles.warning}>
-          Достижение подтверждено школой. После изменения отметка снимется, пока сотрудник не проверит
-          его снова.
-        </Text>
+        <Text style={styles.warning}>{s.verifiedWarning}</Text>
       ) : null}
 
-      <Button title="Сохранить" onPress={onSave} loading={saving} />
+      <Button title={s.save} onPress={onSave} loading={saving} />
       {achievementId ? (
         <>
           <View style={{ height: spacing.sm }} />
-          <Button title="Удалить" variant="danger" onPress={onDelete} />
+          <Button title={s.delete} variant="danger" onPress={onDelete} />
         </>
       ) : null}
     </Screen>

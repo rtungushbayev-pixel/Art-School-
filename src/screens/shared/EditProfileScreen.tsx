@@ -10,18 +10,82 @@ import { supabase } from '../../lib/supabase';
 import { pickAndUploadAvatar } from '../../lib/avatar';
 import { parseYear } from '../../lib/portfolio';
 import { useAuth } from '../../hooks/useAuth';
+import { useStrings } from '../../i18n';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { EnrollmentStatus } from '../../types/database';
 
-const STATUS_OPTIONS: { value: EnrollmentStatus; label: string }[] = [
-  { value: 'planning', label: 'Планирую' },
-  { value: 'applied', label: 'Подал(а) документы' },
-  { value: 'enrolled', label: 'Поступил(а)' },
-];
+const STATUS_VALUES: EnrollmentStatus[] = ['planning', 'applied', 'enrolled'];
+
+const STRINGS = {
+  ru: {
+    status: {
+      planning: 'Планирую',
+      applied: 'Подал(а) документы',
+      enrolled: 'Поступил(а)',
+    } as Record<EnrollmentStatus, string>,
+    avatarFailed: 'Не удалось загрузить фото',
+    checkYear: 'Проверьте год',
+    yearHint: 'Укажите год четырьмя цифрами, например 2023.',
+    saveFailed: 'Не удалось сохранить',
+    loading: 'Загрузка…',
+    changePhoto: 'Изменить фото',
+    name: 'Имя',
+    bio: 'О себе',
+    specialization: 'Направление',
+    specializationPlaceholder: 'Живопись, графика, дизайн…',
+    studySince: 'Учусь с',
+    institution: 'Куда поступил(а) / планирую поступать',
+    institutionPlaceholder: 'Например: КазНАИ им. Т. Жургенова',
+    save: 'Сохранить',
+  },
+  kk: {
+    status: {
+      planning: 'Жоспарлап жүрмін',
+      applied: 'Құжат тапсырдым',
+      enrolled: 'Түстім',
+    } as Record<EnrollmentStatus, string>,
+    avatarFailed: 'Фотоны жүктеу мүмкін болмады',
+    checkYear: 'Жылды тексеріңіз',
+    yearHint: 'Жылды төрт цифрмен көрсетіңіз, мысалы 2023.',
+    saveFailed: 'Сақтау мүмкін болмады',
+    loading: 'Жүктелуде…',
+    changePhoto: 'Фотоны өзгерту',
+    name: 'Аты',
+    bio: 'Өзім туралы',
+    specialization: 'Бағыты',
+    specializationPlaceholder: 'Кескіндеме, графика, дизайн…',
+    studySince: 'Оқып жүрген жылым',
+    institution: 'Қайда түстім / түсуді жоспарлап жүрмін',
+    institutionPlaceholder: 'Мысалы: Т. Жүргенов атындағы ҚазҰӨА',
+    save: 'Сақтау',
+  },
+  en: {
+    status: {
+      planning: 'Planning',
+      applied: 'Applied',
+      enrolled: 'Enrolled',
+    } as Record<EnrollmentStatus, string>,
+    avatarFailed: 'Could not upload the photo',
+    checkYear: 'Check the year',
+    yearHint: 'Enter the year as four digits, e.g. 2023.',
+    saveFailed: 'Could not save',
+    loading: 'Loading…',
+    changePhoto: 'Change photo',
+    name: 'Name',
+    bio: 'About me',
+    specialization: 'Field of study',
+    specializationPlaceholder: 'Painting, graphics, design…',
+    studySince: 'Studying since',
+    institution: 'Where I enrolled / plan to apply',
+    institutionPlaceholder: 'E.g. Zhurgenov Kazakh National Academy of Arts',
+    save: 'Save',
+  },
+};
 
 export function EditProfileScreen() {
   const navigation = useNavigation();
   const { profile, refreshProfile } = useAuth();
+  const s = useStrings(STRINGS);
   const [fullName, setFullName] = useState(profile?.full_name ?? '');
   const [bio, setBio] = useState(profile?.bio ?? '');
   const [targetInstitution, setTargetInstitution] = useState(profile?.target_institution ?? '');
@@ -40,7 +104,7 @@ export function EditProfileScreen() {
       const url = await pickAndUploadAvatar(profile.id);
       if (url) setAvatarUrl(url);
     } catch (e) {
-      Alert.alert('Не удалось загрузить фото', e instanceof Error ? e.message : undefined);
+      Alert.alert(s.avatarFailed, e instanceof Error ? e.message : undefined);
     } finally {
       setUploadingAvatar(false);
     }
@@ -51,7 +115,7 @@ export function EditProfileScreen() {
   const onSave = async () => {
     const studySinceYear = parseYear(studySince);
     if (studySinceYear === 'invalid') {
-      Alert.alert('Проверьте год', 'Укажите год четырьмя цифрами, например 2023.');
+      Alert.alert(s.checkYear, s.yearHint);
       return;
     }
     setSaving(true);
@@ -70,7 +134,7 @@ export function EditProfileScreen() {
       .eq('id', profile.id);
     setSaving(false);
     if (error) {
-      Alert.alert('Не удалось сохранить', error.message);
+      Alert.alert(s.saveFailed, error.message);
       return;
     }
     await refreshProfile();
@@ -81,25 +145,25 @@ export function EditProfileScreen() {
     <Screen scroll>
       <Pressable onPress={pickAvatar} style={styles.avatarWrapper}>
         <Avatar uri={avatarUrl} name={fullName} size={96} />
-        <Text style={styles.avatarHint}>{uploadingAvatar ? 'Загрузка…' : 'Изменить фото'}</Text>
+        <Text style={styles.avatarHint}>{uploadingAvatar ? s.loading : s.changePhoto}</Text>
       </Pressable>
 
-      <TextField label="Имя" value={fullName} onChangeText={setFullName} />
-      <TextField label="О себе" value={bio} onChangeText={setBio} multiline />
+      <TextField label={s.name} value={fullName} onChangeText={setFullName} />
+      <TextField label={s.bio} value={bio} onChangeText={setBio} multiline />
 
       {isStudent ? (
         <View style={styles.row}>
           <View style={styles.rowWide}>
             <TextField
-              label="Направление"
-              placeholder="Живопись, графика, дизайн…"
+              label={s.specialization}
+              placeholder={s.specializationPlaceholder}
               value={specialization}
               onChangeText={setSpecialization}
             />
           </View>
           <View style={styles.rowNarrow}>
             <TextField
-              label="Учусь с"
+              label={s.studySince}
               placeholder="2023"
               value={studySince}
               onChangeText={setStudySince}
@@ -112,22 +176,22 @@ export function EditProfileScreen() {
 
       {isStudent ? (
         <>
-      <Text style={styles.sectionLabel}>Куда поступил(а) / планирую поступать</Text>
+      <Text style={styles.sectionLabel}>{s.institution}</Text>
       <TextField
-        placeholder="Например: КазНАИ им. Т. Жургенова"
+        placeholder={s.institutionPlaceholder}
         value={targetInstitution}
         onChangeText={setTargetInstitution}
       />
 
       {targetInstitution.trim() ? (
         <View style={styles.statusRow}>
-          {STATUS_OPTIONS.map((opt) => (
+          {STATUS_VALUES.map((value) => (
             <Pressable
-              key={opt.value}
-              onPress={() => setStatus(opt.value)}
-              style={[styles.statusOption, status === opt.value && styles.statusOptionActive]}
+              key={value}
+              onPress={() => setStatus(value)}
+              style={[styles.statusOption, status === value && styles.statusOptionActive]}
             >
-              <Text style={[styles.statusText, status === opt.value && styles.statusTextActive]}>{opt.label}</Text>
+              <Text style={[styles.statusText, status === value && styles.statusTextActive]}>{s.status[value]}</Text>
             </Pressable>
           ))}
         </View>
@@ -136,7 +200,7 @@ export function EditProfileScreen() {
         </>
       ) : null}
 
-      <Button title="Сохранить" onPress={onSave} loading={saving} />
+      <Button title={s.save} onPress={onSave} loading={saving} />
     </Screen>
   );
 }
