@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import { ReportsSection } from '../../components/ReportsSection';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -26,7 +27,7 @@ const STRINGS = {
     failed: 'Не получилось',
     works: 'Работы',
     market: 'Продажа',
-    parents: 'Родители',
+    reports: 'Жалобы',
     noPosts: 'Новых работ на проверку нет',
     approve: 'Одобрить',
     reject: 'Отклонить',
@@ -42,7 +43,7 @@ const STRINGS = {
     failed: 'Сәтсіз аяқталды',
     works: 'Жұмыстар',
     market: 'Сату',
-    parents: 'Ата-аналар',
+    reports: 'Шағымдар',
     noPosts: 'Тексеруге жаңа жұмыстар жоқ',
     approve: 'Мақұлдау',
     reject: 'Қабылдамау',
@@ -58,7 +59,7 @@ const STRINGS = {
     failed: 'Something went wrong',
     works: 'Artworks',
     market: 'For sale',
-    parents: 'Parents',
+    reports: 'Reports',
     noPosts: 'No new artworks to review',
     approve: 'Approve',
     reject: 'Reject',
@@ -72,7 +73,7 @@ const STRINGS = {
   },
 };
 
-type ModerationScope = 'posts' | 'listings' | 'parents';
+type ModerationScope = 'posts' | 'listings' | 'reports';
 
 export function ModerationScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<StaffStackParamList>>();
@@ -91,8 +92,6 @@ export function ModerationScreen() {
         setPosts(await fetchPendingPosts(profile?.id));
       } else if (scope === 'listings') {
         setListings(await fetchPendingListings());
-      } else {
-        setLinkRequests(await fetchParentLinkRequests());
       }
     } finally {
       setLoading(false);
@@ -152,10 +151,10 @@ export function ModerationScreen() {
           <Text style={[styles.scopeText, scope === 'listings' && styles.scopeTextActive]}>{s.market}</Text>
         </Pressable>
         <Pressable
-          onPress={() => setScope('parents')}
-          style={[styles.scopeOption, scope === 'parents' && styles.scopeOptionActive]}
+          onPress={() => setScope('reports')}
+          style={[styles.scopeOption, scope === 'reports' && styles.scopeOptionActive]}
         >
-          <Text style={[styles.scopeText, scope === 'parents' && styles.scopeTextActive]}>{s.parents}</Text>
+          <Text style={[styles.scopeText, scope === 'reports' && styles.scopeTextActive]}>{s.reports}</Text>
         </Pressable>
       </View>
 
@@ -189,41 +188,8 @@ export function ModerationScreen() {
             </View>
           ))}
         </>
-      ) : scope === 'parents' ? (
-        <>
-          {linkRequests.length === 0 && !loading ? (
-            <Text style={styles.empty}>{s.noRequests}</Text>
-          ) : null}
-          {linkRequests.map((request) => (
-            <View key={request.id} style={styles.linkCard}>
-              <Text style={styles.linkText}>
-                <Text style={styles.linkName}>{request.parent?.full_name ?? s.parent}</Text>{s.asksToLink}
-              </Text>
-              <Pressable
-                style={styles.linkChild}
-                onPress={() => request.student && navigation.navigate('UserProfile', { userId: request.student.id })}
-              >
-                <Avatar uri={request.student?.avatar_url} name={request.student?.full_name} size={40} />
-                <Text style={styles.linkName}>{request.student?.full_name ?? s.student}</Text>
-              </Pressable>
-              <Text style={styles.linkHint}>{s.linkHint}</Text>
-              <View style={styles.linkActions}>
-                <Pressable
-                  style={[styles.actionButton, styles.approve]}
-                  onPress={() => resolveLinkRequest(request, true)}
-                >
-                  <Text style={styles.actionText}>{s.confirm}</Text>
-                </Pressable>
-                <Pressable
-                  style={[styles.actionButton, styles.reject]}
-                  onPress={() => resolveLinkRequest(request, false)}
-                >
-                  <Text style={styles.actionText}>{s.reject}</Text>
-                </Pressable>
-              </View>
-            </View>
-          ))}
-        </>
+      ) : scope === 'reports' ? (
+        <ReportsSection />
       ) : (
         <>
           {listings.length === 0 && !loading ? (

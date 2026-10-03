@@ -8,7 +8,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { Button } from '../../components/Button';
 import { TextField } from '../../components/TextField';
-import { publishPost } from '../../lib/posts';
+import { publishPost, requestAiModeration } from '../../lib/posts';
 import { parseYear } from '../../lib/portfolio';
 import { useAuth } from '../../hooks/useAuth';
 import { useStrings } from '../../i18n';
@@ -108,7 +108,9 @@ export function CreatePostScreen() {
     }
     setUploading(true);
     try {
-      await publishPost({ authorId: profile.id, assets: [asset], caption, title, technique, artworkYear });
+      const postId = await publishPost({ authorId: profile.id, assets: [asset], caption, title, technique, artworkYear });
+      // Проверка идёт в фоне; результат будет виден в «Мои публикации».
+      requestAiModeration(postId);
       navigation.goBack();
     } catch (e) {
       const message = errorText(e) ?? s.publishFailed;

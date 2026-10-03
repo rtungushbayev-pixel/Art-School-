@@ -61,7 +61,7 @@
    `0017_parent_link_requests.sql`, `0018_support_categories.sql`,
    `0019_school_roster_codes.sql`, `0020_security_hardening.sql`,
    `0021_rate_limits_blocks_storage.sql`, `0022_post_photo_limit.sql`,
-   `0023_admin_role.sql`.
+   `0023_admin_role.sql`, `0024_ai_moderation_reports.sql`.
 3. Скопируйте `.env.example` в `.env` и укажите `EXPO_PUBLIC_SUPABASE_URL`
    и `EXPO_PUBLIC_SUPABASE_ANON_KEY` из настроек вашего проекта Supabase.
 4. Установите зависимости и запустите:

@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { ImagePickerAsset } from 'expo-image-picker';
 import { Button } from './Button';
 import { pickImage, pickImagesFromLibrary } from '../lib/pickImage';
-import { MAX_POST_PHOTOS, publishPost } from '../lib/posts';
+import { MAX_POST_PHOTOS, publishPost, requestAiModeration } from '../lib/posts';
 import { useStrings } from '../i18n';
 import { colors, radius, spacing } from '../theme/colors';
 
@@ -19,6 +19,10 @@ const STRINGS = {
   ru: {
     sent: 'Отправлено',
     sentMessage: 'Публикация появится в Комьюнити после проверки. Пока её видно в «Мои публикации».',
+    published: 'Опубликовано',
+    publishedMessage: 'Публикация уже в Комьюнити.',
+    rejectedTitle: 'Публикация не прошла проверку',
+    rejectedMessage: 'Причина — в «Мои публикации». Если считаете, что это ошибка, напишите в «Помощь».',
     publishFailed: 'Не удалось опубликовать',
     removePhoto: 'Убрать фото',
     gallery: 'Галерея',
@@ -31,6 +35,10 @@ const STRINGS = {
   kk: {
     sent: 'Жіберілді',
     sentMessage: 'Жарияланым тексерілгеннен кейін Қауымдастықта пайда болады. Әзірге оны «Менің жарияланымдарым» бөлімінен көруге болады.',
+    published: 'Жарияланды',
+    publishedMessage: 'Жарияланым Қауымдастықта.',
+    rejectedTitle: 'Жарияланым тексеруден өтпеді',
+    rejectedMessage: 'Себебі «Менің жарияланымдарым» бөлімінде. Қате деп ойласаңыз, «Көмек» бөліміне жазыңыз.',
     publishFailed: 'Жариялау мүмкін болмады',
     removePhoto: 'Фотоны алып тастау',
     gallery: 'Галерея',
@@ -43,6 +51,10 @@ const STRINGS = {
   en: {
     sent: 'Sent',
     sentMessage: 'Your post will appear in the Community after review. For now you can see it in “My posts”.',
+    published: 'Published',
+    publishedMessage: 'Your post is now in the Community.',
+    rejectedTitle: 'Your post did not pass review',
+    rejectedMessage: 'See the reason in “My posts”. If you think this is a mistake, write to Help.',
     publishFailed: 'Could not publish',
     removePhoto: 'Remove photo',
     gallery: 'Gallery',
@@ -83,10 +95,14 @@ export function CommunityComposer({ authorId, onPublished }: Props) {
     if (assets.length === 0) return;
     setPublishing(true);
     try {
-      await publishPost({ authorId, assets, caption });
+      const postId = await publishPost({ authorId, assets, caption });
       setAssets([]);
       setCaption('');
-      Alert.alert(s.sent, s.sentMessage);
+      // Автоматическая проверка: обычно занимает несколько секунд.
+      const decision = await requestAiModeration(postId);
+      if (decision === 'approve') Alert.alert(s.published, s.publishedMessage);
+      else if (decision === 'reject') Alert.alert(s.rejectedTitle, s.rejectedMessage);
+      else Alert.alert(s.sent, s.sentMessage);
       onPublished();
     } catch (e) {
       Alert.alert(s.publishFailed, errorText(e));

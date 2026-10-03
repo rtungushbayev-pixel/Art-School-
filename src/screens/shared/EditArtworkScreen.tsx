@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { requestAiModeration } from '../../lib/posts';
 import { Alert, StyleSheet, Switch, Text, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
@@ -154,6 +155,8 @@ export function EditArtworkScreen() {
       if (featured !== post.featured) {
         await setPostFeatured(post.id, featured);
       }
+      // Изменённый текст снова уходит на проверку — запускаем ИИ-проверку в фоне.
+      requestAiModeration(post.id);
       navigation.goBack();
     } catch (e) {
       Alert.alert(s.saveFailed, e instanceof Error ? e.message : undefined);

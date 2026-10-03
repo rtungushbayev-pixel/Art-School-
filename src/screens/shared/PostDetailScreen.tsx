@@ -33,6 +33,15 @@ interface Comment {
 const STRINGS = {
   ru: {
     commentFailed: 'Не удалось отправить комментарий',
+    report: 'Пожаловаться',
+    reportTitle: 'Что не так с публикацией?',
+    reasonInappropriate: 'Неприемлемое содержание',
+    reasonOffensive: 'Оскорбление или травля',
+    reasonNotOwn: 'Чужая работа',
+    reasonSpam: 'Реклама или спам',
+    reportSent: 'Жалоба отправлена',
+    reportSentText: 'Спасибо. Сотрудники школы посмотрят публикацию.',
+    reportFailed: 'Не удалось отправить жалобу',
     deleteConfirm: 'Удалить публикацию?',
     cancel: 'Отмена',
     delete: 'Удалить',
@@ -46,6 +55,15 @@ const STRINGS = {
   },
   kk: {
     commentFailed: 'Пікірді жіберу мүмкін болмады',
+    report: 'Шағымдану',
+    reportTitle: 'Жарияланымда не дұрыс емес?',
+    reasonInappropriate: 'Орынсыз мазмұн',
+    reasonOffensive: 'Қорлау немесе қудалау',
+    reasonNotOwn: 'Басқа біреудің жұмысы',
+    reasonSpam: 'Жарнама немесе спам',
+    reportSent: 'Шағым жіберілді',
+    reportSentText: 'Рахмет. Мектеп қызметкерлері жарияланымды қарайды.',
+    reportFailed: 'Шағымды жіберу мүмкін болмады',
     deleteConfirm: 'Жарияланымды жою керек пе?',
     cancel: 'Бас тарту',
     delete: 'Жою',
@@ -59,6 +77,15 @@ const STRINGS = {
   },
   en: {
     commentFailed: 'Could not send the comment',
+    report: 'Report',
+    reportTitle: "What's wrong with this post?",
+    reasonInappropriate: 'Inappropriate content',
+    reasonOffensive: 'Insults or bullying',
+    reasonNotOwn: "Someone else's work",
+    reasonSpam: 'Ads or spam',
+    reportSent: 'Report sent',
+    reportSentText: 'Thank you. School staff will review the post.',
+    reportFailed: 'Could not send the report',
     deleteConfirm: 'Delete this post?',
     cancel: 'Cancel',
     delete: 'Delete',
@@ -159,6 +186,23 @@ export function PostDetailScreen() {
   const canDelete = profile && (isStaffRole(profile.role) || profile.id === post?.author_id);
   const isAuthor = !!profile && profile.id === post?.author_id;
 
+  // Жалоба: видна сотрудникам; после трёх жалоб публикация скрывается до проверки.
+  const onReport = () => {
+    const send = async (reason: string) => {
+      if (!profile) return;
+      const { error } = await supabase.from('post_reports').insert({ post_id: postId, reporter_id: profile.id, reason });
+      if (error && error.code !== '23505') Alert.alert(s.reportFailed, errorText(error));
+      else Alert.alert(s.reportSent, s.reportSentText);
+    };
+    Alert.alert(s.reportTitle, undefined, [
+      { text: s.reasonInappropriate, onPress: () => send('inappropriate') },
+      { text: s.reasonOffensive, onPress: () => send('offensive') },
+      { text: s.reasonNotOwn, onPress: () => send('not_own') },
+      { text: s.reasonSpam, onPress: () => send('spam') },
+      { text: s.cancel, style: 'cancel' },
+    ]);
+  };
+
   const onDelete = () => {
     Alert.alert(s.deleteConfirm, undefined, [
       { text: s.cancel, style: 'cancel' },
@@ -212,6 +256,11 @@ export function PostDetailScreen() {
                 {canDelete ? (
                   <Text onPress={onDelete} style={styles.delete}>
                     {s.delete}
+                  </Text>
+                ) : null}
+                {!isAuthor && post.status === 'approved' ? (
+                  <Text onPress={onReport} style={styles.delete}>
+                    {s.report}
                   </Text>
                 ) : null}
               </View>

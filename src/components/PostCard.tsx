@@ -16,6 +16,8 @@ export interface PostCardData {
   featured: boolean;
   created_at: string;
   status: 'pending' | 'approved' | 'rejected';
+  // Пояснение ИИ-проверки (видно автору в «Мои публикации» и сотрудникам)
+  aiReason?: string | null;
   author: { id: string; full_name: string; avatar_url: string | null } | null;
   images: { id: string; image_url: string }[];
   likeCount: number;
@@ -108,6 +110,10 @@ export function PostCard({ post, onPress, onToggleLike, onAuthorPress, showModer
         </Pressable>
       </View>
 
+      {showModerationBadge && post.status !== 'approved' && post.aiReason ? (
+        <Text style={styles.aiReason}>{post.aiReason}</Text>
+      ) : null}
+
       <PhotoCarousel images={post.images} onPress={onPress} />
 
       <View style={styles.actions}>
@@ -158,6 +164,7 @@ const styles = StyleSheet.create({
   badgePending: { backgroundColor: colors.accent },
   badgeRejected: { backgroundColor: colors.danger },
   badgeText: { color: colors.white, fontSize: 11, fontWeight: '700' },
+  aiReason: { color: colors.textMuted, fontSize: 13, paddingHorizontal: spacing.md, paddingBottom: spacing.sm },
   image: { width: '100%', aspectRatio: 1, backgroundColor: colors.border },
   actions: { flexDirection: 'row', gap: spacing.lg, paddingHorizontal: spacing.md, paddingTop: spacing.sm + 2 },
   action: { flexDirection: 'row', alignItems: 'center', gap: 6 },
