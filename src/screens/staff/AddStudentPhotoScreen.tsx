@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { shrinkAsset } from '../../lib/imageResize';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
@@ -85,7 +86,8 @@ export function AddStudentPhotoScreen({ route, navigation }: Props) {
     }
     setUploading(true);
     try {
-      await uploadStudentPhoto({ studentId, uri: asset.uri, mimeType: asset.mimeType, caption: caption.trim() });
+      const small = await shrinkAsset(asset);
+      await uploadStudentPhoto({ studentId, uri: small.uri, mimeType: small.mimeType, caption: caption.trim() });
       navigation.goBack();
     } catch (e) {
       Alert.alert(s.uploadFailed, e instanceof Error ? e.message : undefined);

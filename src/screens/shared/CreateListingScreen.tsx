@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { shrinkAsset } from '../../lib/imageResize';
 import { errorText } from '../../lib/errors';
 import { Alert, Image, StyleSheet, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -132,14 +133,15 @@ export function CreateListingScreen() {
 
     setUploading(true);
     try {
-      const ext = asset.uri.split('.').pop()?.toLowerCase() || 'jpg';
+      const upload = await shrinkAsset(asset);
+      const ext = upload.uri.split('.').pop()?.toLowerCase() || 'jpg';
       const path = `${profile.id}/${Date.now()}.${ext}`;
-      const response = await fetch(asset.uri);
+      const response = await fetch(upload.uri);
       const arrayBuffer = await response.arrayBuffer();
 
       const { error: uploadError } = await supabase.storage
         .from('marketplace')
-        .upload(path, arrayBuffer, { contentType: asset.mimeType ?? 'image/jpeg' });
+        .upload(path, arrayBuffer, { contentType: upload.mimeType ?? 'image/jpeg' });
       if (uploadError) throw uploadError;
 
       const { data: publicUrlData } = supabase.storage.from('marketplace').getPublicUrl(path);

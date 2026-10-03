@@ -1,4 +1,5 @@
 import type { ImagePickerAsset } from 'expo-image-picker';
+import { shrinkAsset } from './imageResize';
 import { supabase } from './supabase';
 import type { PostCardData } from '../components/PostCard';
 
@@ -87,7 +88,8 @@ export async function toggleLike(postId: string, userId: string, currentlyLiked:
 // Сколько фото можно приложить к одной публикации (так же ограничено в базе).
 export const MAX_POST_PHOTOS = 10;
 
-async function uploadPortfolioPhoto(authorId: string, asset: ImagePickerAsset, index: number): Promise<string> {
+async function uploadPortfolioPhoto(authorId: string, original: ImagePickerAsset, index: number): Promise<string> {
+  const asset = await shrinkAsset(original);
   const ext = asset.uri.split('.').pop()?.toLowerCase() || 'jpg';
   const path = `${authorId}/${Date.now()}-${index}.${ext}`;
   const response = await fetch(asset.uri);
