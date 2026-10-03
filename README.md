@@ -60,7 +60,8 @@
    `0015_friends.sql`, `0016_friend_suggestions.sql`,
    `0017_parent_link_requests.sql`, `0018_support_categories.sql`,
    `0019_school_roster_codes.sql`, `0020_security_hardening.sql`,
-   `0021_rate_limits_blocks_storage.sql`, `0022_post_photo_limit.sql`.
+   `0021_rate_limits_blocks_storage.sql`, `0022_post_photo_limit.sql`,
+   `0023_admin_role.sql`.
 3. Скопируйте `.env.example` в `.env` и укажите `EXPO_PUBLIC_SUPABASE_URL`
    и `EXPO_PUBLIC_SUPABASE_ANON_KEY` из настроек вашего проекта Supabase.
 4. Установите зависимости и запустите:
@@ -93,6 +94,16 @@ supabase/
 ```
 
 ## Роли и данные
+
+Роли: `student` (ученик), `parent` (родитель), `staff` (преподаватель),
+`admin` (администратор). Регистрация только по коду из школы
+(`school_roster`) или по приглашению сотрудника (`staff_invites`, создаёт
+администратор). Первого администратора назначают в SQL Editor:
+
+```sql
+update public.profiles set role = 'admin' where id = '<uuid пользователя>';
+```
+
 
 Роль (`student` / `parent` / `staff`) хранится в `profiles.role`. При
 регистрации человек выбирает «Ученик» или «Родитель» и группу: ученик сразу

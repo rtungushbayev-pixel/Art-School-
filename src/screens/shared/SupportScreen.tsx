@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import { isStaffRole } from '../../lib/roles';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -72,7 +73,7 @@ export function SupportScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<NavParamList>>();
   const { profile } = useAuth();
   const s = useStrings(STRINGS);
-  const isStaff = profile?.role === 'staff';
+  const isStaff = isStaffRole(profile?.role);
   const [tickets, setTickets] = useState<SupportTicketWithAuthor[]>([]);
   const [filter, setFilter] = useState<Filter>('active');
   const [loading, setLoading] = useState(true);

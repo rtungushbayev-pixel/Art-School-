@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import { isStaffRole } from '../../lib/roles';
 import { errorText } from '../../lib/errors';
 import { Alert, FlatList, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { PhotoCarousel } from '../../components/PhotoCarousel';
@@ -155,7 +156,7 @@ export function PostDetailScreen() {
     sendPushNotification({ event: 'post_comment', id: comment.id });
   };
 
-  const canDelete = profile && (profile.role === 'staff' || profile.id === post?.author_id);
+  const canDelete = profile && (isStaffRole(profile.role) || profile.id === post?.author_id);
   const isAuthor = !!profile && profile.id === post?.author_id;
 
   const onDelete = () => {

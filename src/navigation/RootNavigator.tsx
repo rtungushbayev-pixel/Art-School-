@@ -1,4 +1,5 @@
 import React from 'react';
+import { isStaffRole } from '../lib/roles';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { useAuth } from '../hooks/useAuth';
@@ -37,7 +38,7 @@ export function RootNavigator() {
         <NewPasswordScreen />
       ) : !session || !profile ? (
         <AuthNavigator />
-      ) : profile.role === 'staff' ? (
+      ) : isStaffRole(profile.role) ? (
         <StaffNavigator />
       ) : profile.role === 'parent' ? (
         <ParentNavigator />

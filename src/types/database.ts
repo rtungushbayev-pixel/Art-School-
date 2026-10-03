@@ -1,4 +1,4 @@
-export type UserRole = 'student' | 'staff' | 'parent';
+export type UserRole = 'student' | 'staff' | 'parent' | 'admin';
 export type EnrollmentStatus = 'planning' | 'applied' | 'enrolled';
 export type PostStatus = 'pending' | 'approved' | 'rejected';
 export type AnnouncementAudience = 'all' | 'students' | 'staff' | 'group';

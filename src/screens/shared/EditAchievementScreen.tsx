@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { isStaffRole } from '../../lib/roles';
 import { Alert, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
@@ -118,7 +119,7 @@ export function EditAchievementScreen() {
   const s = useStrings(STRINGS);
   const { lang } = useLanguage();
   const kindLabels = achievementKindLabels(lang);
-  const isStaff = viewer?.role === 'staff';
+  const isStaff = isStaffRole(viewer?.role);
 
   const [existing, setExisting] = useState<StudentAchievement | null>(null);
   const [kind, setKind] = useState<AchievementKind>('competition');

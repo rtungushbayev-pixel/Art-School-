@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import { isAdminRole, isStaffRole } from '../../lib/roles';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
@@ -48,8 +49,14 @@ const STRINGS = {
   ru: {
     roleChange: {
       staff: {
-        button: 'Сделать сотрудником',
-        question: (name: string) => `${name} получит права сотрудника: модерация, группы, расписание и сообщения.`,
+        button: 'Сделать преподавателем',
+        question: (name: string) =>
+          `${name} станет преподавателем: модерация, сообщения, прогресс учеников и свои группы.`,
+      },
+      admin: {
+        button: 'Сделать администратором',
+        question: (name: string) =>
+          `${name} станет администратором: все права, включая роли, приглашения сотрудников, все группы, коды учеников и телефоны.`,
       },
       student: {
         button: 'Сделать учеником',
@@ -98,9 +105,14 @@ const STRINGS = {
   kk: {
     roleChange: {
       staff: {
-        button: 'Қызметкер ету',
+        button: 'Мұғалім ету',
         question: (name: string) =>
-          `${name} қызметкер құқықтарын алады: модерация, топтар, кесте және хабарламалар.`,
+          `${name} мұғалім болады: модерация, хабарламалар, оқушылардың үлгерімі және өз топтары.`,
+      },
+      admin: {
+        button: 'Әкімші ету',
+        question: (name: string) =>
+          `${name} әкімші болады: барлық құқықтар, соның ішінде рөлдер, қызметкерлерді шақыру, барлық топтар, оқушы кодтары және телефондар.`,
       },
       student: {
         button: 'Оқушы ету',
@@ -150,9 +162,14 @@ const STRINGS = {
   en: {
     roleChange: {
       staff: {
-        button: 'Make staff',
+        button: 'Make teacher',
         question: (name: string) =>
-          `${name} will get staff rights: moderation, groups, schedule and messages.`,
+          `${name} will become a teacher: moderation, messages, student progress and their own groups.`,
+      },
+      admin: {
+        button: 'Make administrator',
+        question: (name: string) =>
+          `${name} will become an administrator: all rights, including roles, staff invitations, all groups, student codes and phone numbers.`,
       },
       student: {
         button: 'Make student',
@@ -201,7 +218,7 @@ const STRINGS = {
   },
 };
 
-const ROLE_ORDER: UserRole[] = ['student', 'parent', 'staff'];
+const ROLE_ORDER: UserRole[] = ['student', 'parent', 'staff', 'admin'];
 
 export function UserProfileScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<NavParamList>>();
@@ -219,7 +236,7 @@ export function UserProfileScreen() {
   const [tab, setTab] = useState<ProfileTab>('profile');
 
   const userId = route.params.userId;
-  const viewerIsStaff = viewer?.role === 'staff';
+  const viewerIsStaff = isStaffRole(viewer?.role);
   const { posts, achievements, groups } = useStudentPortfolio(userId, viewer?.id);
 
   const load = useCallback(async () => {
@@ -227,7 +244,7 @@ export function UserProfileScreen() {
     const loaded = data as Profile;
     setProfile(loaded);
     // Друзья — между учениками и преподавателями.
-    const friendRoles = ['student', 'staff'];
+    const friendRoles = ['student', 'staff', 'admin'];
     if (viewer && loaded && viewer.id !== loaded.id && friendRoles.includes(viewer.role) && friendRoles.includes(loaded.role)) {
       try {
         setFriendState(friendStateOf(await fetchFriendsData(viewer.id), loaded.id));
@@ -271,7 +288,7 @@ export function UserProfileScreen() {
       { text: s.cancel, style: 'cancel' },
       {
         text: s.change,
-        style: profile.role === 'staff' ? 'destructive' : 'default',
+        style: isStaffRole(profile.role) ? 'destructive' : 'default',
         onPress: async () => {
           setChangingRole(role);
           const { error } = await supabase.rpc('set_user_role', { p_user_id: profile.id, p_role: role });
@@ -377,7 +394,7 @@ export function UserProfileScreen() {
           />
         </View>
       ) : null}
-      {viewerIsStaff && viewer?.id !== profile.id ? (
+      {isAdminRole(viewer?.role) && viewer?.id !== profile.id ? (
         <View style={styles.roleAction}>
           {ROLE_ORDER.filter((role) => role !== profile.role).map((role) => (
             <Button

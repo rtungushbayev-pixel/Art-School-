@@ -7,6 +7,8 @@ import { Screen } from '../../components/Screen';
 import { Card } from '../../components/Card';
 import { Avatar } from '../../components/Avatar';
 import { RosterSection } from '../../components/RosterSection';
+import { useAuth } from '../../hooks/useAuth';
+import { isAdminRole } from '../../lib/roles';
 import { supabase } from '../../lib/supabase';
 import { fetchGroupMembers, removeStudentFromGroup } from '../../lib/groups';
 import { dayShort } from '../../lib/schedule';
@@ -65,6 +67,10 @@ export function GroupDetailScreen({ route }: Props) {
   const s = useStrings(STRINGS);
 
   const [group, setGroup] = useState<Group | null>(null);
+  const { profile } = useAuth();
+  // Состав, занятия и коды меняет администратор или преподаватель этой группы
+  // (на сервере — can_manage_group).
+  const canManage = isAdminRole(profile?.role) || (!!group && group.teacher_id === profile?.id);
   const [members, setMembers] = useState<Profile[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
 
@@ -146,7 +152,7 @@ export function GroupDetailScreen({ route }: Props) {
         </Pressable>
       ) : null}
 
-      <RosterSection groupId={groupId} />
+      {canManage ? <RosterSection groupId={groupId} /> : null}
 
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>{s.schedule}</Text>

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
+import { isStaffRole } from './roles';
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import type { NavigationContainerRefWithCurrent } from '@react-navigation/native';
@@ -89,7 +90,7 @@ export function useNotificationNavigation(navigation: AppNavigationRef, role: Us
     // Сразу после входа стек ученика/сотрудника/родителя может ещё не смонтироваться —
     // тогда ждём следующего onStateChange.
     const stack =
-      currentRole === 'staff' ? 'StaffTabs' : currentRole === 'parent' ? 'ParentTabs' : 'StudentTabs';
+      isStaffRole(currentRole) ? 'StaffTabs' : currentRole === 'parent' ? 'ParentTabs' : 'StudentTabs';
     if (!navigation.getRootState()?.routeNames.includes(stack)) return;
     pending.current = null;
     navigateToTarget(navigation, currentRole, target);

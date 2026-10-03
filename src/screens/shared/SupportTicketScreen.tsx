@@ -1,4 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react';
+import { isStaffRole } from '../../lib/roles';
 import { errorText } from '../../lib/errors';
 import {
   Alert,
@@ -139,7 +140,7 @@ export function SupportTicketScreen() {
     );
   }
 
-  const isStaff = profile.role === 'staff';
+  const isStaff = isStaffRole(profile.role);
   const isAuthor = ticket.author_id === profile.id;
   const closed = ticket.status === 'closed';
 
@@ -210,7 +211,7 @@ export function SupportTicketScreen() {
 
         {messages.map((message) => {
           const mine = message.author_id === profile.id;
-          const fromStaff = message.author?.role === 'staff' && message.author_id !== ticket.author_id;
+          const fromStaff = isStaffRole(message.author?.role) && message.author_id !== ticket.author_id;
           return (
             <View key={message.id} style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleOther]}>
               <Text style={[styles.bubbleAuthor, mine && styles.textOnPrimary]}>

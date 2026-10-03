@@ -5,6 +5,8 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
+import { useAuth } from '../../hooks/useAuth';
+import { isAdminRole } from '../../lib/roles';
 import { supabase } from '../../lib/supabase';
 import { colors, spacing } from '../../theme/colors';
 import type { Group } from '../../types/database';
@@ -32,6 +34,9 @@ const STRINGS = {
 export function GroupsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<StaffStackParamList>>();
   const s = useStrings(STRINGS);
+  const { profile } = useAuth();
+  // Группы создаёт только администратор (на сервере — политика groups_write_admin).
+  const canCreate = isAdminRole(profile?.role);
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -50,7 +55,7 @@ export function GroupsScreen() {
 
   return (
     <Screen scroll refreshing={loading} onRefresh={load}>
-      <Button title={s.newGroup} onPress={() => navigation.navigate('CreateGroup')} />
+      {canCreate ? <Button title={s.newGroup} onPress={() => navigation.navigate('CreateGroup')} /> : null}
       <View style={{ height: spacing.sm }} />
       <Button title={s.people} variant="secondary" onPress={() => navigation.navigate('People')} />
       <View style={{ height: spacing.md }} />

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import { isStaffRole } from '../../lib/roles';
 import { errorText } from '../../lib/errors';
 import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
@@ -269,7 +270,7 @@ export function FriendsScreen() {
   // Строка результата поиска: действие зависит от того, кто это для меня.
   const searchRow = (person: Profile) => {
     const state = friendStateOf(data, person.id);
-    const note = person.role === 'staff' ? s.teacher : s.student;
+    const note = isStaffRole(person.role) ? s.teacher : s.student;
     return (
       <View key={person.id} style={styles.row}>
         {personHead(person, note)}

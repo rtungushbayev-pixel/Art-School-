@@ -14,6 +14,7 @@ import { useStrings } from '../../i18n';
 import { FEATURES } from '../../lib/features';
 import { changeProfileAvatar } from '../../lib/avatar';
 import { supabase } from '../../lib/supabase';
+import { isAdminRole } from '../../lib/roles';
 import { useStudentPortfolio } from '../../hooks/useStudentPortfolio';
 import { colors, spacing } from '../../theme/colors';
 import type { StaffStackParamList, StudentStackParamList } from '../../navigation/types';
@@ -28,6 +29,10 @@ const STRINGS = {
     inviteStaff: 'Пригласить сотрудника',
     inviteText: (code: string) => `Приглашение в приложение KasteyevSchool для сотрудника школы. На экране регистрации нажмите «Я сотрудник школы» и введите код: ${code}. Код действует 7 дней.`,
     inviteFailed: 'Не удалось создать приглашение',
+    chooseRole: 'Кем будет новый сотрудник?',
+    roleTeacher: 'Преподаватель',
+    roleAdmin: 'Администратор',
+    cancel: 'Отмена',
     language: 'Язык приложения',
     studentPayments: 'Оплаты учеников',
     myPayments: 'Мои оплаты',
@@ -40,6 +45,10 @@ const STRINGS = {
     inviteStaff: 'Қызметкерді шақыру',
     inviteText: (code: string) => `Мектеп қызметкеріне арналған KasteyevSchool қолданбасына шақыру. Тіркелу бетінде «Мен мектеп қызметкерімін» түймесін басып, кодты енгізіңіз: ${code}. Код 7 күн жарамды.`,
     inviteFailed: 'Шақыру жасау мүмкін болмады',
+    chooseRole: 'Жаңа қызметкер кім болады?',
+    roleTeacher: 'Мұғалім',
+    roleAdmin: 'Әкімші',
+    cancel: 'Бас тарту',
     language: 'Қолданба тілі',
     studentPayments: 'Оқушылардың төлемдері',
     myPayments: 'Менің төлемдерім',
@@ -52,6 +61,10 @@ const STRINGS = {
     inviteStaff: 'Invite a staff member',
     inviteText: (code: string) => `Invitation to the KasteyevSchool app for school staff. On the sign-up screen tap "I'm school staff" and enter the code: ${code}. The code is valid for 7 days.`,
     inviteFailed: 'Could not create an invitation',
+    chooseRole: 'What role will the new staff member have?',
+    roleTeacher: 'Teacher',
+    roleAdmin: 'Administrator',
+    cancel: 'Cancel',
     language: 'App language',
     studentPayments: 'Student payments',
     myPayments: 'My payments',
@@ -119,17 +132,24 @@ export function ProfileScreen() {
           />
           <Text style={styles.sectionLabel}>{s.language}</Text>
           <LanguageSwitcher />
-          {profile.role === 'staff' ? (
+          {isAdminRole(profile.role) ? (
             <>
               <View style={{ height: spacing.sm }} />
               <Button
                 title={s.inviteStaff}
                 variant="secondary"
-                onPress={async () => {
-                  // Одноразовый код: по нему новый сотрудник регистрируется сам.
-                  const { data, error } = await supabase.rpc('create_staff_invite', { p_note: null });
-                  if (error || !data) Alert.alert(s.inviteFailed, error?.message);
-                  else Share.share({ message: s.inviteText(String(data)) }).catch(() => {});
+                onPress={() => {
+                  // Одноразовый код с ролью: по нему новый сотрудник регистрируется сам.
+                  const invite = async (role: 'staff' | 'admin') => {
+                    const { data, error } = await supabase.rpc('create_staff_invite', { p_role: role, p_note: null });
+                    if (error || !data) Alert.alert(s.inviteFailed, error?.message);
+                    else Share.share({ message: s.inviteText(String(data)) }).catch(() => {});
+                  };
+                  Alert.alert(s.inviteStaff, s.chooseRole, [
+                    { text: s.roleTeacher, onPress: () => invite('staff') },
+                    { text: s.roleAdmin, onPress: () => invite('admin') },
+                    { text: s.cancel, style: 'cancel' },
+                  ]);
                 }}
               />
             </>
@@ -137,7 +157,7 @@ export function ProfileScreen() {
           {FEATURES.payments ? (
             <>
               <View style={{ height: spacing.sm }} />
-              {profile.role === 'staff' ? (
+              {isAdminRole(profile.role) ? (
                 <Button
                   title={s.studentPayments}
                   variant="secondary"

@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
+import { isStaffRole } from '../../lib/roles';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -89,7 +90,7 @@ const STRINGS = {
 export function ScheduleScreen() {
   const { profile } = useAuth();
   const s = useStrings(STRINGS);
-  const isStaff = profile?.role === 'staff';
+  const isStaff = isStaffRole(profile?.role);
   const navigation = useNavigation<NativeStackNavigationProp<StaffStackParamList>>();
 
   const [weekOffset, setWeekOffset] = useState(0);

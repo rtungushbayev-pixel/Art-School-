@@ -82,7 +82,7 @@ export async function searchPeople(userId: string, query: string): Promise<Profi
   let request = supabase
     .from('profiles')
     .select('*')
-    .in('role', ['student', 'staff'])
+    .in('role', ['student', 'staff', 'admin'])
     .neq('id', userId)
     .order('full_name')
     .limit(50);

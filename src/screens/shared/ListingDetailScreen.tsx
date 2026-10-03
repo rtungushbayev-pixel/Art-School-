@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import { isStaffRole } from '../../lib/roles';
 import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
@@ -105,7 +106,7 @@ export function ListingDetailScreen() {
   );
 
   const isOwner = profile?.id === listing?.seller_id;
-  const isStaff = profile?.role === 'staff';
+  const isStaff = isStaffRole(profile?.role);
 
   const moderate = async (status: 'approved' | 'rejected') => {
     if (!profile || !listing) return;

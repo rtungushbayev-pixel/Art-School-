@@ -2,7 +2,7 @@ import { supabase } from './supabase';
 import type { Profile } from '../types/database';
 
 export async function fetchStaffProfiles(): Promise<Profile[]> {
-  const { data, error } = await supabase.from('profiles').select('*').eq('role', 'staff').order('full_name');
+  const { data, error } = await supabase.from('profiles').select('*').in('role', ['staff', 'admin']).order('full_name');
   if (error) throw error;
   return (data as Profile[]) ?? [];
 }

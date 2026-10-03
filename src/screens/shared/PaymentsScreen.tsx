@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import { isAdminRole } from '../../lib/roles';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
@@ -96,7 +97,7 @@ export function PaymentsScreen() {
   const s = useStrings(STRINGS);
   const navigation = useNavigation<NativeStackNavigationProp<NavParamList>>();
   const route = useRoute<RouteProp<NavParamList, 'Payments'>>();
-  const isStaff = profile?.role === 'staff';
+  const isStaff = isAdminRole(profile?.role);
   const studentId = route.params?.studentId ?? profile?.id;
 
   const [studentName, setStudentName] = useState('');
