@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { Alert, Share, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
@@ -12,6 +12,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useStrings } from '../../i18n';
 import { FEATURES } from '../../lib/features';
 import { changeProfileAvatar } from '../../lib/avatar';
+import { supabase } from '../../lib/supabase';
 import { useStudentPortfolio } from '../../hooks/useStudentPortfolio';
 import { colors, spacing } from '../../theme/colors';
 import type { StaffStackParamList, StudentStackParamList } from '../../navigation/types';
@@ -23,6 +24,9 @@ const STRINGS = {
     avatarFailed: 'Не удалось загрузить фото',
     editProfile: 'Редактировать профиль',
     notifications: 'Уведомления',
+    inviteStaff: 'Пригласить сотрудника',
+    inviteText: (code: string) => `Приглашение в приложение KasteyevSchool для сотрудника школы. На экране регистрации нажмите «Я сотрудник школы» и введите код: ${code}. Код действует 7 дней.`,
+    inviteFailed: 'Не удалось создать приглашение',
     language: 'Язык приложения',
     studentPayments: 'Оплаты учеников',
     myPayments: 'Мои оплаты',
@@ -32,6 +36,9 @@ const STRINGS = {
     avatarFailed: 'Фотоны жүктеу мүмкін болмады',
     editProfile: 'Профильді өңдеу',
     notifications: 'Хабарландырулар',
+    inviteStaff: 'Қызметкерді шақыру',
+    inviteText: (code: string) => `Мектеп қызметкеріне арналған KasteyevSchool қолданбасына шақыру. Тіркелу бетінде «Мен мектеп қызметкерімін» түймесін басып, кодты енгізіңіз: ${code}. Код 7 күн жарамды.`,
+    inviteFailed: 'Шақыру жасау мүмкін болмады',
     language: 'Қолданба тілі',
     studentPayments: 'Оқушылардың төлемдері',
     myPayments: 'Менің төлемдерім',
@@ -41,6 +48,9 @@ const STRINGS = {
     avatarFailed: 'Could not upload the photo',
     editProfile: 'Edit profile',
     notifications: 'Notifications',
+    inviteStaff: 'Invite a staff member',
+    inviteText: (code: string) => `Invitation to the KasteyevSchool app for school staff. On the sign-up screen tap "I'm school staff" and enter the code: ${code}. The code is valid for 7 days.`,
+    inviteFailed: 'Could not create an invitation',
     language: 'App language',
     studentPayments: 'Student payments',
     myPayments: 'My payments',
@@ -108,6 +118,21 @@ export function ProfileScreen() {
           />
           <Text style={styles.sectionLabel}>{s.language}</Text>
           <LanguageSwitcher />
+          {profile.role === 'staff' ? (
+            <>
+              <View style={{ height: spacing.sm }} />
+              <Button
+                title={s.inviteStaff}
+                variant="secondary"
+                onPress={async () => {
+                  // Одноразовый код: по нему новый сотрудник регистрируется сам.
+                  const { data, error } = await supabase.rpc('create_staff_invite', { p_note: null });
+                  if (error || !data) Alert.alert(s.inviteFailed, error?.message);
+                  else Share.share({ message: s.inviteText(String(data)) }).catch(() => {});
+                }}
+              />
+            </>
+          ) : null}
           {FEATURES.payments ? (
             <>
               <View style={{ height: spacing.sm }} />

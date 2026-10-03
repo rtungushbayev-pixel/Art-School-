@@ -16,6 +16,9 @@ interface AuthContextValue {
     fullName: string;
     accountType: SignUpAccountType;
     groupId: string | null;
+    // Код из школы: ученика (для ученика и родителя) или приглашение сотрудника.
+    code: string;
+    phone: string;
   }) => Promise<SignUpResult>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -29,8 +32,9 @@ interface AuthContextValue {
 // уже вошёл (подтверждение выключено в настройках проекта).
 export type SignUpResult = { error: string | null; needsConfirmation: boolean };
 
-// Сотрудником при регистрации стать нельзя: эту роль назначает администрация.
-export type SignUpAccountType = 'student' | 'parent';
+// Регистрация только по коду из школы: код ученика (ученик, родитель) или
+// одноразовое приглашение сотрудника. Сервер проверяет код в handle_new_user.
+export type SignUpAccountType = 'student' | 'parent' | 'staff';
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
@@ -96,13 +100,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         return error?.message ?? null;
       },
-      signUp: async ({ email, password, fullName, accountType, groupId }) => {
+      signUp: async ({ email, password, fullName, accountType, groupId, code, phone }) => {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: AUTH_REDIRECT_URL,
-            data: { full_name: fullName, account_type: accountType, group_id: groupId },
+            data: { full_name: fullName, account_type: accountType, group_id: groupId, code, phone },
           },
         });
         return { error: error?.message ?? null, needsConfirmation: !error && !data.session };

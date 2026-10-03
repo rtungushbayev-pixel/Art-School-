@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useNavigation } from '@react-navigation/native';
@@ -8,6 +8,7 @@ import { Button } from '../../components/Button';
 import { Avatar } from '../../components/Avatar';
 import { supabase } from '../../lib/supabase';
 import { pickAndUploadAvatar } from '../../lib/avatar';
+import { isValidPhone, normalizePhone } from '../../lib/signupCodes';
 import { parseYear } from '../../lib/portfolio';
 import { useAuth } from '../../hooks/useAuth';
 import { useStrings } from '../../i18n';
@@ -27,6 +28,9 @@ const STRINGS = {
     checkYear: 'Проверьте год',
     yearHint: 'Укажите год четырьмя цифрами, например 2023.',
     saveFailed: 'Не удалось сохранить',
+    phone: 'Номер телефона',
+    badPhone: 'Укажите номер телефона полностью, например +7 701 234 56 78',
+    phoneHint: 'Телефон видите только вы и администрация школы.',
     loading: 'Загрузка…',
     changePhoto: 'Изменить фото',
     name: 'Имя',
@@ -48,6 +52,9 @@ const STRINGS = {
     checkYear: 'Жылды тексеріңіз',
     yearHint: 'Жылды төрт цифрмен көрсетіңіз, мысалы 2023.',
     saveFailed: 'Сақтау мүмкін болмады',
+    phone: 'Телефон нөмірі',
+    badPhone: 'Телефон нөмірін толық көрсетіңіз, мысалы +7 701 234 56 78',
+    phoneHint: 'Телефонды тек сіз және мектеп әкімшілігі көреді.',
     loading: 'Жүктелуде…',
     changePhoto: 'Фотоны өзгерту',
     name: 'Аты',
@@ -69,6 +76,9 @@ const STRINGS = {
     checkYear: 'Check the year',
     yearHint: 'Enter the year as four digits, e.g. 2023.',
     saveFailed: 'Could not save',
+    phone: 'Phone number',
+    badPhone: 'Enter your full phone number, for example +7 701 234 56 78',
+    phoneHint: 'Only you and the school administration can see your phone.',
     loading: 'Loading…',
     changePhoto: 'Change photo',
     name: 'Name',
@@ -95,6 +105,22 @@ export function EditProfileScreen() {
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url ?? null);
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [phone, setPhone] = useState('');
+  const [initialPhone, setInitialPhone] = useState('');
+
+  // Телефон хранится отдельно (profile_private): его видят только владелец и администрация.
+  useEffect(() => {
+    if (!profile) return;
+    supabase
+      .from('profile_private')
+      .select('phone')
+      .eq('user_id', profile.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        setPhone(data?.phone ?? '');
+        setInitialPhone(data?.phone ?? '');
+      });
+  }, [profile?.id]);
 
   if (!profile) return null;
 
@@ -118,7 +144,21 @@ export function EditProfileScreen() {
       Alert.alert(s.checkYear, s.yearHint);
       return;
     }
+    if (!isValidPhone(phone)) {
+      Alert.alert(s.badPhone);
+      return;
+    }
     setSaving(true);
+    if (normalizePhone(phone) !== normalizePhone(initialPhone)) {
+      const { error: phoneError } = await supabase
+        .from('profile_private')
+        .upsert({ user_id: profile.id, phone: normalizePhone(phone), updated_at: new Date().toISOString() });
+      if (phoneError) {
+        setSaving(false);
+        Alert.alert(s.saveFailed, phoneError.message);
+        return;
+      }
+    }
     const { error } = await supabase
       .from('profiles')
       .update({
@@ -149,6 +189,14 @@ export function EditProfileScreen() {
       </Pressable>
 
       <TextField label={s.name} value={fullName} onChangeText={setFullName} />
+      <TextField
+        label={s.phone}
+        value={phone}
+        onChangeText={setPhone}
+        keyboardType="phone-pad"
+        placeholder="+7 701 234 56 78"
+      />
+      <Text style={styles.phoneHint}>{s.phoneHint}</Text>
       <TextField label={s.bio} value={bio} onChangeText={setBio} multiline />
 
       {isStudent ? (
@@ -206,6 +254,7 @@ export function EditProfileScreen() {
 }
 
 const styles = StyleSheet.create({
+  phoneHint: { color: colors.textMuted, fontSize: 12, marginTop: -spacing.sm, marginBottom: spacing.md },
   avatarWrapper: { alignItems: 'center', marginBottom: spacing.lg },
   avatarHint: { color: colors.primary, fontWeight: '600', marginTop: spacing.sm },
   row: { flexDirection: 'row', gap: spacing.sm },

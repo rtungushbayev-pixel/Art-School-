@@ -6,6 +6,7 @@ import type { NativeStackNavigationProp, NativeStackScreenProps } from '@react-n
 import { Screen } from '../../components/Screen';
 import { Card } from '../../components/Card';
 import { Avatar } from '../../components/Avatar';
+import { RosterSection } from '../../components/RosterSection';
 import { supabase } from '../../lib/supabase';
 import { fetchGroupMembers, removeStudentFromGroup } from '../../lib/groups';
 import { dayShort } from '../../lib/schedule';
@@ -144,6 +145,8 @@ export function GroupDetailScreen({ route }: Props) {
           <Text style={styles.addLink}>{s.chargeGroup}</Text>
         </Pressable>
       ) : null}
+
+      <RosterSection groupId={groupId} />
 
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>{s.schedule}</Text>
