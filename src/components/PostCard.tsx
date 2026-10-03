@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Avatar } from './Avatar';
+import { PhotoCarousel } from './PhotoCarousel';
 import { useStrings, type Lang, useLanguage } from '../i18n';
 import { colors, radius, spacing } from '../theme/colors';
 
@@ -81,7 +82,6 @@ function formatPostTime(iso: string, lang: Lang): string {
 export function PostCard({ post, onPress, onToggleLike, onAuthorPress, showModerationBadge, viewer }: PostCardProps) {
   const s = useStrings(STRINGS);
   const { lang } = useLanguage();
-  const cover = post.images[0];
   const meta = [post.title, post.technique, formatPostTime(post.created_at, lang)].filter(Boolean).join(' • ');
 
   return (
@@ -108,11 +108,7 @@ export function PostCard({ post, onPress, onToggleLike, onAuthorPress, showModer
         </Pressable>
       </View>
 
-      {cover ? (
-        <Pressable onPress={onPress}>
-          <Image source={{ uri: cover.image_url }} style={styles.image} contentFit="cover" />
-        </Pressable>
-      ) : null}
+      <PhotoCarousel images={post.images} onPress={onPress} />
 
       <View style={styles.actions}>
         <Pressable onPress={onToggleLike} style={styles.action} hitSlop={6}>

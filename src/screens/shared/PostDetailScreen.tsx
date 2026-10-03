@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { errorText } from '../../lib/errors';
-import { Alert, FlatList, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { PhotoCarousel } from '../../components/PhotoCarousel';
 import { Image } from 'expo-image';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
@@ -71,6 +72,7 @@ const STRINGS = {
 };
 
 export function PostDetailScreen() {
+  const { width: windowWidth } = useWindowDimensions();
   const route = useRoute<RouteProp<NavParamList, 'PostDetail'>>();
   const { postId } = route.params;
   const { profile } = useAuth();
@@ -189,9 +191,9 @@ export function PostDetailScreen() {
               <Avatar uri={author?.avatar_url} name={author?.full_name} />
               <Text style={styles.authorName}>{author?.full_name}</Text>
             </View>
-            {images[0] ? (
-              <Image source={{ uri: images[0].image_url }} style={styles.image} contentFit="cover" />
-            ) : null}
+            <View style={styles.photos}>
+              <PhotoCarousel images={images} width={windowWidth - spacing.md * 2} />
+            </View>
             {post.title ? <Text style={styles.title}>{post.title}</Text> : null}
             {artworkMeta(post) ? <Text style={styles.meta}>{artworkMeta(post)}</Text> : null}
             {post.caption ? <Text style={styles.caption}>{post.caption}</Text> : null}
@@ -245,7 +247,7 @@ const styles = StyleSheet.create({
   empty: { color: colors.textMuted, textAlign: 'center', marginVertical: spacing.md },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
   authorName: { fontWeight: '700', color: colors.text },
-  image: { width: '100%', aspectRatio: 1, borderRadius: radius.md, backgroundColor: colors.border },
+  photos: { borderRadius: radius.md, overflow: 'hidden' },
   title: { marginTop: spacing.sm, fontSize: 17, fontWeight: '700', color: colors.text },
   meta: { marginTop: 2, fontSize: 13, color: colors.textMuted },
   caption: { marginTop: spacing.sm, color: colors.text },

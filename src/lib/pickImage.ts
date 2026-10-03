@@ -63,3 +63,23 @@ export async function pickImage(source: ImageSource): Promise<ImagePicker.ImageP
   if (result.canceled || !result.assets[0]) return null;
   return result.assets[0];
 }
+
+// Несколько фото из галереи сразу (без обрезки: при множественном выборе
+// система её не поддерживает).
+export async function pickImagesFromLibrary(limit: number): Promise<ImagePicker.ImagePickerAsset[]> {
+  if (limit <= 0) return [];
+  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (!permission.granted) {
+    Alert.alert(pick(STRINGS).galleryAccess);
+    return [];
+  }
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ['images'],
+    quality: 0.8,
+    allowsMultipleSelection: true,
+    selectionLimit: limit,
+    orderedSelection: true,
+  });
+  if (result.canceled) return [];
+  return result.assets.slice(0, limit);
+}

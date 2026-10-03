@@ -108,7 +108,7 @@ export function CreatePostScreen() {
     }
     setUploading(true);
     try {
-      await publishPost({ authorId: profile.id, asset, caption, title, technique, artworkYear });
+      await publishPost({ authorId: profile.id, assets: [asset], caption, title, technique, artworkYear });
       navigation.goBack();
     } catch (e) {
       const message = errorText(e) ?? s.publishFailed;

@@ -82,28 +82,39 @@ export async function toggleLike(postId: string, userId: string, currentlyLiked:
   }
 }
 
-// Загружает фото в бакет portfolio и создаёт публикацию. Публикация попадает
-// в общую ленту после проверки сотрудником (статус pending по умолчанию).
+// Сколько фото можно приложить к одной публикации (так же ограничено в базе).
+export const MAX_POST_PHOTOS = 10;
+
+async function uploadPortfolioPhoto(authorId: string, asset: ImagePickerAsset, index: number): Promise<string> {
+  const ext = asset.uri.split('.').pop()?.toLowerCase() || 'jpg';
+  const path = `${authorId}/${Date.now()}-${index}.${ext}`;
+  const response = await fetch(asset.uri);
+  const arrayBuffer = await response.arrayBuffer();
+  const { error } = await supabase.storage
+    .from('portfolio')
+    .upload(path, arrayBuffer, { contentType: asset.mimeType ?? 'image/jpeg' });
+  if (error) throw error;
+  return supabase.storage.from('portfolio').getPublicUrl(path).data.publicUrl;
+}
+
+// Загружает фото в бакет portfolio и создаёт публикацию (до 10 фото, в
+// выбранном порядке). Публикация попадает в общую ленту после проверки.
 export async function publishPost(params: {
   authorId: string;
-  asset: ImagePickerAsset;
+  assets: ImagePickerAsset[];
   caption?: string | null;
   title?: string | null;
   technique?: string | null;
   artworkYear?: number | null;
 }) {
-  const { authorId, asset } = params;
-  const ext = asset.uri.split('.').pop()?.toLowerCase() || 'jpg';
-  const path = `${authorId}/${Date.now()}.${ext}`;
-  const response = await fetch(asset.uri);
-  const arrayBuffer = await response.arrayBuffer();
+  const { authorId } = params;
+  const assets = params.assets.slice(0, MAX_POST_PHOTOS);
+  if (assets.length === 0) throw new Error('no photos');
 
-  const { error: uploadError } = await supabase.storage
-    .from('portfolio')
-    .upload(path, arrayBuffer, { contentType: asset.mimeType ?? 'image/jpeg' });
-  if (uploadError) throw uploadError;
-
-  const { data: publicUrlData } = supabase.storage.from('portfolio').getPublicUrl(path);
+  const urls: string[] = [];
+  for (let i = 0; i < assets.length; i += 1) {
+    urls.push(await uploadPortfolioPhoto(authorId, assets[i], i));
+  }
 
   const { data: post, error: postError } = await supabase
     .from('posts')
@@ -120,6 +131,8 @@ export async function publishPost(params: {
 
   const { error: imageError } = await supabase
     .from('post_images')
-    .insert({ post_id: post.id, image_url: publicUrlData.publicUrl, position: 0 });
+    .insert(urls.map((image_url, position) => ({ post_id: post.id, image_url, position })));
   if (imageError) throw imageError;
+
+  return post.id as string;
 }
