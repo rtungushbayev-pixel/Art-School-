@@ -59,7 +59,8 @@
    `0012_parents_progress.sql`, `0013_support.sql`, `0014_signup_account_type.sql`,
    `0015_friends.sql`, `0016_friend_suggestions.sql`,
    `0017_parent_link_requests.sql`, `0018_support_categories.sql`,
-   `0019_school_roster_codes.sql`, `0020_security_hardening.sql`.
+   `0019_school_roster_codes.sql`, `0020_security_hardening.sql`,
+   `0021_rate_limits_blocks_storage.sql`.
 3. Скопируйте `.env.example` в `.env` и укажите `EXPO_PUBLIC_SUPABASE_URL`
    и `EXPO_PUBLIC_SUPABASE_ANON_KEY` из настроек вашего проекта Supabase.
 4. Установите зависимости и запустите:

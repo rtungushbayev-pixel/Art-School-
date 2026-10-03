@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import { errorText } from '../../lib/errors';
 import { Alert, FlatList, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
@@ -143,7 +144,7 @@ export function PostDetailScreen() {
       .single();
     setPosting(false);
     if (error) {
-      Alert.alert(s.commentFailed, error.message);
+      Alert.alert(s.commentFailed, errorText(error));
       return;
     }
     setCommentText('');

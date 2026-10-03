@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { Button } from '../../components/Button';
+import { DeleteAccountButton } from '../../components/DeleteAccountButton';
 import { ProfileHeader } from '../../components/ProfileHeader';
 import { PortfolioSections } from '../../components/PortfolioSections';
 import { ProfileTabs, type ProfileTab } from '../../components/ProfileTabs';
@@ -149,6 +150,7 @@ export function ProfileScreen() {
           ) : null}
           <View style={{ height: spacing.sm }} />
           <Button title={s.signOut} variant="danger" onPress={signOut} />
+          <DeleteAccountButton />
         </>
       ) : null}
       <View style={{ height: spacing.xl }} />

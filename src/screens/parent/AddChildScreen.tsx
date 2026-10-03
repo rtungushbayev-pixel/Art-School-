@@ -6,6 +6,7 @@ import { Screen } from '../../components/Screen';
 import { TextField } from '../../components/TextField';
 import { Button } from '../../components/Button';
 import { linkChildByCode } from '../../lib/signupCodes';
+import { errorText } from '../../lib/errors';
 import { useStrings } from '../../i18n';
 import { colors, spacing } from '../../theme/colors';
 import type { ParentStackParamList } from '../../navigation/types';
@@ -72,7 +73,11 @@ export function AddChildScreen() {
         navigation.goBack();
       }
     } catch (e) {
-      Alert.alert(s.failed, e instanceof Error && e.message === 'too_many_parents' ? s.tooMany : s.notFound);
+      const message = e instanceof Error ? e.message : '';
+      Alert.alert(
+        s.failed,
+        message === 'too_many_parents' ? s.tooMany : message === 'rate_limited' ? errorText(e) : s.notFound
+      );
     }
     setLoading(false);
   };

@@ -68,11 +68,10 @@ const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
 const CHUNK_SIZE = 100;
 const MAX_BODY_LENGTH = 180;
 
-function corsHeaders() {
-  return {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  };
+// Функцию вызывает только мобильное приложение, браузерам доступ не нужен,
+// поэтому разрешающих CORS-заголовков нет.
+function corsHeaders(): Record<string, string> {
+  return {};
 }
 
 function json(status: number, payload: unknown) {
@@ -328,7 +327,19 @@ Deno.serve(async (req) => {
     const message = await buildMessage(admin, caller, request);
 
     // Себе уведомления не шлём (свой комментарий, модерация своей работы).
-    const recipientIds = message ? [...new Set(message.recipientIds)].filter((id) => id !== caller.id) : [];
+    let recipientIds = message ? [...new Set(message.recipientIds)].filter((id) => id !== caller.id) : [];
+    // Тем, кто заблокировал отправителя, его уведомления не приходят.
+    // Уведомления от сотрудников (модерация, объявления, ответы в «Помощи»)
+    // блокировкой не отключаются.
+    if (recipientIds.length > 0 && caller.role !== 'staff') {
+      const { data: blocks } = await admin
+        .from('user_blocks')
+        .select('blocker_id')
+        .eq('blocked_id', caller.id)
+        .in('blocker_id', recipientIds);
+      const blockedBy = new Set((blocks ?? []).map((b: { blocker_id: string }) => b.blocker_id));
+      recipientIds = recipientIds.filter((id) => !blockedBy.has(id));
+    }
     if (!message || recipientIds.length === 0) {
       return json(200, { recipients: 0, sent: 0 });
     }
@@ -350,6 +361,8 @@ Deno.serve(async (req) => {
     if (e instanceof HttpError) {
       return json(e.status, { error: e.message });
     }
-    return json(500, { error: e instanceof Error ? e.message : 'Unknown error' });
+    // Подробности ошибки — только в журнал функции, не в ответ приложению.
+    console.error(e);
+    return json(500, { error: 'Internal error' });
   }
 });

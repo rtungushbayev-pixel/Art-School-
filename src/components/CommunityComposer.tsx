@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { errorText } from '../lib/errors';
 import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -70,7 +71,7 @@ export function CommunityComposer({ authorId, onPublished }: Props) {
       Alert.alert(s.sent, s.sentMessage);
       onPublished();
     } catch (e) {
-      Alert.alert(s.publishFailed, e instanceof Error ? e.message : undefined);
+      Alert.alert(s.publishFailed, errorText(e));
     } finally {
       setPublishing(false);
     }

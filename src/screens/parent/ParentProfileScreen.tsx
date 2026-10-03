@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { Button } from '../../components/Button';
+import { DeleteAccountButton } from '../../components/DeleteAccountButton';
 import { ProfileHeader } from '../../components/ProfileHeader';
 import { LanguageSwitcher } from '../../components/LanguageSwitcher';
 import { useAuth } from '../../hooks/useAuth';
@@ -76,6 +77,7 @@ export function ParentProfileScreen() {
       <LanguageSwitcher />
       <View style={{ height: spacing.md }} />
       <Button title={s.signOut} variant="danger" onPress={signOut} />
+      <DeleteAccountButton />
     </Screen>
   );
 }

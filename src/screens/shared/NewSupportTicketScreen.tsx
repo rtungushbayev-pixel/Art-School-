@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { errorText } from '../../lib/errors';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -72,7 +73,7 @@ export function NewSupportTicketScreen() {
       navigation.replace('SupportTicket', { ticketId });
     } catch (e) {
       setSaving(false);
-      Alert.alert(s.sendFailed, e instanceof Error ? e.message : undefined);
+      Alert.alert(s.sendFailed, errorText(e));
     }
   };
 

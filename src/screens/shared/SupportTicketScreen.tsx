@@ -1,4 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react';
+import { errorText } from '../../lib/errors';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -151,7 +152,7 @@ export function SupportTicketScreen() {
       setText('');
       await load();
     } catch (e) {
-      Alert.alert(s.sendFailed, e instanceof Error ? e.message : undefined);
+      Alert.alert(s.sendFailed, errorText(e));
     }
     setSending(false);
   };
@@ -161,7 +162,7 @@ export function SupportTicketScreen() {
       await setSupportTicketStatus(ticket.id, status);
       await load();
     } catch (e) {
-      Alert.alert(s.statusFailed, e instanceof Error ? e.message : undefined);
+      Alert.alert(s.statusFailed, errorText(e));
     }
   };
 

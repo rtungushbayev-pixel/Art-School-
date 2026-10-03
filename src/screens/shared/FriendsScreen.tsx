@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import { errorText } from '../../lib/errors';
 import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -206,7 +207,7 @@ export function FriendsScreen() {
       await action();
       await load();
     } catch (e) {
-      Alert.alert(s.failed, e instanceof Error ? e.message : undefined);
+      Alert.alert(s.failed, errorText(e));
     }
     setBusyId(null);
   };

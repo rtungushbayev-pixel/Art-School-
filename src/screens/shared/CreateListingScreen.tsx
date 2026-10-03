@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { errorText } from '../../lib/errors';
 import { Alert, Image, StyleSheet, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
@@ -164,7 +165,7 @@ export function CreateListingScreen() {
       Alert.alert(s.done, s.sentForReview);
       navigation.goBack();
     } catch (e) {
-      const message = e instanceof Error ? e.message : s.publishFailed;
+      const message = errorText(e) ?? s.publishFailed;
       Alert.alert(s.error, message);
     } finally {
       setUploading(false);

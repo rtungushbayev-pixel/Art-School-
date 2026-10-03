@@ -31,6 +31,7 @@ export async function linkChildByCode(code: string): Promise<boolean> {
   const { data, error } = await supabase.rpc('link_child_by_code', { p_code: code });
   if (error) {
     if (error.message.includes('too_many_parents')) throw new Error('too_many_parents');
+    if (error.message.includes('rate_limited')) throw new Error('rate_limited');
     throw error;
   }
   return data === true;
