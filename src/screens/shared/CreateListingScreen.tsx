@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Alert, Image, StyleSheet, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
@@ -94,18 +94,7 @@ export function CreateListingScreen() {
   const [contactInfo, setContactInfo] = useState('');
   const [uploading, setUploading] = useState(false);
 
-  // Подставляем свой телефон как контакт по умолчанию (profile_private виден только владельцу).
-  useEffect(() => {
-    if (!profile) return;
-    supabase
-      .from('profile_private')
-      .select('phone')
-      .eq('user_id', profile.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data?.phone) setContactInfo((current) => current || data.phone);
-      });
-  }, [profile?.id]);
+  // Телефон не подставляется сам: объявление видят все, контакт автор указывает осознанно.
 
   const pickImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();

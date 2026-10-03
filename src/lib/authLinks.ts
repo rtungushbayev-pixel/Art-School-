@@ -30,7 +30,7 @@ export const AUTH_REDIRECT_URL = 'kasteyevschool://auth-callback';
 // Ссылка из письма «Сбросить пароль»: после входа по ней — экран нового пароля.
 export const PASSWORD_RESET_URL = 'kasteyevschool://reset-password';
 
-// Supabase передаёт токены во фрагменте после «#» (а ошибки иногда в query).
+// Параметры ссылки: код PKCE приходит в query, ошибки — в query или после «#».
 function parseParams(url: string): Record<string, string> {
   const params: Record<string, string> = {};
   const parts = [url.split('#')[1], url.split('?')[1]?.split('#')[0]];
@@ -44,25 +44,29 @@ function parseParams(url: string): Record<string, string> {
   return params;
 }
 
+// Обрабатываем только ссылки по схеме PKCE (?code=…): обменять код на вход
+// можно лишь на телефоне, где ссылку запросили. Ссылки с готовыми токенами
+// (#access_token=…) игнорируются: такую ссылку мог подсунуть кто угодно,
+// чтобы незаметно войти в его аккаунт на телефоне жертвы.
 async function handleAuthUrl(url: string | null, onRecovery: () => void) {
   if (!url || !(url.startsWith(AUTH_REDIRECT_URL) || url.startsWith(PASSWORD_RESET_URL))) return;
   const params = parseParams(url);
-  const isRecovery = url.startsWith(PASSWORD_RESET_URL) || params.type === 'recovery';
+  const isRecovery = url.startsWith(PASSWORD_RESET_URL);
   const s = pick(STRINGS);
   if (params.error_description || params.error) {
     Alert.alert(s.linkFailed, s.linkFailedText);
     return;
   }
-  if (params.access_token && params.refresh_token) {
-    const { error } = await supabase.auth.setSession({
-      access_token: params.access_token,
-      refresh_token: params.refresh_token,
-    });
-    if (error) {
-      Alert.alert(isRecovery ? s.linkFailed : s.emailConfirmed, isRecovery ? s.linkFailedText : s.emailConfirmedText);
-    } else if (isRecovery) {
-      onRecovery();
-    }
+  if (!params.code) return;
+  // Подтверждение почты, когда человек уже вошёл, ничего не меняет.
+  const { data: current } = await supabase.auth.getSession();
+  if (current.session && !isRecovery) return;
+  const { error } = await supabase.auth.exchangeCodeForSession(params.code);
+  if (error) {
+    // Код не подходит: ссылку открыли на другом телефоне или она устарела.
+    Alert.alert(isRecovery ? s.linkFailed : s.emailConfirmed, isRecovery ? s.linkFailedText : s.emailConfirmedText);
+  } else if (isRecovery) {
+    onRecovery();
   }
 }
 
