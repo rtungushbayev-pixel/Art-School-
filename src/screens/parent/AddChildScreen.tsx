@@ -13,8 +13,8 @@ import type { ParentStackParamList } from '../../navigation/types';
 
 const STRINGS = {
   ru: {
-    hint: 'Введите код ребёнка, который выдала школа. После этого вы увидите его расписание, успехи и работы.',
-    code: 'Код ребёнка',
+    hint: 'Введите код для родителей, который выдала школа (он отличается от кода ученика). После этого вы увидите его расписание, успехи и работы.',
+    code: 'Код для родителей',
     placeholder: 'Например, A1B2C-3D4E5',
     add: 'Добавить ребёнка',
     enterCode: 'Введите код ребёнка',
@@ -25,8 +25,8 @@ const STRINGS = {
     addedText: 'Если ребёнок ещё не зарегистрировался в приложении, его данные появятся сразу после регистрации.',
   },
   kk: {
-    hint: 'Мектеп берген бала кодын енгізіңіз. Осыдан кейін оның кестесін, жетістіктері мен жұмыстарын көресіз.',
-    code: 'Бала коды',
+    hint: 'Мектеп берген ата-аналар кодын енгізіңіз (ол оқушы кодынан өзгеше). Осыдан кейін оның кестесін, жетістіктері мен жұмыстарын көресіз.',
+    code: 'Ата-аналар коды',
     placeholder: 'Мысалы, A1B2C-3D4E5',
     add: 'Баланы қосу',
     enterCode: 'Бала кодын енгізіңіз',
@@ -37,8 +37,8 @@ const STRINGS = {
     addedText: 'Егер бала қолданбаға әлі тіркелмесе, оның деректері тіркелгеннен кейін бірден пайда болады.',
   },
   en: {
-    hint: "Enter the child's code given by the school. You will then see their schedule, progress and artworks.",
-    code: "Child's code",
+    hint: "Enter the parent code given by the school (it is different from the student's code). You will then see their schedule, progress and artworks.",
+    code: 'Parent code',
     placeholder: 'For example, A1B2C-3D4E5',
     add: 'Add child',
     enterCode: "Enter the child's code",

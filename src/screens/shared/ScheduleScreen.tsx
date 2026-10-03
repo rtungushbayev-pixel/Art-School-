@@ -14,7 +14,6 @@ import {
   dayName,
   fetchLessonChanges,
   fetchScheduleLessons,
-  fetchParentChosenGroupIds,
   fetchStudentGroupIds,
   formatDayMonth,
   formatTime,
@@ -117,10 +116,8 @@ export function ScheduleScreen() {
         setChildren(kids);
         const selected = kids.find((k) => k.id === childId) ?? kids[0] ?? null;
         if (selected && selected.id !== childId) setChildId(selected.id);
-        // Пока ни один ребёнок не привязан — группа, выбранная при регистрации.
-        groupIds = selected
-          ? await fetchStudentGroupIds(selected.id)
-          : await fetchParentChosenGroupIds(profile.id);
+        // Расписание — только групп привязанных детей.
+        groupIds = selected ? await fetchStudentGroupIds(selected.id) : [];
       } else if (!isStaff) {
         groupIds = await fetchStudentGroupIds(profile.id);
       }

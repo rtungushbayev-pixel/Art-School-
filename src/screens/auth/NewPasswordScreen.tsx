@@ -14,7 +14,7 @@ const STRINGS = {
     password: 'Новый пароль',
     repeat: 'Повторите пароль',
     save: 'Сохранить пароль',
-    tooShort: 'Пароль должен быть не короче 6 символов',
+    tooShort: 'Пароль должен быть не короче 8 символов',
     mismatch: 'Пароли не совпадают',
     failed: 'Не удалось сменить пароль',
     done: 'Пароль изменён',
@@ -25,7 +25,7 @@ const STRINGS = {
     password: 'Жаңа құпиясөз',
     repeat: 'Құпиясөзді қайталаңыз',
     save: 'Құпиясөзді сақтау',
-    tooShort: 'Құпиясөз кемінде 6 таңбадан тұруы керек',
+    tooShort: 'Құпиясөз кемінде 8 таңбадан тұруы керек',
     mismatch: 'Құпиясөздер сәйкес келмейді',
     failed: 'Құпиясөзді өзгерту мүмкін болмады',
     done: 'Құпиясөз өзгертілді',
@@ -36,7 +36,7 @@ const STRINGS = {
     password: 'New password',
     repeat: 'Repeat password',
     save: 'Save password',
-    tooShort: 'The password must be at least 6 characters',
+    tooShort: 'The password must be at least 8 characters',
     mismatch: 'Passwords do not match',
     failed: 'Could not change the password',
     done: 'Password changed',
@@ -52,7 +52,7 @@ export function NewPasswordScreen() {
   const [loading, setLoading] = useState(false);
 
   const onSave = async () => {
-    if (password.length < 6) {
+    if (password.length < 8) {
       Alert.alert(s.tooShort);
       return;
     }

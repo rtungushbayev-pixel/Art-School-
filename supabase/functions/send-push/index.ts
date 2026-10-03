@@ -23,7 +23,7 @@
 // Необязательно: если в Expo включён Enhanced Push Security, задайте секрет
 // EXPO_ACCESS_TOKEN — тогда без него Expo не примет пуш даже по украденному токену.
 
-import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
+import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.117.2';
 
 type PushEvent = 'post_comment' | 'post_moderated' | 'listing_moderated' | 'announcement' | 'support_message';
 type NotificationCategory = 'announcements' | 'comments' | 'moderation' | 'support';
@@ -35,7 +35,7 @@ interface RequestBody {
 
 interface Caller {
   id: string;
-  role: 'student' | 'staff' | 'parent';
+  role: 'student' | 'staff' | 'parent' | 'admin';
   full_name: string;
 }
 
@@ -86,7 +86,7 @@ function truncate(text: string) {
 }
 
 function requireStaff(caller: Caller) {
-  if (caller.role !== 'staff') {
+  if (caller.role !== 'staff' && caller.role !== 'admin') {
     throw new HttpError(403, 'Только сотрудники могут отправлять это уведомление');
   }
 }
@@ -205,7 +205,7 @@ async function buildMessage(admin: SupabaseClient, caller: Caller, { event, id }
 
       // Написал автор обращения — сообщаем всем сотрудникам.
       if (ticket.author_id === caller.id) {
-        const { data: staff, error } = await admin.from('profiles').select('id').eq('role', 'staff');
+        const { data: staff, error } = await admin.from('profiles').select('id').in('role', ['staff', 'admin']);
         if (error) throw error;
         return {
           dedupKey: `support_message:${message.id}`,
@@ -254,7 +254,7 @@ async function resolveAudience(admin: SupabaseClient, audience: string, groupId:
 
   let query = admin.from('profiles').select('id');
   if (audience === 'students') query = query.eq('role', 'student');
-  if (audience === 'staff') query = query.eq('role', 'staff');
+  if (audience === 'staff') query = query.in('role', ['staff', 'admin']);
   const { data, error } = await query;
   if (error) throw error;
   return (data ?? []).map((row: { id: string }) => row.id);
@@ -280,7 +280,7 @@ async function resolveTokens(admin: SupabaseClient, userIds: string[], category:
   return (tokens ?? []).map((t: { token: string }) => t.token);
 }
 
-async function sendToExpo(tokens: string[], message: PushMessage) {
+async function sendToExpo(admin: SupabaseClient, tokens: string[], message: PushMessage) {
   const accessToken = Deno.env.get('EXPO_ACCESS_TOKEN');
   let sent = 0;
   for (let i = 0; i < tokens.length; i += CHUNK_SIZE) {
@@ -306,6 +306,16 @@ async function sendToExpo(tokens: string[], message: PushMessage) {
 
     if (response.ok) {
       sent += chunk.length;
+      // Токены удалённых приложений Expo помечает DeviceNotRegistered — удаляем их.
+      try {
+        const result = (await response.json()) as { data?: { status?: string; details?: { error?: string } }[] };
+        const dead = (result.data ?? [])
+          .map((ticket, index) => (ticket?.details?.error === 'DeviceNotRegistered' ? chunk[index] : null))
+          .filter((t): t is string => !!t);
+        if (dead.length > 0) await admin.from('push_tokens').delete().in('token', dead);
+      } catch {
+        // Ответ без подробностей — ничего не чистим.
+      }
     }
   }
   return sent;
@@ -331,7 +341,7 @@ Deno.serve(async (req) => {
     // Тем, кто заблокировал отправителя, его уведомления не приходят.
     // Уведомления от сотрудников (модерация, объявления, ответы в «Помощи»)
     // блокировкой не отключаются.
-    if (recipientIds.length > 0 && caller.role !== 'staff') {
+    if (recipientIds.length > 0 && caller.role !== 'staff' && caller.role !== 'admin') {
       const { data: blocks } = await admin
         .from('user_blocks')
         .select('blocker_id')
@@ -355,7 +365,7 @@ Deno.serve(async (req) => {
     }
 
     const tokens = await resolveTokens(admin, recipientIds, message.category);
-    const sent = await sendToExpo(tokens, message);
+    const sent = await sendToExpo(admin, tokens, message);
     return json(200, { recipients: tokens.length, sent });
   } catch (e) {
     if (e instanceof HttpError) {

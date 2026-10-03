@@ -185,3 +185,20 @@ export async function resolvePostReports(postId: string, keep: boolean, moderato
   const { error: deleteError } = await supabase.from('post_reports').delete().eq('post_id', postId);
   if (deleteError) throw deleteError;
 }
+
+// Путь объекта в бакете по публичной ссылке (…/object/public/<bucket>/<path>).
+export function storagePathFromUrl(url: string, bucket: string): string | null {
+  const marker = `/object/public/${bucket}/`;
+  const index = url.indexOf(marker);
+  if (index < 0) return null;
+  return decodeURIComponent(url.slice(index + marker.length).split('?')[0]);
+}
+
+// Удалить публикацию и её файлы: сначала строку (каскадом уйдут фото в базе),
+// потом сами файлы — пока на файл ссылается работа, сервер не даст его удалить.
+export async function deletePostWithFiles(postId: string, imageUrls: string[]) {
+  const { error } = await supabase.from('posts').delete().eq('id', postId);
+  if (error) throw error;
+  const paths = imageUrls.map((u) => storagePathFromUrl(u, 'portfolio')).filter((p): p is string => !!p);
+  if (paths.length > 0) await supabase.storage.from('portfolio').remove(paths);
+}

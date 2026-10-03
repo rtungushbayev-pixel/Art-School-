@@ -10,12 +10,6 @@ import { fetchPendingPosts } from '../../lib/posts';
 import { fetchPendingListings, ListingCardData } from '../../lib/marketplace';
 import { supabase } from '../../lib/supabase';
 import { Avatar } from '../../components/Avatar';
-import {
-  approveChildLinkRequest,
-  cancelChildLinkRequest,
-  fetchParentLinkRequests,
-  type ParentLinkRequest,
-} from '../../lib/parents';
 import { sendPushNotification } from '../../lib/notifications';
 import { useAuth } from '../../hooks/useAuth';
 import { colors, radius, spacing } from '../../theme/colors';
@@ -82,7 +76,6 @@ export function ModerationScreen() {
   const [scope, setScope] = useState<ModerationScope>('posts');
   const [posts, setPosts] = useState<PostCardData[]>([]);
   const [listings, setListings] = useState<ListingCardData[]>([]);
-  const [linkRequests, setLinkRequests] = useState<ParentLinkRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -122,16 +115,6 @@ export function ModerationScreen() {
       .eq('id', listing.id);
     setListings((prev) => prev.filter((l) => l.id !== listing.id));
     sendPushNotification({ event: 'listing_moderated', id: listing.id });
-  };
-
-  const resolveLinkRequest = async (request: ParentLinkRequest, approve: boolean) => {
-    try {
-      if (approve) await approveChildLinkRequest(request.id);
-      else await cancelChildLinkRequest(request.id);
-      setLinkRequests((prev) => prev.filter((r) => r.id !== request.id));
-    } catch (e) {
-      Alert.alert(s.failed, e instanceof Error ? e.message : undefined);
-    }
   };
 
   return (

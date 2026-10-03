@@ -10,7 +10,7 @@
 // Развёртывание: Supabase → Edge Functions → Deploy a new function →
 // имя delete-account → вставить этот файл. Verify JWT оставить включённым.
 
-import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
+import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.117.2';
 
 // student-photos — фото с занятий, которые сотрудники загрузили в папку ученика.
 const USER_BUCKETS = ['avatars', 'portfolio', 'marketplace', 'student-photos'];
@@ -49,6 +49,13 @@ Deno.serve(async (req) => {
     const { data: auth, error } = await admin.auth.getUser(jwt);
     if (error || !auth.user) return json(401, { error: 'Unauthorized' });
     const userId = auth.user.id;
+
+    // Нужен недавний вход: приложение перед удалением просит пароль ещё раз,
+    // чтобы чужой человек с разблокированным телефоном не удалил аккаунт.
+    const lastSignIn = auth.user.last_sign_in_at ? Date.parse(auth.user.last_sign_in_at) : 0;
+    if (Date.now() - lastSignIn > 10 * 60 * 1000) {
+      return json(403, { error: 'reauthentication_required' });
+    }
 
     await removeUserFiles(admin, userId);
     // Push-токены удалятся каскадом вместе с профилем.

@@ -6,13 +6,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { Card } from '../../components/Card';
 import { Avatar } from '../../components/Avatar';
-import {
-  cancelChildLinkRequest,
-  fetchChildren,
-  fetchParentLinkRequests,
-  fetchStudentGroupNames,
-  type ParentLinkRequest,
-} from '../../lib/parents';
+import { fetchChildren, fetchStudentGroupNames } from '../../lib/parents';
 import { useAuth } from '../../hooks/useAuth';
 import { useStrings } from '../../i18n';
 import { colors, spacing } from '../../theme/colors';
@@ -65,7 +59,6 @@ export function ChildrenScreen() {
   const { profile } = useAuth();
   const s = useStrings(STRINGS);
   const [children, setChildren] = useState<ChildRow[]>([]);
-  const [requests, setRequests] = useState<ParentLinkRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
   useLayoutEffect(() => {
@@ -87,7 +80,6 @@ export function ChildrenScreen() {
         list.map(async (child) => ({ profile: child, groups: await fetchStudentGroupNames(child.id) }))
       );
       setChildren(rows);
-      setRequests(await fetchParentLinkRequests(profile.id).catch(() => []));
     } finally {
       setLoading(false);
     }
@@ -101,7 +93,7 @@ export function ChildrenScreen() {
 
   return (
     <Screen scroll refreshing={loading} onRefresh={load}>
-      {children.length === 0 && requests.length === 0 && !loading ? (
+      {children.length === 0 && !loading ? (
         <View style={styles.emptyBox}>
           <Text style={styles.empty}>{s.empty}</Text>
           <Pressable style={styles.addButton} onPress={() => navigation.navigate('AddChild')}>
@@ -110,30 +102,6 @@ export function ChildrenScreen() {
           </Pressable>
         </View>
       ) : null}
-      {requests.map((request) => (
-        <Card key={request.id} style={styles.row}>
-          <Avatar uri={request.student?.avatar_url} name={request.student?.full_name} size={52} />
-          <View style={styles.info}>
-            <Text style={styles.name}>{request.student?.full_name ?? s.student}</Text>
-            <Text style={styles.pending}>{s.pending}</Text>
-          </View>
-          <Pressable
-            hitSlop={8}
-            onPress={() =>
-              Alert.alert(s.withdrawConfirm, undefined, [
-                { text: s.no, style: 'cancel' },
-                {
-                  text: s.withdraw,
-                  style: 'destructive',
-                  onPress: () => cancelChildLinkRequest(request.id).then(load).catch(() => {}),
-                },
-              ])
-            }
-          >
-            <Text style={styles.cancel}>{s.withdraw}</Text>
-          </Pressable>
-        </Card>
-      ))}
       {children.map(({ profile: child, groups }) => (
         <Pressable key={child.id} onPress={() => navigation.navigate('ChildDetail', { childId: child.id })}>
           <Card style={styles.row}>

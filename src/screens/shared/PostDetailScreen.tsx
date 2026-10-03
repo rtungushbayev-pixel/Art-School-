@@ -12,7 +12,7 @@ import { Avatar } from '../../components/Avatar';
 import { TextField } from '../../components/TextField';
 import { Button } from '../../components/Button';
 import { supabase } from '../../lib/supabase';
-import { toggleLike } from '../../lib/posts';
+import { toggleLike, deletePostWithFiles } from '../../lib/posts';
 import { artworkMeta } from '../../lib/portfolio';
 import { sendPushNotification } from '../../lib/notifications';
 import { useAuth } from '../../hooks/useAuth';
@@ -210,8 +210,17 @@ export function PostDetailScreen() {
         text: s.delete,
         style: 'destructive',
         onPress: async () => {
-          await supabase.from('posts').delete().eq('id', postId);
-          navigation.goBack();
+          try {
+            // Автор удаляет и файлы; сотрудник — только публикацию (файлы чужие).
+            if (isAuthor) {
+              await deletePostWithFiles(postId, images.map((i) => i.image_url));
+            } else {
+              await supabase.from('posts').delete().eq('id', postId);
+            }
+            navigation.goBack();
+          } catch (e) {
+            Alert.alert(s.deleteConfirm, errorText(e));
+          }
         },
       },
     ]);

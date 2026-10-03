@@ -139,13 +139,6 @@ export async function fetchStudentGroupIds(studentId: string): Promise<string[]>
   return (data ?? []).map((m) => m.group_id as string);
 }
 
-// Группа, которую родитель выбрал при регистрации (пока ребёнок не привязан).
-export async function fetchParentChosenGroupIds(parentId: string): Promise<string[]> {
-  const { data, error } = await supabase.from('parent_groups').select('group_id').eq('parent_id', parentId);
-  if (error) throw error;
-  return (data ?? []).map((r) => r.group_id as string);
-}
-
 export interface SignupGroup {
   id: string;
   name: string;

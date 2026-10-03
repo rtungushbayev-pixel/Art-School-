@@ -70,7 +70,9 @@ export function GroupDetailScreen({ route }: Props) {
   const { profile } = useAuth();
   // Состав, занятия и коды меняет администратор или преподаватель этой группы
   // (на сервере — can_manage_group).
-  const canManage = isAdminRole(profile?.role) || (!!group && group.teacher_id === profile?.id);
+  // Состав группы меняет только администратор (group_members_write_admin).
+  const isAdmin = isAdminRole(profile?.role);
+  const canManage = isAdmin || (!!group && group.teacher_id === profile?.id);
   const [members, setMembers] = useState<Profile[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
 
@@ -127,9 +129,11 @@ export function GroupDetailScreen({ route }: Props) {
 
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>{s.students(members.length)}</Text>
-        <Pressable onPress={() => navigation.navigate('AddStudentToGroup', { groupId })}>
-          <Text style={styles.addLink}>{s.add}</Text>
-        </Pressable>
+        {isAdmin ? (
+          <Pressable onPress={() => navigation.navigate('AddStudentToGroup', { groupId })}>
+            <Text style={styles.addLink}>{s.add}</Text>
+          </Pressable>
+        ) : null}
       </View>
       {members.length === 0 ? <Text style={styles.empty}>{s.noStudents}</Text> : null}
       {members.map((m) => (
@@ -141,9 +145,11 @@ export function GroupDetailScreen({ route }: Props) {
             <Avatar uri={m.avatar_url} name={m.full_name} size={36} />
             <Text style={styles.memberName}>{m.full_name}</Text>
           </Pressable>
-          <Pressable onPress={() => onRemoveMember(m)}>
-            <Text style={styles.remove}>{s.remove}</Text>
-          </Pressable>
+          {isAdmin ? (
+            <Pressable onPress={() => onRemoveMember(m)}>
+              <Text style={styles.remove}>{s.remove}</Text>
+            </Pressable>
+          ) : null}
         </Card>
       ))}
       {FEATURES.payments && members.length > 0 ? (

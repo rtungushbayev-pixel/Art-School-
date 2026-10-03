@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import { storagePathFromUrl } from '../../lib/posts';
 import { isStaffRole } from '../../lib/roles';
 import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
@@ -136,6 +137,13 @@ export function ListingDetailScreen() {
         style: 'destructive',
         onPress: async () => {
           await supabase.from('marketplace_listings').delete().eq('id', listingId);
+          // Файлы удаляет только владелец (сервер не даст удалить чужие).
+          if (listing && profile?.id === listing.seller_id) {
+            const paths = images
+              .map((i) => storagePathFromUrl(i.image_url, 'marketplace'))
+              .filter((p): p is string => !!p);
+            if (paths.length > 0) await supabase.storage.from('marketplace').remove(paths);
+          }
           navigation.goBack();
         },
       },
