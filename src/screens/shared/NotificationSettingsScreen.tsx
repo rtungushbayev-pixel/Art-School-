@@ -12,15 +12,25 @@ import { useStrings } from '../../i18n';
 import { colors, spacing } from '../../theme/colors';
 import type { Profile } from '../../types/database';
 
-type SettingKey = 'notify_announcements' | 'notify_comments' | 'notify_moderation' | 'notify_support';
+type SettingKey = 'notify_announcements' | 'notify_comments' | 'notify_moderation' | 'notify_support' | 'notify_attendance';
 
-const SETTING_KEYS: SettingKey[] = ['notify_announcements', 'notify_comments', 'notify_moderation', 'notify_support'];
+const SETTING_KEYS: SettingKey[] = [
+  'notify_attendance',
+  'notify_announcements',
+  'notify_comments',
+  'notify_moderation',
+  'notify_support',
+];
 
 type SettingText = Record<SettingKey, { title: string; description: string }>;
 
 const STRINGS = {
   ru: {
     settings: {
+      notify_attendance: {
+        title: 'Посещаемость',
+        description: 'Ребёнок отсутствует на занятии',
+      },
       notify_announcements: {
         title: 'Объявления',
         description: 'Новые объявления от администрации школы',
@@ -48,6 +58,10 @@ const STRINGS = {
   },
   kk: {
     settings: {
+      notify_attendance: {
+        title: 'Сабаққа қатысу',
+        description: 'Бала сабаққа келмеді',
+      },
       notify_announcements: {
         title: 'Хабарландырулар',
         description: 'Мектеп әкімшілігінің жаңа хабарландырулары',
@@ -75,6 +89,10 @@ const STRINGS = {
   },
   en: {
     settings: {
+      notify_attendance: {
+        title: 'Attendance',
+        description: 'Your child is absent from a class',
+      },
       notify_announcements: {
         title: 'Announcements',
         description: 'New announcements from the school administration',
@@ -115,6 +133,7 @@ export function NotificationSettingsScreen() {
           notify_comments: profile.notify_comments,
           notify_moderation: profile.notify_moderation,
           notify_support: profile.notify_support,
+          notify_attendance: profile.notify_attendance ?? true,
         }
       : null
   );
@@ -184,7 +203,7 @@ export function NotificationSettingsScreen() {
 
       <Text style={styles.sectionTitle}>{s.sendNotifications}</Text>
       <Card style={styles.list}>
-        {SETTING_KEYS.map((key, index) => (
+        {SETTING_KEYS.filter((key) => key !== 'notify_attendance' || profile.role === 'parent').map((key, index) => (
           <View key={key} style={[styles.row, index > 0 && styles.rowDivider]}>
             <View style={styles.rowText}>
               <Text style={styles.rowTitle}>{s.settings[key].title}</Text>

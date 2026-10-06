@@ -6,6 +6,7 @@ import type { NativeStackNavigationProp, NativeStackScreenProps } from '@react-n
 import { Screen } from '../../components/Screen';
 import { Card } from '../../components/Card';
 import { Avatar } from '../../components/Avatar';
+import { Button } from '../../components/Button';
 import { RosterSection } from '../../components/RosterSection';
 import { useAuth } from '../../hooks/useAuth';
 import { isAdminRole } from '../../lib/roles';
@@ -19,6 +20,7 @@ import { useStrings } from '../../i18n';
 
 const STRINGS = {
   ru: {
+    attendance: 'Отметить посещаемость',
     removeTitle: 'Убрать из группы?',
     cancel: 'Отмена',
     remove: 'Убрать',
@@ -32,6 +34,7 @@ const STRINGS = {
     room: (room: string) => ` · каб. ${room}`,
   },
   kk: {
+    attendance: 'Қатысуды белгілеу',
     removeTitle: 'Топтан шығару керек пе?',
     cancel: 'Бас тарту',
     remove: 'Шығару',
@@ -45,6 +48,7 @@ const STRINGS = {
     room: (room: string) => ` · ${room} каб.`,
   },
   en: {
+    attendance: 'Take attendance',
     removeTitle: 'Remove from the group?',
     cancel: 'Cancel',
     remove: 'Remove',
@@ -126,6 +130,15 @@ export function GroupDetailScreen({ route }: Props) {
     <Screen scroll>
       <Text style={styles.title}>{group.name}</Text>
       {group.description ? <Text style={styles.description}>{group.description}</Text> : null}
+      {canManage && members.length > 0 ? (
+        <>
+          <View style={{ height: spacing.sm }} />
+          <Button
+            title={s.attendance}
+            onPress={() => navigation.navigate('Attendance', { groupId, groupName: group.name })}
+          />
+        </>
+      ) : null}
 
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>{s.students(members.length)}</Text>

@@ -76,6 +76,7 @@ export type StaffStackParamList = {
   Support: undefined;
   NewSupportTicket: { category: SupportCategory };
   SupportTicket: { ticketId: string };
+  Attendance: { groupId: string; groupName: string };
   MaterialRequests: undefined;
   NewMaterialRequest: undefined;
   MaterialRequest: { requestId: string };

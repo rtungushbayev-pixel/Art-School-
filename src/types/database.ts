@@ -26,6 +26,7 @@ export interface Profile {
   notify_comments: boolean;
   notify_moderation: boolean;
   notify_support: boolean;
+  notify_attendance: boolean; // родителю: ребёнок отсутствует на занятии
   created_at: string;
   updated_at: string;
 }

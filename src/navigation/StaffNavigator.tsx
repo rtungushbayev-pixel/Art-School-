@@ -32,6 +32,7 @@ import { PhotoViewScreen } from '../screens/shared/PhotoViewScreen';
 import { SupportScreen } from '../screens/shared/SupportScreen';
 import { NewSupportTicketScreen } from '../screens/shared/NewSupportTicketScreen';
 import { SupportTicketScreen } from '../screens/shared/SupportTicketScreen';
+import { AttendanceScreen } from '../screens/staff/AttendanceScreen';
 import { MaterialRequestsScreen } from '../screens/materials/MaterialRequestsScreen';
 import { NewMaterialRequestScreen } from '../screens/materials/NewMaterialRequestScreen';
 import { MaterialRequestScreen } from '../screens/materials/MaterialRequestScreen';
@@ -75,6 +76,7 @@ const STRINGS = {
     newMaterialRequest: 'Новая заявка',
     materialRequest: 'Заявка',
     materialSummary: 'Сводка по материалам',
+    attendance: 'Посещаемость',
   },
   kk: {
     messages: 'Хабарламалар',
@@ -111,6 +113,7 @@ const STRINGS = {
     newMaterialRequest: 'Жаңа өтінім',
     materialRequest: 'Өтінім',
     materialSummary: 'Материалдар жиынтығы',
+    attendance: 'Сабаққа қатысу',
   },
   en: {
     messages: 'Messages',
@@ -147,6 +150,7 @@ const STRINGS = {
     newMaterialRequest: 'New request',
     materialRequest: 'Request',
     materialSummary: 'Supplies summary',
+    attendance: 'Attendance',
   },
 };
 
@@ -209,6 +213,7 @@ export function StaffNavigator() {
         options={{ title: s.help }}
       />
       <Stack.Screen name="SupportTicket" component={SupportTicketScreen} options={{ title: s.ticket }} />
+      <Stack.Screen name="Attendance" component={AttendanceScreen} options={{ title: s.attendance }} />
       <Stack.Screen name="MaterialRequests" component={MaterialRequestsScreen} options={{ title: s.materialRequests }} />
       <Stack.Screen
         name="NewMaterialRequest"

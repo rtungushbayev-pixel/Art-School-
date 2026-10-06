@@ -13,7 +13,8 @@ type NotificationTarget =
   | { screen: 'PostDetail'; postId: string }
   | { screen: 'ListingDetail'; listingId: string }
   | { screen: 'Announcements' }
-  | { screen: 'SupportTicket'; ticketId: string };
+  | { screen: 'SupportTicket'; ticketId: string }
+  | { screen: 'ChildDetail'; childId: string };
 
 function asId(value: unknown): string | null {
   return typeof value === 'string' && value.length > 0 ? value : null;
@@ -36,6 +37,10 @@ export function resolveNotificationTarget(data: Record<string, unknown> | undefi
     case 'support_ticket': {
       const ticketId = asId(data.ticketId);
       return ticketId ? { screen: 'SupportTicket', ticketId } : null;
+    }
+    case 'attendance': {
+      const childId = asId(data.studentId);
+      return childId ? { screen: 'ChildDetail', childId } : null;
     }
     default:
       return null;
@@ -63,6 +68,12 @@ function navigateToTarget(navigation: AppNavigationRef, role: UserRole, target: 
       break;
     case 'SupportTicket':
       navigation.navigate('SupportTicket', { ticketId: target.ticketId });
+      break;
+    case 'ChildDetail':
+      // Об отсутствии ребёнка пишут только родителям.
+      if (role === 'parent') {
+        navigation.navigate('ChildDetail', { childId: target.childId });
+      }
       break;
   }
 }

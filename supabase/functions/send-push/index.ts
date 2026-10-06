@@ -11,6 +11,8 @@
 //   announcement      { id: announcement_id } — сотрудник → аудитории объявления
 //   support_message   { id: message_id }      — автор обращения → всем сотрудникам,
 //                                               сотрудник → автору обращения
+//   attendance_absent { id: attendance_id }   — преподаватель → родителям ученика,
+//                                               которого отметил «Нет» на занятии
 //
 // Каждое событие рассылается не более одного раза (таблица push_events).
 // Получатели, отключившие категорию в настройках (profiles.notify_*),
@@ -25,8 +27,14 @@
 
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.117.2';
 
-type PushEvent = 'post_comment' | 'post_moderated' | 'listing_moderated' | 'announcement' | 'support_message';
-type NotificationCategory = 'announcements' | 'comments' | 'moderation' | 'support';
+type PushEvent =
+  | 'post_comment'
+  | 'post_moderated'
+  | 'listing_moderated'
+  | 'announcement'
+  | 'support_message'
+  | 'attendance_absent';
+type NotificationCategory = 'announcements' | 'comments' | 'moderation' | 'support' | 'attendance';
 
 interface RequestBody {
   event: PushEvent;
@@ -35,7 +43,7 @@ interface RequestBody {
 
 interface Caller {
   id: string;
-  role: 'student' | 'staff' | 'parent' | 'admin';
+  role: 'student' | 'staff' | 'parent' | 'admin' | 'office';
   full_name: string;
 }
 
@@ -62,6 +70,7 @@ const CATEGORY_COLUMNS: Record<NotificationCategory, string> = {
   comments: 'notify_comments',
   moderation: 'notify_moderation',
   support: 'notify_support',
+  attendance: 'notify_attendance',
 };
 
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
@@ -227,6 +236,36 @@ async function buildMessage(admin: SupabaseClient, caller: Caller, { event, id }
         title: `Ответ по обращению «${ticket.subject}»`,
         body: truncate(message.body),
         data,
+      };
+    }
+
+    case 'attendance_absent': {
+      requireStaff(caller);
+      const { data: mark } = await admin
+        .from('attendance')
+        .select('id, student_id, lesson_date, status, marked_by, group:group_id ( name ), student:student_id ( full_name )')
+        .eq('id', id)
+        .single();
+      if (!mark) throw new HttpError(404, 'Отметка не найдена');
+      if (mark.marked_by !== caller.id) throw new HttpError(403, 'Это не ваша отметка');
+      if (mark.status !== 'absent') return null;
+      const { data: links, error } = await admin
+        .from('parent_children')
+        .select('parent_id')
+        .eq('student_id', mark.student_id);
+      if (error) throw error;
+      const group = mark.group as unknown as { name: string } | null;
+      const student = mark.student as unknown as { full_name: string } | null;
+      const [y, m, d] = String(mark.lesson_date).split('-');
+      return {
+        dedupKey: `attendance_absent:${mark.id}:${mark.lesson_date}`,
+        category: 'attendance',
+        recipientIds: (links ?? []).map((row: { parent_id: string }) => row.parent_id),
+        title: 'Ребёнок не пришёл на занятие',
+        body: truncate(
+          `${student?.full_name ?? 'Ваш ребёнок'} отсутствует на занятии${group?.name ? ` группы «${group.name}»` : ''} ${d}.${m}.${y}. Если это ошибка, свяжитесь с преподавателем.`
+        ),
+        data: { type: 'attendance', studentId: mark.student_id },
       };
     }
 

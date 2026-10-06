@@ -10,6 +10,7 @@ import { supabase } from '../../lib/supabase';
 import { fetchUserPosts } from '../../lib/posts';
 import {
   fetchProgressNotes,
+  fetchStudentAttendance,
   fetchStudentGroupNames,
   fetchStudentPhotos,
   type ProgressNoteWithAuthor,
@@ -18,7 +19,8 @@ import {
 import { useAuth } from '../../hooks/useAuth';
 import { useStrings } from '../../i18n';
 import { colors, radius, spacing } from '../../theme/colors';
-import type { Profile } from '../../types/database';
+import type { Attendance, Profile } from '../../types/database';
+import { localISODate } from '../../lib/attendance';
 import type { PostCardData } from '../../components/PostCard';
 import type { ParentStackParamList } from '../../navigation/types';
 
@@ -38,6 +40,11 @@ const STRINGS = {
     progress: 'Прогресс',
     gallery: (n: number) => `Галерея (${n})`,
     teacherNotes: 'Отзывы преподавателей',
+    attendance: 'Посещаемость за 30 дней',
+    attendanceSummary: (absent: number, late: number) => `Пропусков: ${absent} · опозданий: ${late}`,
+    absentOn: 'Не был',
+    lateOn: 'Опоздал',
+    noAbsences: 'Пропусков нет',
     noNotes: 'Преподаватели ещё не оставляли отзывов',
     noWorks: 'Работ пока нет',
     pending: 'На модерации',
@@ -50,6 +57,11 @@ const STRINGS = {
     progress: 'Үлгерім',
     gallery: (n: number) => `Галерея (${n})`,
     teacherNotes: 'Оқытушылардың пікірлері',
+    attendance: 'Соңғы 30 күндегі қатысу',
+    attendanceSummary: (absent: number, late: number) => `Жіберілген: ${absent} · кешіккен: ${late}`,
+    absentOn: 'Келмеді',
+    lateOn: 'Кешікті',
+    noAbsences: 'Жіберілген сабақ жоқ',
     noNotes: 'Оқытушылар әлі пікір қалдырмаған',
     noWorks: 'Әзірге жұмыстар жоқ',
     pending: 'Модерацияда',
@@ -62,6 +74,11 @@ const STRINGS = {
     progress: 'Progress',
     gallery: (n: number) => `Gallery (${n})`,
     teacherNotes: 'Teacher feedback',
+    attendance: 'Attendance, last 30 days',
+    attendanceSummary: (absent: number, late: number) => `Absences: ${absent} · late: ${late}`,
+    absentOn: 'Absent',
+    lateOn: 'Late',
+    noAbsences: 'No absences',
     noNotes: 'Teachers haven’t left any feedback yet',
     noWorks: 'No artwork yet',
     pending: 'Under review',
@@ -80,18 +97,23 @@ export function ChildDetailScreen({ route, navigation }: Props) {
   const [notes, setNotes] = useState<ProgressNoteWithAuthor[]>([]);
   const [gallery, setGallery] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [attendance, setAttendance] = useState<Attendance[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const { data } = await supabase.from('profiles').select('*').eq('id', childId).single();
       setChild(data as Profile);
-      const [groupNames, progress, works, photos] = await Promise.all([
+      const since = new Date();
+      since.setDate(since.getDate() - 30);
+      const [groupNames, progress, works, photos, marks] = await Promise.all([
         fetchStudentGroupNames(childId),
         fetchProgressNotes(childId),
         fetchUserPosts(childId, viewer?.id),
         fetchStudentPhotos(childId),
+        fetchStudentAttendance(childId, localISODate(since)).catch(() => [] as Attendance[]),
       ]);
+      setAttendance(marks);
       setGroups(groupNames);
       setNotes(progress);
       const items: GalleryItem[] = [
@@ -152,6 +174,28 @@ export function ChildDetailScreen({ route, navigation }: Props) {
 
       {tab === 'progress' ? (
         <>
+          <Text style={styles.sectionTitle}>{s.attendance}</Text>
+          {(() => {
+            const missed = attendance
+              .filter((a) => a.status === 'absent' || a.status === 'late')
+              .sort((a, b) => b.lesson_date.localeCompare(a.lesson_date));
+            const absent = missed.filter((a) => a.status === 'absent').length;
+            return (
+              <View style={styles.attendance}>
+                <Text style={styles.attendanceSummary}>
+                  {missed.length === 0 ? s.noAbsences : s.attendanceSummary(absent, missed.length - absent)}
+                </Text>
+                {missed.slice(0, 10).map((a) => {
+                  const [, m, d] = a.lesson_date.split('-');
+                  return (
+                    <Text key={a.id} style={a.status === 'absent' ? styles.absent : styles.late}>
+                      {d}.{m} — {a.status === 'absent' ? s.absentOn : s.lateOn}
+                    </Text>
+                  );
+                })}
+              </View>
+            );
+          })()}
           <Text style={styles.sectionTitle}>{s.teacherNotes}</Text>
           {notes.length === 0 && !loading ? (
             <Text style={styles.empty}>{s.noNotes}</Text>
@@ -220,6 +264,10 @@ const styles = StyleSheet.create({
   segmentItemActive: { backgroundColor: colors.primary },
   segmentText: { fontWeight: '600', color: colors.text },
   segmentTextActive: { color: colors.white },
+  attendance: { marginBottom: spacing.lg, gap: 2 },
+  attendanceSummary: { color: colors.text, fontWeight: '600', marginBottom: spacing.xs },
+  absent: { color: colors.danger },
+  late: { color: colors.warning },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.primary, marginBottom: spacing.sm },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.md },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: spacing.md },
