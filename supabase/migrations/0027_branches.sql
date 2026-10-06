@@ -24,11 +24,12 @@ create policy "branches_write_admin" on public.branches
 insert into public.branches (name, sort_order) values
   ('Ауэзова', 1),
   ('6 мкрн', 2),
-  ('Мамыр', 3),
-  ('Толе би (Сайран)', 4),
-  ('Аккент', 5),
-  ('Орбита', 6)
-on conflict (name) do nothing;
+  ('Орманова', 3),
+  ('Мамыр', 4),
+  ('Толе би (Сайран)', 5),
+  ('Аккент', 6),
+  ('Орбита', 7)
+on conflict (name) do update set sort_order = excluded.sort_order;
 
 -- Руководитель филиала: сотрудник, которого отметил администратор.
 create table public.branch_heads (
