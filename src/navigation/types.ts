@@ -76,6 +76,16 @@ export type StaffStackParamList = {
   Support: undefined;
   NewSupportTicket: { category: SupportCategory };
   SupportTicket: { ticketId: string };
+  MaterialRequests: undefined;
+  NewMaterialRequest: undefined;
+  MaterialRequest: { requestId: string };
+  MaterialSummary: undefined;
+};
+
+// Администрация: заявки на материалы и профиль. Стек — часть стека сотрудника.
+export type OfficeTabParamList = {
+  MaterialsTab: undefined;
+  ProfileTab: undefined;
 };
 
 export type ParentTabParamList = {

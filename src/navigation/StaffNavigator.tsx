@@ -32,6 +32,10 @@ import { PhotoViewScreen } from '../screens/shared/PhotoViewScreen';
 import { SupportScreen } from '../screens/shared/SupportScreen';
 import { NewSupportTicketScreen } from '../screens/shared/NewSupportTicketScreen';
 import { SupportTicketScreen } from '../screens/shared/SupportTicketScreen';
+import { MaterialRequestsScreen } from '../screens/materials/MaterialRequestsScreen';
+import { NewMaterialRequestScreen } from '../screens/materials/NewMaterialRequestScreen';
+import { MaterialRequestScreen } from '../screens/materials/MaterialRequestScreen';
+import { MaterialSummaryScreen } from '../screens/materials/MaterialSummaryScreen';
 import { colors } from '../theme/colors';
 import { useStrings } from '../i18n';
 
@@ -67,6 +71,10 @@ const STRINGS = {
     tickets: 'Обращения',
     help: 'Помощь',
     ticket: 'Обращение',
+    materialRequests: 'Заявки на материалы',
+    newMaterialRequest: 'Новая заявка',
+    materialRequest: 'Заявка',
+    materialSummary: 'Сводка по материалам',
   },
   kk: {
     messages: 'Хабарламалар',
@@ -99,6 +107,10 @@ const STRINGS = {
     tickets: 'Өтініштер',
     help: 'Көмек',
     ticket: 'Өтініш',
+    materialRequests: 'Материалдарға өтінімдер',
+    newMaterialRequest: 'Жаңа өтінім',
+    materialRequest: 'Өтінім',
+    materialSummary: 'Материалдар жиынтығы',
   },
   en: {
     messages: 'Messages',
@@ -131,6 +143,10 @@ const STRINGS = {
     tickets: 'Requests',
     help: 'Help',
     ticket: 'Request',
+    materialRequests: 'Supply requests',
+    newMaterialRequest: 'New request',
+    materialRequest: 'Request',
+    materialSummary: 'Supplies summary',
   },
 };
 
@@ -193,6 +209,14 @@ export function StaffNavigator() {
         options={{ title: s.help }}
       />
       <Stack.Screen name="SupportTicket" component={SupportTicketScreen} options={{ title: s.ticket }} />
+      <Stack.Screen name="MaterialRequests" component={MaterialRequestsScreen} options={{ title: s.materialRequests }} />
+      <Stack.Screen
+        name="NewMaterialRequest"
+        component={NewMaterialRequestScreen}
+        options={{ title: s.newMaterialRequest }}
+      />
+      <Stack.Screen name="MaterialRequest" component={MaterialRequestScreen} options={{ title: s.materialRequest }} />
+      <Stack.Screen name="MaterialSummary" component={MaterialSummaryScreen} options={{ title: s.materialSummary }} />
     </Stack.Navigator>
   );
 }

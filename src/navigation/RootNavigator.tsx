@@ -7,6 +7,7 @@ import { AuthNavigator } from './AuthNavigator';
 import { StudentNavigator } from './StudentNavigator';
 import { StaffNavigator } from './StaffNavigator';
 import { ParentNavigator } from './ParentNavigator';
+import { OfficeNavigator } from './OfficeNavigator';
 import { NewPasswordScreen } from '../screens/auth/NewPasswordScreen';
 import { colors } from '../theme/colors';
 import { useNotificationNavigation } from '../lib/notificationRouting';
@@ -40,6 +41,8 @@ export function RootNavigator() {
         <AuthNavigator />
       ) : isStaffRole(profile.role) ? (
         <StaffNavigator />
+      ) : profile.role === 'office' ? (
+        <OfficeNavigator />
       ) : profile.role === 'parent' ? (
         <ParentNavigator />
       ) : (

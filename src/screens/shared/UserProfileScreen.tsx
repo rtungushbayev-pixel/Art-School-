@@ -58,6 +58,11 @@ const STRINGS = {
         question: (name: string) =>
           `${name} станет администратором: все права, включая роли, приглашения сотрудников, все группы, коды учеников и телефоны.`,
       },
+      office: {
+        button: 'Сделать Администрацией',
+        question: (name: string) =>
+          `${name} войдёт в Администрацию школы: увидит заявки преподавателей на материалы и будет отмечать выдачу.`,
+      },
       student: {
         button: 'Сделать учеником',
         question: (name: string) => `${name} станет учеником.`,
@@ -113,6 +118,11 @@ const STRINGS = {
         button: 'Әкімші ету',
         question: (name: string) =>
           `${name} әкімші болады: барлық құқықтар, соның ішінде рөлдер, қызметкерлерді шақыру, барлық топтар, оқушы кодтары және телефондар.`,
+      },
+      office: {
+        button: 'Әкімшілікке қосу',
+        question: (name: string) =>
+          `${name} мектеп әкімшілігіне қосылады: мұғалімдердің материалдарға өтінімдерін көріп, берілгенін белгілейді.`,
       },
       student: {
         button: 'Оқушы ету',
@@ -171,6 +181,11 @@ const STRINGS = {
         question: (name: string) =>
           `${name} will become an administrator: all rights, including roles, staff invitations, all groups, student codes and phone numbers.`,
       },
+      office: {
+        button: 'Make administration staff',
+        question: (name: string) =>
+          `${name} will join the school administration: they will see teachers' supply requests and mark them as issued.`,
+      },
       student: {
         button: 'Make student',
         question: (name: string) => `${name} will become a student.`,
@@ -218,7 +233,7 @@ const STRINGS = {
   },
 };
 
-const ROLE_ORDER: UserRole[] = ['student', 'parent', 'staff', 'admin'];
+const ROLE_ORDER: UserRole[] = ['student', 'parent', 'staff', 'office', 'admin'];
 
 export function UserProfileScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<NavParamList>>();

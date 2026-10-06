@@ -11,7 +11,7 @@ import { useStrings } from '../i18n';
 
 const STRINGS = {
   ru: {
-    roles: { student: 'Ученик', staff: 'Преподаватель', parent: 'Родитель', admin: 'Администратор' } as Record<UserRole, string>,
+    roles: { student: 'Ученик', staff: 'Преподаватель', parent: 'Родитель', admin: 'Администратор', office: 'Администрация' } as Record<UserRole, string>,
     statuses: {
       planning: 'Планирует поступать',
       applied: 'Подал документы',
@@ -23,7 +23,7 @@ const STRINGS = {
     goal: 'Цель',
   },
   kk: {
-    roles: { student: 'Оқушы', staff: 'Мұғалім', parent: 'Ата-ана', admin: 'Әкімші' } as Record<UserRole, string>,
+    roles: { student: 'Оқушы', staff: 'Мұғалім', parent: 'Ата-ана', admin: 'Әкімші', office: 'Әкімшілік' } as Record<UserRole, string>,
     statuses: {
       planning: 'Түсуді жоспарлап жүр',
       applied: 'Құжат тапсырды',
@@ -35,7 +35,7 @@ const STRINGS = {
     goal: 'Мақсат',
   },
   en: {
-    roles: { student: 'Student', staff: 'Teacher', parent: 'Parent', admin: 'Administrator' } as Record<UserRole, string>,
+    roles: { student: 'Student', staff: 'Teacher', parent: 'Parent', admin: 'Administrator', office: 'Administration' } as Record<UserRole, string>,
     statuses: {
       planning: 'Planning to apply',
       applied: 'Applied',

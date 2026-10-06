@@ -1,4 +1,4 @@
-export type UserRole = 'student' | 'staff' | 'parent' | 'admin';
+export type UserRole = 'student' | 'staff' | 'parent' | 'admin' | 'office';
 export type EnrollmentStatus = 'planning' | 'applied' | 'enrolled';
 export type PostStatus = 'pending' | 'approved' | 'rejected';
 export type AnnouncementAudience = 'all' | 'students' | 'staff' | 'group';
@@ -9,6 +9,8 @@ export type PaymentMethod = 'cash' | 'card' | 'transfer';
 export type AchievementKind = 'competition' | 'exhibition' | 'award' | 'other';
 export type SupportCategory = 'bug' | 'schedule' | 'operations' | 'question' | 'other';
 export type SupportStatus = 'open' | 'answered' | 'closed';
+export type MaterialUnit = 'pcs' | 'pack' | 'set' | 'l' | 'kg' | 'm' | 'sheet';
+export type MaterialRequestStatus = 'pending' | 'issued' | 'rejected';
 
 export interface Profile {
   id: string;
@@ -283,4 +285,21 @@ export interface Database {
       };
     };
   };
+}
+
+// Заявка преподавателя на материалы. Решение («Выдано» / «Отклонено»)
+// ставит Администрация через decide_material_request.
+export interface MaterialRequest {
+  id: string;
+  teacher_id: string;
+  material: string;
+  quantity: number;
+  unit: MaterialUnit;
+  comment: string | null;
+  status: MaterialRequestStatus;
+  issued_quantity: number | null;
+  office_note: string | null;
+  decided_by: string | null;
+  decided_at: string | null;
+  created_at: string;
 }

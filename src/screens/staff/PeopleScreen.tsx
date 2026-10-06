@@ -14,19 +14,19 @@ import { useStrings } from '../../i18n';
 
 const STRINGS = {
   ru: {
-    roles: { student: 'Ученик', staff: 'Сотрудник', parent: 'Родитель' } as Record<UserRole, string>,
+    roles: { student: 'Ученик', staff: 'Сотрудник', parent: 'Родитель', admin: 'Администратор', office: 'Администрация' } as Record<UserRole, string>,
     search: 'Поиск по имени…',
     nobody: 'Никого не найдено',
     noName: 'Без имени',
   },
   kk: {
-    roles: { student: 'Оқушы', staff: 'Қызметкер', parent: 'Ата-ана' } as Record<UserRole, string>,
+    roles: { student: 'Оқушы', staff: 'Қызметкер', parent: 'Ата-ана', admin: 'Әкімші', office: 'Әкімшілік' } as Record<UserRole, string>,
     search: 'Аты бойынша іздеу…',
     nobody: 'Ешкім табылмады',
     noName: 'Аты жоқ',
   },
   en: {
-    roles: { student: 'Student', staff: 'Staff', parent: 'Parent' } as Record<UserRole, string>,
+    roles: { student: 'Student', staff: 'Staff', parent: 'Parent', admin: 'Administrator', office: 'Administration' } as Record<UserRole, string>,
     search: 'Search by name…',
     nobody: 'No one found',
     noName: 'No name',

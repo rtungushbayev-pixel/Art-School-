@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, Share, StyleSheet, Text, View } from 'react-native';
+import { Alert, Platform, Share, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
@@ -14,7 +14,7 @@ import { useStrings } from '../../i18n';
 import { FEATURES } from '../../lib/features';
 import { changeProfileAvatar } from '../../lib/avatar';
 import { supabase } from '../../lib/supabase';
-import { isAdminRole } from '../../lib/roles';
+import { isAdminRole, isStaffRole } from '../../lib/roles';
 import { useStudentPortfolio } from '../../hooks/useStudentPortfolio';
 import { colors, spacing } from '../../theme/colors';
 import type { StaffStackParamList, StudentStackParamList } from '../../navigation/types';
@@ -32,6 +32,8 @@ const STRINGS = {
     chooseRole: 'Кем будет новый сотрудник?',
     roleTeacher: 'Преподаватель',
     roleAdmin: 'Администратор',
+    roleOffice: 'Администрация (заявки на материалы)',
+    materials: 'Заявки на материалы',
     cancel: 'Отмена',
     language: 'Язык приложения',
     studentPayments: 'Оплаты учеников',
@@ -48,6 +50,8 @@ const STRINGS = {
     chooseRole: 'Жаңа қызметкер кім болады?',
     roleTeacher: 'Мұғалім',
     roleAdmin: 'Әкімші',
+    roleOffice: 'Әкімшілік (материалдарға өтінімдер)',
+    materials: 'Материалдарға өтінімдер',
     cancel: 'Бас тарту',
     language: 'Қолданба тілі',
     studentPayments: 'Оқушылардың төлемдері',
@@ -64,6 +68,8 @@ const STRINGS = {
     chooseRole: 'What role will the new staff member have?',
     roleTeacher: 'Teacher',
     roleAdmin: 'Administrator',
+    roleOffice: 'Administration (supply requests)',
+    materials: 'Supply requests',
     cancel: 'Cancel',
     language: 'App language',
     studentPayments: 'Student payments',
@@ -130,6 +136,16 @@ export function ProfileScreen() {
             variant="secondary"
             onPress={() => navigation.navigate('NotificationSettings')}
           />
+          {isStaffRole(profile.role) ? (
+            <>
+              <View style={{ height: spacing.sm }} />
+              <Button
+                title={s.materials}
+                variant="secondary"
+                onPress={() => navigation.navigate('MaterialRequests')}
+              />
+            </>
+          ) : null}
           <Text style={styles.sectionLabel}>{s.language}</Text>
           <LanguageSwitcher />
           {isAdminRole(profile.role) ? (
@@ -140,21 +156,28 @@ export function ProfileScreen() {
                 variant="secondary"
                 onPress={() => {
                   // Одноразовый код с ролью: по нему новый сотрудник регистрируется сам.
-                  const invite = async (role: 'staff' | 'admin') => {
+                  const invite = async (role: 'staff' | 'admin' | 'office') => {
                     const { data, error } = await supabase.rpc('create_staff_invite', { p_role: role, p_note: null });
                     if (error || !data) Alert.alert(s.inviteFailed, error?.message);
                     else Share.share({ message: s.inviteText(String(data)) }).catch(() => {});
                   };
-                  Alert.alert(s.inviteStaff, s.chooseRole, [
-                    { text: s.roleTeacher, onPress: () => invite('staff') },
-                    { text: s.roleAdmin, onPress: () => invite('admin') },
-                    { text: s.cancel, style: 'cancel' },
-                  ]);
+                  // На Android в окне не больше трёх кнопок: там «Отмена» — касание мимо окна.
+                  Alert.alert(
+                    s.inviteStaff,
+                    s.chooseRole,
+                    [
+                      { text: s.roleTeacher, onPress: () => invite('staff') },
+                      { text: s.roleOffice, onPress: () => invite('office') },
+                      { text: s.roleAdmin, onPress: () => invite('admin') },
+                      ...(Platform.OS === 'ios' ? [{ text: s.cancel, style: 'cancel' as const }] : []),
+                    ],
+                    { cancelable: true }
+                  );
                 }}
               />
             </>
           ) : null}
-          {FEATURES.payments ? (
+          {FEATURES.payments && profile.role !== 'office' ? (
             <>
               <View style={{ height: spacing.sm }} />
               {isAdminRole(profile.role) ? (

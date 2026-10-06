@@ -10,3 +10,8 @@ export function isStaffRole(role: UserRole | null | undefined): boolean {
 export function isAdminRole(role: UserRole | null | undefined): boolean {
   return role === 'admin';
 }
+
+// Администрация школы (office) и администратор: заявки на материалы.
+export function isOfficeRole(role: UserRole | null | undefined): boolean {
+  return role === 'office' || role === 'admin';
+}
