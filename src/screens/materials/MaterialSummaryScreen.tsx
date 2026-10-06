@@ -5,13 +5,24 @@ import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { TextField } from '../../components/TextField';
 import { errorText } from '../../lib/errors';
-import { fetchMaterialUsage, formatQuantity, materialUnitLabel, type MaterialUsageItem } from '../../lib/materials';
+import {
+  fetchMaterialUsage,
+  formatMoney,
+  formatQuantity,
+  materialUnitLabel,
+  type MaterialUsage,
+  type MaterialUsageItem,
+} from '../../lib/materials';
 import { useStrings } from '../../i18n';
 import { colors, radius, spacing } from '../../theme/colors';
 
 const STRINGS = {
   ru: {
-    intro: 'Сколько материалов выдано преподавателям за период (по дате выдачи).',
+    intro: 'Сколько материалов выдано филиалам за период (по дате выдачи) и на какую сумму.',
+    byBranch: 'По филиалам',
+    byMaterial: 'По материалам',
+    totalCost: 'Расходы всего',
+    noBranch: 'Без филиала',
     presets: { month: 'Этот месяц', half1: '1 полугодие', half2: '2 полугодие', year: 'Учебный год', custom: 'Свои даты' },
     from: 'С (ГГГГ-ММ-ДД)',
     to: 'По (ГГГГ-ММ-ДД)',
@@ -23,7 +34,11 @@ const STRINGS = {
     failed: 'Не удалось загрузить сводку',
   },
   kk: {
-    intro: 'Кезең ішінде мұғалімдерге қанша материал берілді (берілген күні бойынша).',
+    intro: 'Кезең ішінде филиалдарға қанша материал қандай сомаға берілді (берілген күні бойынша).',
+    byBranch: 'Филиалдар бойынша',
+    byMaterial: 'Материалдар бойынша',
+    totalCost: 'Барлық шығын',
+    noBranch: 'Филиалсыз',
     presets: { month: 'Осы ай', half1: '1 жартыжылдық', half2: '2 жартыжылдық', year: 'Оқу жылы', custom: 'Өз күндерім' },
     from: 'Бастап (ЖЖЖЖ-АА-КК)',
     to: 'Дейін (ЖЖЖЖ-АА-КК)',
@@ -35,7 +50,11 @@ const STRINGS = {
     failed: 'Жиынтықты жүктеу мүмкін болмады',
   },
   en: {
-    intro: 'How many supplies were issued to teachers during the period (by issue date).',
+    intro: 'How many supplies were issued to branches during the period (by issue date) and at what cost.',
+    byBranch: 'By branch',
+    byMaterial: 'By item',
+    totalCost: 'Total spent',
+    noBranch: 'No branch',
     presets: { month: 'This month', half1: '1st half-year', half2: '2nd half-year', year: 'School year', custom: 'Custom dates' },
     from: 'From (YYYY-MM-DD)',
     to: 'To (YYYY-MM-DD)',
@@ -77,7 +96,8 @@ export function MaterialSummaryScreen() {
   const initial = useMemo(() => presetRange('year'), []);
   const [from, setFrom] = useState(initial[0]);
   const [to, setTo] = useState(initial[1]);
-  const [items, setItems] = useState<MaterialUsageItem[]>([]);
+  const [usage, setUsage] = useState<MaterialUsage | null>(null);
+  const [view, setView] = useState<'branches' | 'materials'>('branches');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -90,7 +110,7 @@ export function MaterialSummaryScreen() {
     setLoading(true);
     setError(null);
     try {
-      setItems(await fetchMaterialUsage(f, t));
+      setUsage(await fetchMaterialUsage(f, t, s.noBranch));
     } catch (e) {
       setError(`${s.failed}${errorText(e) ? `: ${errorText(e)}` : ''}`);
     }
@@ -100,6 +120,19 @@ export function MaterialSummaryScreen() {
   useEffect(() => {
     load(initial[0], initial[1]);
   }, [load, initial]);
+
+  // Строка материала внутри филиала: количество и сумма.
+  const itemRow = (item: MaterialUsageItem, key: string) => (
+    <View key={key} style={styles.teacherRow}>
+      <Text style={styles.teacher} numberOfLines={2}>
+        {item.material}
+      </Text>
+      <Text style={styles.teacherTotal}>
+        {formatQuantity(item.total)} {materialUnitLabel(item.unit)}
+        {item.cost > 0 ? ` · ${formatMoney(item.cost)}` : ''}
+      </Text>
+    </View>
+  );
 
   const choose = (p: Preset) => {
     setPreset(p);
@@ -134,39 +167,90 @@ export function MaterialSummaryScreen() {
       )}
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
-      {!error && !loading && items.length === 0 ? <Text style={styles.empty}>{s.empty}</Text> : null}
-      {items.length > 0 ? <Text style={styles.count}>{s.positions(items.length)}</Text> : null}
+      {!error && !loading && usage && usage.materials.length === 0 ? <Text style={styles.empty}>{s.empty}</Text> : null}
 
-      {items.map((item) => {
-        const key = `${item.material}|${item.unit}`;
-        const open = expanded === key;
-        const unit = materialUnitLabel(item.unit);
-        return (
-          <Pressable key={key} onPress={() => setExpanded(open ? null : key)}>
-            <Card>
-              <View style={styles.titleRow}>
-                <Text style={styles.material}>{item.material}</Text>
-                <Text style={styles.total}>
-                  {formatQuantity(item.total)} {unit}
+      {usage && usage.materials.length > 0 ? (
+        <>
+          <Card>
+            <View style={styles.titleRow}>
+              <Text style={styles.material}>{s.totalCost}</Text>
+              <Text style={styles.total}>{formatMoney(usage.totalCost)}</Text>
+            </View>
+          </Card>
+          <View style={styles.filterRow}>
+            {(['branches', 'materials'] as const).map((v) => (
+              <Pressable
+                key={v}
+                onPress={() => {
+                  setView(v);
+                  setExpanded(null);
+                }}
+                style={[styles.filterOption, view === v && styles.filterOptionActive]}
+              >
+                <Text style={[styles.filterText, view === v && styles.filterTextActive]}>
+                  {v === 'branches' ? s.byBranch : s.byMaterial}
                 </Text>
-              </View>
-              <Text style={styles.meta}>{s.requests(item.requests)}</Text>
-              {open
-                ? item.teachers.map((t) => (
-                    <View key={t.id} style={styles.teacherRow}>
-                      <Text style={styles.teacher} numberOfLines={1}>
-                        {t.name}
-                      </Text>
-                      <Text style={styles.teacherTotal}>
-                        {formatQuantity(t.total)} {unit}
-                      </Text>
-                    </View>
-                  ))
-                : null}
-            </Card>
-          </Pressable>
-        );
-      })}
+              </Pressable>
+            ))}
+          </View>
+        </>
+      ) : null}
+
+      {usage && view === 'branches'
+        ? usage.branches.map((b) => {
+            const open = expanded === b.id;
+            return (
+              <Pressable key={b.id} onPress={() => setExpanded(open ? null : b.id)}>
+                <Card>
+                  <View style={styles.titleRow}>
+                    <Text style={styles.material}>{b.name}</Text>
+                    <Text style={styles.total}>{formatMoney(b.cost)}</Text>
+                  </View>
+                  <Text style={styles.meta}>
+                    {s.requests(b.requests)} · {s.positions(b.materials.length)}
+                  </Text>
+                  {open ? b.materials.map((item) => itemRow(item, `${b.id}|${item.material}|${item.unit}`)) : null}
+                </Card>
+              </Pressable>
+            );
+          })
+        : null}
+
+      {usage && view === 'materials'
+        ? usage.materials.map((item) => {
+            const key = `${item.material}|${item.unit}`;
+            const open = expanded === key;
+            const unit = materialUnitLabel(item.unit);
+            return (
+              <Pressable key={key} onPress={() => setExpanded(open ? null : key)}>
+                <Card>
+                  <View style={styles.titleRow}>
+                    <Text style={styles.material}>{item.material}</Text>
+                    <Text style={styles.total}>
+                      {formatQuantity(item.total)} {unit}
+                    </Text>
+                  </View>
+                  <Text style={styles.meta}>
+                    {s.requests(item.requests)}
+                    {item.cost > 0 ? ` · ${formatMoney(item.cost)}` : ''}
+                  </Text>
+                  {open
+                    ? item.parts.map((p) => (
+                        <View key={p.id} style={styles.teacherRow}>
+                          <Text style={styles.teacher} numberOfLines={1}>
+                            {p.name}
+                          </Text>
+                          <Text style={styles.teacherTotal}>
+                            {formatQuantity(p.total)} {unit}
+                          </Text>
+                        </View>
+                      ))
+                    : null}
+                </Card>
+              </Pressable>
+            );
+          })
+        : null}
     </Screen>
   );
 }
@@ -188,7 +272,6 @@ const styles = StyleSheet.create({
   period: { color: colors.text, fontWeight: '600', marginBottom: spacing.md },
   error: { color: colors.danger, marginBottom: spacing.md },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.md },
-  count: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.sm },
   titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
   material: { flex: 1, fontSize: 16, fontWeight: '600', color: colors.text },
   total: { fontSize: 16, fontWeight: '700', color: colors.primary },

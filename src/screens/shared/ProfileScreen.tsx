@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, Platform, Share, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -15,6 +15,7 @@ import { FEATURES } from '../../lib/features';
 import { changeProfileAvatar } from '../../lib/avatar';
 import { supabase } from '../../lib/supabase';
 import { isAdminRole, isStaffRole } from '../../lib/roles';
+import { fetchHeadedBranch } from '../../lib/materials';
 import { useStudentPortfolio } from '../../hooks/useStudentPortfolio';
 import { colors, spacing } from '../../theme/colors';
 import type { StaffStackParamList, StudentStackParamList } from '../../navigation/types';
@@ -85,6 +86,15 @@ export function ProfileScreen() {
   const { posts, achievements, groups } = useStudentPortfolio(profile?.id, profile?.id);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [tab, setTab] = useState<ProfileTab>('profile');
+  const [headsBranch, setHeadsBranch] = useState(false);
+
+  // Заявки на материалы: у руководителей филиалов и у администратора.
+  useEffect(() => {
+    if (!profile || !isStaffRole(profile.role)) return;
+    fetchHeadedBranch(profile.id)
+      .then((b) => setHeadsBranch(b !== null))
+      .catch(() => {});
+  }, [profile]);
 
   const onAvatarPress = async () => {
     if (!profile) return;
@@ -136,7 +146,7 @@ export function ProfileScreen() {
             variant="secondary"
             onPress={() => navigation.navigate('NotificationSettings')}
           />
-          {isStaffRole(profile.role) ? (
+          {headsBranch || isAdminRole(profile.role) ? (
             <>
               <View style={{ height: spacing.sm }} />
               <Button

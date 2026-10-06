@@ -301,5 +301,14 @@ export interface MaterialRequest {
   office_note: string | null;
   decided_by: string | null;
   decided_at: string | null;
+  branch_id: string | null;
+  cost: number | null; // сумма выдачи, ₸ — ставит Администрация
   created_at: string;
+}
+
+// Филиал школы. Руководителей отмечает администратор (branch_heads).
+export interface Branch {
+  id: string;
+  name: string;
+  sort_order: number;
 }

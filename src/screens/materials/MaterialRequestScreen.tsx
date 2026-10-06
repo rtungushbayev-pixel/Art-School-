@@ -13,6 +13,7 @@ import {
   decideMaterialRequest,
   fetchMaterialRequest,
   formatMaterialDate,
+  formatMoney,
   formatQuantity,
   materialStatusLabel,
   materialUnitLabel,
@@ -27,7 +28,11 @@ import type { StaffStackParamList } from '../../navigation/types';
 const STRINGS = {
   ru: {
     notFound: 'Заявка не найдена или уже отменена',
-    teacher: 'Преподаватель',
+    teacher: 'Руководитель',
+    branch: 'Филиал',
+    cost: 'Сумма',
+    costField: 'Сумма, ₸ (необязательно)',
+    badCost: 'Сумма — число, например 12500',
     asked: 'Запрошено',
     issued: 'Выдано',
     created: 'Создана',
@@ -49,7 +54,11 @@ const STRINGS = {
   },
   kk: {
     notFound: 'Өтінім табылмады немесе тоқтатылды',
-    teacher: 'Мұғалім',
+    teacher: 'Жетекші',
+    branch: 'Филиал',
+    cost: 'Сомасы',
+    costField: 'Сомасы, ₸ (міндетті емес)',
+    badCost: 'Сома сан болуы керек, мысалы 12500',
     asked: 'Сұралды',
     issued: 'Берілді',
     created: 'Құрылды',
@@ -71,7 +80,11 @@ const STRINGS = {
   },
   en: {
     notFound: 'Request not found or already cancelled',
-    teacher: 'Teacher',
+    teacher: 'Branch head',
+    branch: 'Branch',
+    cost: 'Cost',
+    costField: 'Cost, ₸ (optional)',
+    badCost: 'Cost must be a number, e.g. 12500',
     asked: 'Requested',
     issued: 'Issued',
     created: 'Created',
@@ -103,6 +116,7 @@ export function MaterialRequestScreen() {
   const [loading, setLoading] = useState(true);
   const [issuedQuantity, setIssuedQuantity] = useState('');
   const [note, setNote] = useState('');
+  const [cost, setCost] = useState('');
   const [saving, setSaving] = useState<MaterialRequestStatus | 'cancel' | null>(null);
 
   const load = useCallback(async () => {
@@ -113,6 +127,7 @@ export function MaterialRequestScreen() {
       if (r) {
         setIssuedQuantity(formatQuantity(r.issued_quantity ?? r.quantity));
         setNote(r.office_note ?? '');
+        setCost(r.cost !== null ? String(Math.round(Number(r.cost))) : '');
       }
     } catch {
       // Нет сети — оставляем то, что уже показано.
@@ -146,9 +161,17 @@ export function MaterialRequestScreen() {
       }
       qty = Math.round(qty * 100) / 100;
     }
+    let amount: number | null = null;
+    if (status === 'issued' && cost.trim()) {
+      amount = Number(cost.replace(/\s/g, '').replace(',', '.'));
+      if (!Number.isFinite(amount) || amount < 0 || amount > 100000000) {
+        Alert.alert(s.badCost);
+        return;
+      }
+    }
     setSaving(status);
     try {
-      await decideMaterialRequest(request.id, status, qty, note.trim() || null);
+      await decideMaterialRequest(request.id, status, qty, note.trim() || null, amount);
       navigation.goBack();
     } catch (e) {
       setSaving(null);
@@ -191,11 +214,13 @@ export function MaterialRequestScreen() {
         {materialStatusLabel(request.status)}
       </Text>
       <Card>
+        {row(s.branch, request.branch?.name)}
         {isOffice ? row(s.teacher, request.teacher?.full_name) : null}
         {row(s.asked, `${formatQuantity(request.quantity)} ${unit}`)}
         {request.status === 'issued' && request.issued_quantity !== null
           ? row(s.issued, `${formatQuantity(request.issued_quantity)} ${unit}`)
           : null}
+        {isOffice && request.status === 'issued' && request.cost !== null ? row(s.cost, formatMoney(request.cost)) : null}
         {row(s.created, formatMaterialDate(request.created_at))}
         {request.decided_at ? row(s.decided, formatMaterialDate(request.decided_at)) : null}
         {row(s.comment, request.comment)}
@@ -211,6 +236,13 @@ export function MaterialRequestScreen() {
             onChangeText={setIssuedQuantity}
             keyboardType="decimal-pad"
             maxLength={9}
+          />
+          <TextField
+            label={s.costField}
+            value={cost}
+            onChangeText={setCost}
+            keyboardType="decimal-pad"
+            maxLength={12}
           />
           <TextField
             label={s.note}
