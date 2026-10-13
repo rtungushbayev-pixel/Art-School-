@@ -45,6 +45,7 @@ import { EventsScreen } from '../screens/shared/EventsScreen';
 import { EventDetailScreen } from '../screens/shared/EventDetailScreen';
 import { EditEventScreen } from '../screens/staff/EditEventScreen';
 import { KaspiSettingsScreen } from '../screens/staff/KaspiSettingsScreen';
+import { ProfileSettingsScreen } from '../screens/shared/ProfileSettingsScreen';
 import { colors } from '../theme/colors';
 import { useStrings } from '../i18n';
 
@@ -92,6 +93,7 @@ const STRINGS = {
     event: 'Событие',
     editEvent: 'Событие',
     kaspi: 'Kaspi',
+    profileSettings: 'Настройки профиля',
   },
   kk: {
     messages: 'Хабарламалар',
@@ -136,6 +138,7 @@ const STRINGS = {
     event: 'Іс-шара',
     editEvent: 'Іс-шара',
     kaspi: 'Kaspi',
+    profileSettings: 'Профиль баптаулары',
   },
   en: {
     messages: 'Messages',
@@ -180,6 +183,7 @@ const STRINGS = {
     event: 'Event',
     editEvent: 'Event',
     kaspi: 'Kaspi',
+    profileSettings: 'Profile settings',
   },
 };
 
@@ -206,6 +210,7 @@ export function StaffNavigator() {
       />
       <Stack.Screen name="PostDetail" component={PostDetailScreen} options={{ title: s.post }} />
       <Stack.Screen name="CreatePost" component={CreatePostScreen} options={{ title: s.newWork }} />
+      <Stack.Screen name="ProfileSettings" component={ProfileSettingsScreen} options={{ title: s.profileSettings }} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: s.editProfile }} />
       <Stack.Screen
         name="NotificationSettings"

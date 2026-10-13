@@ -12,6 +12,7 @@ import { AnnouncementsScreen } from '../screens/student/AnnouncementsScreen';
 import { SupportScreen } from '../screens/shared/SupportScreen';
 import { NewSupportTicketScreen } from '../screens/shared/NewSupportTicketScreen';
 import { SupportTicketScreen } from '../screens/shared/SupportTicketScreen';
+import { ProfileSettingsScreen } from '../screens/shared/ProfileSettingsScreen';
 import { colors, paint } from '../theme/colors';
 import { useStrings } from '../i18n';
 
@@ -26,6 +27,7 @@ const STRINGS = {
     tickets: 'Обращения',
     help: 'Помощь',
     ticket: 'Обращение',
+    profileSettings: 'Настройки профиля',
   },
   kk: {
     materials: 'Өтінімдер',
@@ -37,6 +39,7 @@ const STRINGS = {
     tickets: 'Өтініштер',
     help: 'Көмек',
     ticket: 'Өтініш',
+    profileSettings: 'Профиль баптаулары',
   },
   en: {
     materials: 'Requests',
@@ -48,6 +51,7 @@ const STRINGS = {
     tickets: 'Requests',
     help: 'Help',
     ticket: 'Request',
+    profileSettings: 'Profile settings',
   },
 };
 
@@ -87,6 +91,7 @@ export function OfficeNavigator() {
     >
       <Stack.Screen name="OfficeTabs" component={OfficeTabs} options={{ headerShown: false }} />
       <Stack.Screen name="MaterialRequest" component={MaterialRequestScreen} options={{ title: s.request }} />
+      <Stack.Screen name="ProfileSettings" component={ProfileSettingsScreen} options={{ title: s.profileSettings }} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: s.editProfile }} />
       <Stack.Screen
         name="NotificationSettings"

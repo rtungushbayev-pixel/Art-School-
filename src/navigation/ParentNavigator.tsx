@@ -21,6 +21,7 @@ import { ChatScreen } from '../screens/shared/ChatScreen';
 import { EventsScreen } from '../screens/shared/EventsScreen';
 import { EventDetailScreen } from '../screens/shared/EventDetailScreen';
 import { PaymentsScreen } from '../screens/shared/PaymentsScreen';
+import { ProfileSettingsScreen } from '../screens/shared/ProfileSettingsScreen';
 import { colors } from '../theme/colors';
 import { useStrings } from '../i18n';
 
@@ -43,6 +44,7 @@ const STRINGS = {
     events: 'Выставки и конкурсы',
     event: 'Событие',
     payments: 'Оплаты',
+    profileSettings: 'Настройки профиля',
   },
   kk: {
     messages: 'Хабарламалар',
@@ -62,6 +64,7 @@ const STRINGS = {
     events: 'Көрмелер мен байқаулар',
     event: 'Іс-шара',
     payments: 'Төлемдер',
+    profileSettings: 'Профиль баптаулары',
   },
   en: {
     messages: 'Messages',
@@ -81,6 +84,7 @@ const STRINGS = {
     events: 'Exhibitions and competitions',
     event: 'Event',
     payments: 'Payments',
+    profileSettings: 'Profile settings',
   },
 };
 
@@ -112,6 +116,7 @@ export function ParentNavigator() {
       <Stack.Screen name="Portfolio" component={PortfolioScreen} options={{ title: s.posts }} />
       <Stack.Screen name="ChildDetail" component={ChildDetailScreen} options={{ title: s.childProgress }} />
       <Stack.Screen name="PostDetail" component={PostDetailScreen} options={{ title: s.post }} />
+      <Stack.Screen name="ProfileSettings" component={ProfileSettingsScreen} options={{ title: s.profileSettings }} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: s.editProfile }} />
       <Stack.Screen
         name="NotificationSettings"

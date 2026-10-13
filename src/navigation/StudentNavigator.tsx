@@ -22,6 +22,7 @@ import { SupportTicketScreen } from '../screens/shared/SupportTicketScreen';
 import { CheckInScreen } from '../screens/shared/CheckInScreen';
 import { EventsScreen } from '../screens/shared/EventsScreen';
 import { EventDetailScreen } from '../screens/shared/EventDetailScreen';
+import { ProfileSettingsScreen } from '../screens/shared/ProfileSettingsScreen';
 import { colors } from '../theme/colors';
 import { useStrings } from '../i18n';
 
@@ -46,6 +47,7 @@ const STRINGS = {
     checkIn: 'Отметиться по QR',
     events: 'Выставки и конкурсы',
     event: 'Событие',
+    profileSettings: 'Настройки профиля',
   },
   kk: {
     messages: 'Хабарламалар',
@@ -67,6 +69,7 @@ const STRINGS = {
     checkIn: 'QR арқылы белгілену',
     events: 'Көрмелер мен байқаулар',
     event: 'Іс-шара',
+    profileSettings: 'Профиль баптаулары',
   },
   en: {
     messages: 'Messages',
@@ -88,6 +91,7 @@ const STRINGS = {
     checkIn: 'Check in with QR',
     events: 'Exhibitions and competitions',
     event: 'Event',
+    profileSettings: 'Profile settings',
   },
 };
 
@@ -109,6 +113,7 @@ export function StudentNavigator() {
       <Stack.Screen name="Friends" component={FriendsScreen} options={{ title: s.friends }} />
       <Stack.Screen name="PostDetail" component={PostDetailScreen} options={{ title: s.post }} />
       <Stack.Screen name="CreatePost" component={CreatePostScreen} options={{ title: s.newWork }} />
+      <Stack.Screen name="ProfileSettings" component={ProfileSettingsScreen} options={{ title: s.profileSettings }} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: s.editProfile }} />
       <Stack.Screen
         name="NotificationSettings"

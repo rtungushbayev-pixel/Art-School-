@@ -1,44 +1,37 @@
 import React, { useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { Alert, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { Button } from '../../components/Button';
 import { DeleteAccountButton } from '../../components/DeleteAccountButton';
 import { ProfileHeader } from '../../components/ProfileHeader';
-import { LanguageSwitcher } from '../../components/LanguageSwitcher';
 import { useAuth } from '../../hooks/useAuth';
 import { useStrings } from '../../i18n';
 import { changeProfileAvatar } from '../../lib/avatar';
-import { colors, spacing } from '../../theme/colors';
+import { spacing } from '../../theme/colors';
 import type { ParentStackParamList } from '../../navigation/types';
 
 const STRINGS = {
   ru: {
+    profileSettings: 'Настройки профиля',
     chats: 'Чаты с преподавателями',
     photoFailed: 'Не удалось загрузить фото',
     myChildren: 'Мои дети',
-    editProfile: 'Редактировать профиль',
-    notifications: 'Уведомления',
-    language: 'Язык приложения',
     signOut: 'Выйти',
   },
   kk: {
+    profileSettings: 'Профиль баптаулары',
     chats: 'Мұғалімдермен чаттар',
     photoFailed: 'Фотосуретті жүктеу мүмкін болмады',
     myChildren: 'Менің балаларым',
-    editProfile: 'Профильді өңдеу',
-    notifications: 'Хабарландырулар',
-    language: 'Қолданба тілі',
     signOut: 'Шығу',
   },
   en: {
+    profileSettings: 'Profile settings',
     chats: 'Chats with teachers',
     photoFailed: 'Could not upload the photo',
     myChildren: 'My children',
-    editProfile: 'Edit profile',
-    notifications: 'Notifications',
-    language: 'App language',
     signOut: 'Sign out',
   },
 };
@@ -71,15 +64,11 @@ export function ParentProfileScreen() {
       <View style={{ height: spacing.sm }} />
       <Button title={s.chats} variant="secondary" onPress={() => navigation.navigate('Chats')} />
       <View style={{ height: spacing.sm }} />
-      <Button title={s.editProfile} variant="secondary" onPress={() => navigation.navigate('EditProfile')} />
-      <View style={{ height: spacing.sm }} />
       <Button
-        title={s.notifications}
+        title={s.profileSettings}
         variant="secondary"
-        onPress={() => navigation.navigate('NotificationSettings')}
+        onPress={() => navigation.navigate('ProfileSettings')}
       />
-      <Text style={styles.sectionLabel}>{s.language}</Text>
-      <LanguageSwitcher />
       <View style={{ height: spacing.md }} />
       <Button title={s.signOut} variant="danger" onPress={signOut} />
       <DeleteAccountButton />
@@ -87,12 +76,3 @@ export function ParentProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  sectionLabel: {
-    marginTop: spacing.lg,
-    marginBottom: spacing.sm,
-    color: colors.textMuted,
-    fontSize: 13,
-    fontWeight: '600',
-  },
-});

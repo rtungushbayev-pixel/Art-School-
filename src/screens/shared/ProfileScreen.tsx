@@ -8,7 +8,6 @@ import { DeleteAccountButton } from '../../components/DeleteAccountButton';
 import { ProfileHeader } from '../../components/ProfileHeader';
 import { PortfolioSections } from '../../components/PortfolioSections';
 import { ProfileTabs, type ProfileTab } from '../../components/ProfileTabs';
-import { LanguageSwitcher } from '../../components/LanguageSwitcher';
 import { useAuth } from '../../hooks/useAuth';
 import { useStrings } from '../../i18n';
 import { FEATURES } from '../../lib/features';
@@ -24,10 +23,9 @@ type NavParamList = StudentStackParamList & StaffStackParamList;
 
 const STRINGS = {
   ru: {
+    profileSettings: 'Настройки профиля',
     chats: 'Чаты с родителями',
     avatarFailed: 'Не удалось загрузить фото',
-    editProfile: 'Редактировать профиль',
-    notifications: 'Уведомления',
     inviteStaff: 'Пригласить сотрудника',
     inviteText: (code: string) => `Приглашение в приложение KasteyevSchool для сотрудника школы. На экране регистрации нажмите «Я сотрудник школы» и введите код: ${code}. Код действует 7 дней.`,
     inviteFailed: 'Не удалось создать приглашение',
@@ -39,16 +37,14 @@ const STRINGS = {
     attendanceSummary: 'Сводка посещаемости',
     branchQr: 'QR-коды филиалов',
     cancel: 'Отмена',
-    language: 'Язык приложения',
     studentPayments: 'Оплаты учеников',
     myPayments: 'Мои оплаты',
     signOut: 'Выйти',
   },
   kk: {
+    profileSettings: 'Профиль баптаулары',
     chats: 'Ата-аналармен чаттар',
     avatarFailed: 'Фотоны жүктеу мүмкін болмады',
-    editProfile: 'Профильді өңдеу',
-    notifications: 'Хабарландырулар',
     inviteStaff: 'Қызметкерді шақыру',
     inviteText: (code: string) => `Мектеп қызметкеріне арналған KasteyevSchool қолданбасына шақыру. Тіркелу бетінде «Мен мектеп қызметкерімін» түймесін басып, кодты енгізіңіз: ${code}. Код 7 күн жарамды.`,
     inviteFailed: 'Шақыру жасау мүмкін болмады',
@@ -60,16 +56,14 @@ const STRINGS = {
     attendanceSummary: 'Қатысу жиынтығы',
     branchQr: 'Филиалдардың QR-кодтары',
     cancel: 'Бас тарту',
-    language: 'Қолданба тілі',
     studentPayments: 'Оқушылардың төлемдері',
     myPayments: 'Менің төлемдерім',
     signOut: 'Шығу',
   },
   en: {
+    profileSettings: 'Profile settings',
     chats: 'Chats with parents',
     avatarFailed: 'Could not upload the photo',
-    editProfile: 'Edit profile',
-    notifications: 'Notifications',
     inviteStaff: 'Invite a staff member',
     inviteText: (code: string) => `Invitation to the KasteyevSchool app for school staff. On the sign-up screen tap "I'm school staff" and enter the code: ${code}. The code is valid for 7 days.`,
     inviteFailed: 'Could not create an invitation',
@@ -81,7 +75,6 @@ const STRINGS = {
     attendanceSummary: 'Attendance summary',
     branchQr: 'Branch QR codes',
     cancel: 'Cancel',
-    language: 'App language',
     studentPayments: 'Student payments',
     myPayments: 'My payments',
     signOut: 'Sign out',
@@ -128,7 +121,7 @@ export function ProfileScreen() {
         avatarUploading={avatarUploading}
       />
 
-      <Button title={s.editProfile} onPress={() => navigation.navigate('EditProfile')} />
+      <Button title={s.profileSettings} onPress={() => navigation.navigate('ProfileSettings')} />
 
       <ProfileTabs value={tab} onChange={setTab} />
 
@@ -150,11 +143,6 @@ export function ProfileScreen() {
       {tab === 'profile' ? (
         <>
           <View style={{ height: spacing.lg }} />
-          <Button
-            title={s.notifications}
-            variant="secondary"
-            onPress={() => navigation.navigate('NotificationSettings')}
-          />
           {isAdminRole(profile.role) ? (
             <>
               <View style={{ height: spacing.sm }} />
@@ -187,8 +175,6 @@ export function ProfileScreen() {
               />
             </>
           ) : null}
-          <Text style={styles.sectionLabel}>{s.language}</Text>
-          <LanguageSwitcher />
           {isAdminRole(profile.role) ? (
             <>
               <View style={{ height: spacing.sm }} />
@@ -243,12 +229,4 @@ export function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  sectionLabel: {
-    marginTop: spacing.lg,
-    marginBottom: spacing.sm,
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-  },
 });
