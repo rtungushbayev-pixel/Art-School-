@@ -114,7 +114,7 @@ export function PostCard({ post, onPress, onToggleLike, onAuthorPress, showModer
         <Text style={styles.aiReason}>{post.aiReason}</Text>
       ) : null}
 
-      <PhotoCarousel images={post.images} onPress={onPress} />
+      <PhotoCarousel images={post.images} />
 
       <View style={styles.actions}>
         <Pressable onPress={onToggleLike} style={styles.action} hitSlop={6}>

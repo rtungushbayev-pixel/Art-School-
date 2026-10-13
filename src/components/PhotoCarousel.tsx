@@ -2,40 +2,55 @@ import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Image } from 'expo-image';
 import { colors, spacing } from '../theme/colors';
+import { FullscreenPhotos } from './FullscreenPhotos';
 
 interface Props {
   images: { id: string; image_url: string }[];
   // Ширина карусели; по умолчанию — вся ширина экрана.
   width?: number;
-  onPress?: () => void;
 }
 
 // Несколько фото публикации: листаются пальцем, под ними точки-индикаторы.
-export function PhotoCarousel({ images, width, onPress }: Props) {
+// Нажатие на фото открывает его на весь экран.
+export function PhotoCarousel({ images, width }: Props) {
   const { width: screenWidth } = useWindowDimensions();
   const size = width ?? screenWidth;
   const [index, setIndex] = useState(0);
+  const [fullscreen, setFullscreen] = useState<number | null>(null);
 
   if (images.length === 0) return null;
 
+  const viewer = (
+    <FullscreenPhotos
+      images={images}
+      startIndex={fullscreen ?? 0}
+      visible={fullscreen !== null}
+      onClose={() => setFullscreen(null)}
+    />
+  );
+
   if (images.length === 1) {
     return (
-      <Pressable onPress={onPress}>
-        <Image source={{ uri: images[0].image_url }} style={[styles.image, { width: size, height: size }]} contentFit="cover" />
-      </Pressable>
+      <>
+        <Pressable onPress={() => setFullscreen(0)}>
+          <Image source={{ uri: images[0].image_url }} style={[styles.image, { width: size, height: size }]} contentFit="cover" />
+        </Pressable>
+        {viewer}
+      </>
     );
   }
 
   return (
     <View>
+      {viewer}
       <ScrollView
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         onMomentumScrollEnd={(e) => setIndex(Math.round(e.nativeEvent.contentOffset.x / size))}
       >
-        {images.map((img) => (
-          <Pressable key={img.id} onPress={onPress}>
+        {images.map((img, i) => (
+          <Pressable key={img.id} onPress={() => setFullscreen(i)}>
             <Image source={{ uri: img.image_url }} style={[styles.image, { width: size, height: size }]} contentFit="cover" />
           </Pressable>
         ))}
