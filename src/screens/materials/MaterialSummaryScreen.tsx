@@ -14,6 +14,7 @@ import {
   type MaterialUsageItem,
 } from '../../lib/materials';
 import { useStrings } from '../../i18n';
+import { isValidRange, PERIOD_PRESETS, presetRange, type PeriodPreset as Preset } from '../../lib/periods';
 import { colors, radius, spacing } from '../../theme/colors';
 
 const STRINGS = {
@@ -67,29 +68,6 @@ const STRINGS = {
   },
 };
 
-type Preset = 'month' | 'half1' | 'half2' | 'year' | 'custom';
-
-function iso(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
-// Учебный год: 1 сентября — 31 мая. 1 полугодие: сентябрь—декабрь, 2: январь—май.
-function presetRange(preset: Exclude<Preset, 'custom'>, now = new Date()): [string, string] {
-  const startYear = now.getMonth() >= 8 ? now.getFullYear() : now.getFullYear() - 1;
-  switch (preset) {
-    case 'month':
-      return [iso(new Date(now.getFullYear(), now.getMonth(), 1)), iso(new Date(now.getFullYear(), now.getMonth() + 1, 0))];
-    case 'half1':
-      return [`${startYear}-09-01`, `${startYear}-12-31`];
-    case 'half2':
-      return [`${startYear + 1}-01-01`, `${startYear + 1}-05-31`];
-    case 'year':
-      return [`${startYear}-09-01`, `${startYear + 1}-05-31`];
-  }
-}
-
-const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-
 export function MaterialSummaryScreen() {
   const s = useStrings(STRINGS);
   const [preset, setPreset] = useState<Preset>('year');
@@ -103,7 +81,7 @@ export function MaterialSummaryScreen() {
   const [expanded, setExpanded] = useState<string | null>(null);
 
   const load = useCallback(async (f: string, t: string) => {
-    if (!DATE_RE.test(f) || !DATE_RE.test(t) || f > t || Number.isNaN(Date.parse(f)) || Number.isNaN(Date.parse(t))) {
+    if (!isValidRange(f, t)) {
       setError(s.badDates);
       return;
     }
@@ -147,7 +125,7 @@ export function MaterialSummaryScreen() {
     <Screen scroll refreshing={loading} onRefresh={() => load(from, to)}>
       <Text style={styles.intro}>{s.intro}</Text>
       <View style={styles.filterRow}>
-        {(['month', 'half1', 'half2', 'year', 'custom'] as Preset[]).map((p) => (
+        {PERIOD_PRESETS.map((p) => (
           <Pressable key={p} onPress={() => choose(p)} style={[styles.filterOption, preset === p && styles.filterOptionActive]}>
             <Text style={[styles.filterText, preset === p && styles.filterTextActive]}>{s.presets[p]}</Text>
           </Pressable>

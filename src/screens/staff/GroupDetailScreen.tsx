@@ -8,6 +8,7 @@ import { Card } from '../../components/Card';
 import { Avatar } from '../../components/Avatar';
 import { Button } from '../../components/Button';
 import { RosterSection } from '../../components/RosterSection';
+import { GroupBranchPicker } from '../../components/GroupBranchPicker';
 import { useAuth } from '../../hooks/useAuth';
 import { isAdminRole } from '../../lib/roles';
 import { supabase } from '../../lib/supabase';
@@ -130,6 +131,7 @@ export function GroupDetailScreen({ route }: Props) {
     <Screen scroll>
       <Text style={styles.title}>{group.name}</Text>
       {group.description ? <Text style={styles.description}>{group.description}</Text> : null}
+      {isAdmin ? <GroupBranchPicker groupId={groupId} branchId={group.branch_id} /> : null}
       {canManage && members.length > 0 ? (
         <>
           <View style={{ height: spacing.sm }} />

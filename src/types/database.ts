@@ -43,6 +43,7 @@ export interface Group {
   name: string;
   description: string | null;
   teacher_id: string | null;
+  branch_id: string | null;
   created_at: string;
 }
 

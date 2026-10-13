@@ -35,6 +35,7 @@ const STRINGS = {
     roleAdmin: 'Администратор',
     roleOffice: 'Администрация (заявки на материалы)',
     materials: 'Заявки на материалы',
+    attendanceSummary: 'Сводка посещаемости',
     cancel: 'Отмена',
     language: 'Язык приложения',
     studentPayments: 'Оплаты учеников',
@@ -53,6 +54,7 @@ const STRINGS = {
     roleAdmin: 'Әкімші',
     roleOffice: 'Әкімшілік (материалдарға өтінімдер)',
     materials: 'Материалдарға өтінімдер',
+    attendanceSummary: 'Қатысу жиынтығы',
     cancel: 'Бас тарту',
     language: 'Қолданба тілі',
     studentPayments: 'Оқушылардың төлемдері',
@@ -71,6 +73,7 @@ const STRINGS = {
     roleAdmin: 'Administrator',
     roleOffice: 'Administration (supply requests)',
     materials: 'Supply requests',
+    attendanceSummary: 'Attendance summary',
     cancel: 'Cancel',
     language: 'App language',
     studentPayments: 'Student payments',
@@ -146,6 +149,16 @@ export function ProfileScreen() {
             variant="secondary"
             onPress={() => navigation.navigate('NotificationSettings')}
           />
+          {isAdminRole(profile.role) ? (
+            <>
+              <View style={{ height: spacing.sm }} />
+              <Button
+                title={s.attendanceSummary}
+                variant="secondary"
+                onPress={() => navigation.navigate('AttendanceSummary')}
+              />
+            </>
+          ) : null}
           {headsBranch || isAdminRole(profile.role) ? (
             <>
               <View style={{ height: spacing.sm }} />
