@@ -39,6 +39,8 @@ import { NewMaterialRequestScreen } from '../screens/materials/NewMaterialReques
 import { MaterialRequestScreen } from '../screens/materials/MaterialRequestScreen';
 import { MaterialSummaryScreen } from '../screens/materials/MaterialSummaryScreen';
 import { BranchQrScreen } from '../screens/staff/BranchQrScreen';
+import { ChatsScreen } from '../screens/shared/ChatsScreen';
+import { ChatScreen } from '../screens/shared/ChatScreen';
 import { colors } from '../theme/colors';
 import { useStrings } from '../i18n';
 
@@ -81,6 +83,7 @@ const STRINGS = {
     attendance: 'Посещаемость',
     attendanceSummary: 'Сводка посещаемости',
     branchQr: 'QR-коды филиалов',
+    chats: 'Чаты',
   },
   kk: {
     messages: 'Хабарламалар',
@@ -120,6 +123,7 @@ const STRINGS = {
     attendance: 'Сабаққа қатысу',
     attendanceSummary: 'Қатысу жиынтығы',
     branchQr: 'Филиалдардың QR-кодтары',
+    chats: 'Чаттар',
   },
   en: {
     messages: 'Messages',
@@ -159,6 +163,7 @@ const STRINGS = {
     attendance: 'Attendance',
     attendanceSummary: 'Attendance summary',
     branchQr: 'Branch QR codes',
+    chats: 'Chats',
   },
 };
 
@@ -215,6 +220,8 @@ export function StaffNavigator() {
       <Stack.Screen name="AddStudentPhoto" component={AddStudentPhotoScreen} options={{ title: s.galleryPhoto }} />
       <Stack.Screen name="PhotoView" component={PhotoViewScreen} options={{ title: s.photo }} />
       <Stack.Screen name="BranchQr" component={BranchQrScreen} options={{ title: s.branchQr }} />
+      <Stack.Screen name="Chats" component={ChatsScreen} options={{ title: s.chats }} />
+      <Stack.Screen name="Chat" component={ChatScreen} options={{ title: s.chats }} />
       <Stack.Screen name="Support" component={SupportScreen} options={{ title: s.tickets }} />
       <Stack.Screen
         name="NewSupportTicket"

@@ -24,6 +24,8 @@ import {
 } from '../../lib/parents';
 import { Card } from '../../components/Card';
 import { BranchHeadPicker } from '../../components/BranchHeadPicker';
+import { startChat } from '../../lib/chats';
+import { errorText } from '../../lib/errors';
 import { Avatar } from '../../components/Avatar';
 import { ProgressNoteCard } from '../../components/ProgressNoteCard';
 import { useAuth } from '../../hooks/useAuth';
@@ -48,6 +50,7 @@ type RoleChange = Record<UserRole, { button: string; question: (name: string) =>
 
 const STRINGS = {
   ru: {
+    writeParent: (name: string) => `Написать родителю: ${name}`,
     roleChange: {
       staff: {
         button: 'Сделать преподавателем',
@@ -109,6 +112,7 @@ const STRINGS = {
     photoHint: 'Удерживайте фото, чтобы удалить его.',
   },
   kk: {
+    writeParent: (name: string) => `Ата-анаға жазу: ${name}`,
     roleChange: {
       staff: {
         button: 'Мұғалім ету',
@@ -171,6 +175,7 @@ const STRINGS = {
     photoHint: 'Фотоны жою үшін оны басып тұрыңыз.',
   },
   en: {
+    writeParent: (name: string) => `Message parent: ${name}`,
     roleChange: {
       staff: {
         button: 'Make teacher',
@@ -462,6 +467,23 @@ export function UserProfileScreen() {
           {parents.length > 0 ? (
             <Text style={styles.parents}>{s.parents(parents.map((p) => p.full_name).join(', '))}</Text>
           ) : null}
+          {parents.map((parent) => (
+            <View key={parent.id} style={{ marginBottom: spacing.sm }}>
+              <Button
+                title={s.writeParent(parent.full_name)}
+                variant="secondary"
+                onPress={async () => {
+                  if (!viewer) return;
+                  try {
+                    const chatId = await startChat(parent.id, viewer.id, profile.id);
+                    navigation.navigate('Chat', { chatId });
+                  } catch (e) {
+                    Alert.alert('', errorText(e));
+                  }
+                }}
+              />
+            </View>
+          ))}
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitleInline}>{s.progress}</Text>
             <Pressable

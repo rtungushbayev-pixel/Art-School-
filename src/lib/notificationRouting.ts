@@ -14,7 +14,8 @@ type NotificationTarget =
   | { screen: 'ListingDetail'; listingId: string }
   | { screen: 'Announcements' }
   | { screen: 'SupportTicket'; ticketId: string }
-  | { screen: 'ChildDetail'; childId: string };
+  | { screen: 'ChildDetail'; childId: string }
+  | { screen: 'Chat'; chatId: string };
 
 function asId(value: unknown): string | null {
   return typeof value === 'string' && value.length > 0 ? value : null;
@@ -37,6 +38,10 @@ export function resolveNotificationTarget(data: Record<string, unknown> | undefi
     case 'support_ticket': {
       const ticketId = asId(data.ticketId);
       return ticketId ? { screen: 'SupportTicket', ticketId } : null;
+    }
+    case 'chat_message': {
+      const chatId = asId(data.chatId);
+      return chatId ? { screen: 'Chat', chatId } : null;
     }
     case 'attendance': {
       const childId = asId(data.studentId);
@@ -68,6 +73,12 @@ function navigateToTarget(navigation: AppNavigationRef, role: UserRole, target: 
       break;
     case 'SupportTicket':
       navigation.navigate('SupportTicket', { ticketId: target.ticketId });
+      break;
+    case 'Chat':
+      // Чат есть у родителей и сотрудников.
+      if (role === 'parent' || role === 'staff' || role === 'admin') {
+        navigation.navigate('Chat', { chatId: target.chatId });
+      }
       break;
     case 'ChildDetail':
       // Об отсутствии ребёнка пишут только родителям.

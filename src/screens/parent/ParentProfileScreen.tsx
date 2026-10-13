@@ -15,6 +15,7 @@ import type { ParentStackParamList } from '../../navigation/types';
 
 const STRINGS = {
   ru: {
+    chats: 'Чаты с преподавателями',
     photoFailed: 'Не удалось загрузить фото',
     myChildren: 'Мои дети',
     editProfile: 'Редактировать профиль',
@@ -23,6 +24,7 @@ const STRINGS = {
     signOut: 'Выйти',
   },
   kk: {
+    chats: 'Мұғалімдермен чаттар',
     photoFailed: 'Фотосуретті жүктеу мүмкін болмады',
     myChildren: 'Менің балаларым',
     editProfile: 'Профильді өңдеу',
@@ -31,6 +33,7 @@ const STRINGS = {
     signOut: 'Шығу',
   },
   en: {
+    chats: 'Chats with teachers',
     photoFailed: 'Could not upload the photo',
     myChildren: 'My children',
     editProfile: 'Edit profile',
@@ -65,6 +68,8 @@ export function ParentProfileScreen() {
     <Screen scroll>
       <ProfileHeader profile={profile} onAvatarPress={onAvatarPress} avatarUploading={avatarUploading} />
       <Button title={s.myChildren} onPress={() => navigation.navigate('Children')} />
+      <View style={{ height: spacing.sm }} />
+      <Button title={s.chats} variant="secondary" onPress={() => navigation.navigate('Chats')} />
       <View style={{ height: spacing.sm }} />
       <Button title={s.editProfile} variant="secondary" onPress={() => navigation.navigate('EditProfile')} />
       <View style={{ height: spacing.sm }} />

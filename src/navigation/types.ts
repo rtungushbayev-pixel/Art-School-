@@ -80,6 +80,8 @@ export type StaffStackParamList = {
   Attendance: { groupId: string; groupName: string };
   AttendanceSummary: undefined;
   BranchQr: undefined;
+  Chats: undefined;
+  Chat: { chatId: string };
   MaterialRequests: undefined;
   NewMaterialRequest: undefined;
   MaterialRequest: { requestId: string };
@@ -101,6 +103,8 @@ export type ParentTabParamList = {
 export type ParentStackParamList = {
   ParentTabs: NavigatorScreenParams<ParentTabParamList> | undefined;
   CheckIn: undefined;
+  Chats: undefined;
+  Chat: { chatId: string };
   Portfolio: { userId: string };
   Messages: undefined;
   Children: undefined;

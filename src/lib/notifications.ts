@@ -64,7 +64,8 @@ export type PushEvent =
   | { event: 'announcement'; id: string } // id объявления
   | { event: 'support_message'; id: string } // id сообщения в обращении
   | { event: 'attendance_absent'; id: string } // id отметки «Нет» — пуш родителям
-  | { event: 'lesson_change'; id: string }; // id отмены/переноса — ученикам и родителям группы
+  | { event: 'lesson_change'; id: string } // id отмены/переноса — ученикам и родителям группы
+  | { event: 'chat_message'; id: string }; // id сообщения в чате родителя с преподавателем
 
 export async function sendPushNotification(pushEvent: PushEvent) {
   try {

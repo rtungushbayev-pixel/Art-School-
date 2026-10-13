@@ -1,10 +1,13 @@
 import React, { useCallback, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { Avatar } from '../../components/Avatar';
+import { Button } from '../../components/Button';
+import { fetchChildTeachers, startChat, type ChildTeacher } from '../../lib/chats';
+import { errorText } from '../../lib/errors';
 import { ProgressNoteCard } from '../../components/ProgressNoteCard';
 import { supabase } from '../../lib/supabase';
 import { fetchUserPosts } from '../../lib/posts';
@@ -35,6 +38,8 @@ type GalleryItem =
 
 const STRINGS = {
   ru: {
+    chatFailed: 'Не удалось открыть чат',
+    writeTeacher: (name: string, group: string) => `Написать преподавателю: ${name} (${group})`,
     locale: 'ru-RU',
     noName: 'Без имени',
     progress: 'Прогресс',
@@ -52,6 +57,8 @@ const STRINGS = {
     fromClass: 'С занятия',
   },
   kk: {
+    chatFailed: 'Чатты ашу мүмкін болмады',
+    writeTeacher: (name: string, group: string) => `Мұғалімге жазу: ${name} (${group})`,
     locale: 'kk-KZ',
     noName: 'Аты жоқ',
     progress: 'Үлгерім',
@@ -69,6 +76,8 @@ const STRINGS = {
     fromClass: 'Сабақтан',
   },
   en: {
+    chatFailed: 'Could not open the chat',
+    writeTeacher: (name: string, group: string) => `Message the teacher: ${name} (${group})`,
     locale: 'en-US',
     noName: 'No name',
     progress: 'Progress',
@@ -98,6 +107,7 @@ export function ChildDetailScreen({ route, navigation }: Props) {
   const [gallery, setGallery] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [attendance, setAttendance] = useState<Attendance[]>([]);
+  const [teachers, setTeachers] = useState<ChildTeacher[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -114,6 +124,7 @@ export function ChildDetailScreen({ route, navigation }: Props) {
         fetchStudentAttendance(childId, localISODate(since)).catch(() => [] as Attendance[]),
       ]);
       setAttendance(marks);
+      setTeachers(await fetchChildTeachers(childId).catch(() => [] as ChildTeacher[]));
       setGroups(groupNames);
       setNotes(progress);
       const items: GalleryItem[] = [
@@ -154,6 +165,25 @@ export function ChildDetailScreen({ route, navigation }: Props) {
           {groups.length > 0 ? <Text style={styles.groups}>{groups.join(', ')}</Text> : null}
         </View>
       ) : null}
+
+      {viewer
+        ? teachers.map((t) => (
+            <View key={t.teacher_id} style={styles.writeTeacher}>
+              <Button
+                title={s.writeTeacher(t.full_name, t.group_name)}
+                variant="secondary"
+                onPress={async () => {
+                  try {
+                    const chatId = await startChat(viewer.id, t.teacher_id, childId);
+                    navigation.navigate('Chat', { chatId });
+                  } catch (e) {
+                    Alert.alert(s.chatFailed, errorText(e));
+                  }
+                }}
+              />
+            </View>
+          ))
+        : null}
 
       <View style={styles.segment}>
         {(
@@ -268,6 +298,7 @@ const styles = StyleSheet.create({
   attendanceSummary: { color: colors.text, fontWeight: '600', marginBottom: spacing.xs },
   absent: { color: colors.danger },
   late: { color: colors.warning },
+  writeTeacher: { marginBottom: spacing.sm },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.primary, marginBottom: spacing.sm },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.md },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: spacing.md },

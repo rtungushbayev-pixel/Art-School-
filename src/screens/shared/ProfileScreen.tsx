@@ -24,6 +24,7 @@ type NavParamList = StudentStackParamList & StaffStackParamList;
 
 const STRINGS = {
   ru: {
+    chats: 'Чаты с родителями',
     avatarFailed: 'Не удалось загрузить фото',
     editProfile: 'Редактировать профиль',
     notifications: 'Уведомления',
@@ -44,6 +45,7 @@ const STRINGS = {
     signOut: 'Выйти',
   },
   kk: {
+    chats: 'Ата-аналармен чаттар',
     avatarFailed: 'Фотоны жүктеу мүмкін болмады',
     editProfile: 'Профильді өңдеу',
     notifications: 'Хабарландырулар',
@@ -64,6 +66,7 @@ const STRINGS = {
     signOut: 'Шығу',
   },
   en: {
+    chats: 'Chats with parents',
     avatarFailed: 'Could not upload the photo',
     editProfile: 'Edit profile',
     notifications: 'Notifications',
@@ -162,6 +165,12 @@ export function ProfileScreen() {
               />
               <View style={{ height: spacing.sm }} />
               <Button title={s.branchQr} variant="secondary" onPress={() => navigation.navigate('BranchQr')} />
+            </>
+          ) : null}
+          {isStaffRole(profile.role) ? (
+            <>
+              <View style={{ height: spacing.sm }} />
+              <Button title={s.chats} variant="secondary" onPress={() => navigation.navigate('Chats')} />
             </>
           ) : null}
           {headsBranch || isAdminRole(profile.role) ? (

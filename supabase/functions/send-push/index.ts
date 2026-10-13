@@ -15,6 +15,8 @@
 //                                               которого отметил «Нет» на занятии
 //   lesson_change     { id: lesson_change_id } — преподаватель группы → ученикам
 //                                               группы и их родителям (отмена/перенос)
+//   chat_message      { id: message_id }       — участник чата родителя с
+//                                               преподавателем → собеседнику
 //
 // Каждое событие рассылается не более одного раза (таблица push_events).
 // Получатели, отключившие категорию в настройках (profiles.notify_*),
@@ -36,7 +38,8 @@ type PushEvent =
   | 'announcement'
   | 'support_message'
   | 'attendance_absent'
-  | 'lesson_change';
+  | 'lesson_change'
+  | 'chat_message';
 type NotificationCategory = 'announcements' | 'comments' | 'moderation' | 'support' | 'attendance';
 
 interface RequestBody {
@@ -303,6 +306,32 @@ async function buildMessage(admin: SupabaseClient, caller: Caller, { event, id }
         title: change.cancelled ? `Отмена занятия ${d}.${m}` : `Изменение занятия ${d}.${m}`,
         body: truncate(`${groupName}. ${details}${change.note ? ` ${change.note}` : ''}`),
         data: { type: 'announcement' },
+      };
+    }
+
+    case 'chat_message': {
+      const { data: message } = await admin
+        .from('parent_chat_messages')
+        .select('id, chat_id, author_id, body, chat:chat_id ( parent_id, teacher_id, student:student_id ( full_name ) )')
+        .eq('id', id)
+        .single();
+      if (!message) throw new HttpError(404, 'Сообщение не найдено');
+      if (message.author_id !== caller.id) throw new HttpError(403, 'Это не ваше сообщение');
+      const chat = message.chat as unknown as {
+        parent_id: string;
+        teacher_id: string;
+        student: { full_name: string } | null;
+      } | null;
+      if (!chat) return null;
+      const toTeacher = caller.id === chat.parent_id;
+      const child = chat.student?.full_name ?? '';
+      return {
+        dedupKey: `chat_message:${message.id}`,
+        category: 'support',
+        recipientIds: [toTeacher ? chat.teacher_id : chat.parent_id],
+        title: toTeacher ? `${caller.full_name} (родитель: ${child})` : `${caller.full_name} · преподаватель`,
+        body: truncate(message.body),
+        data: { type: 'chat_message', chatId: message.chat_id },
       };
     }
 
