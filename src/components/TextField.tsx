@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, TextInput, TextInputProps, View } from 'react-native';
 import { colors, radius, spacing } from '../theme/colors';
+import { useRevealFocusedField } from './Screen';
 
 interface TextFieldProps extends TextInputProps {
   label?: string;
@@ -8,6 +9,7 @@ interface TextFieldProps extends TextInputProps {
 
 export function TextField({ label, style, onFocus, onBlur, ...props }: TextFieldProps) {
   const [focused, setFocused] = useState(false);
+  const revealFocused = useRevealFocusedField();
 
   return (
     <View style={styles.wrapper}>
@@ -17,6 +19,8 @@ export function TextField({ label, style, onFocus, onBlur, ...props }: TextField
         style={[styles.input, focused && styles.inputFocused, style]}
         onFocus={(e) => {
           setFocused(true);
+          // Переход на другое поле при открытой клавиатуре — докрутить к нему.
+          setTimeout(revealFocused, 80);
           onFocus?.(e);
         }}
         onBlur={(e) => {

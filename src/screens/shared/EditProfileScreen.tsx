@@ -9,6 +9,7 @@ import { Avatar } from '../../components/Avatar';
 import { supabase } from '../../lib/supabase';
 import { pickAndUploadAvatar } from '../../lib/avatar';
 import { isValidPhone, normalizePhone } from '../../lib/signupCodes';
+import { onKzPhoneInput } from '../../lib/phone';
 import { parseYear } from '../../lib/portfolio';
 import { useAuth } from '../../hooks/useAuth';
 import { useStrings } from '../../i18n';
@@ -117,7 +118,7 @@ export function EditProfileScreen() {
       .eq('user_id', profile.id)
       .maybeSingle()
       .then(({ data }) => {
-        setPhone(data?.phone ?? '');
+        setPhone(onKzPhoneInput(data?.phone ?? ''));
         setInitialPhone(data?.phone ?? '');
       });
   }, [profile?.id]);
@@ -192,9 +193,9 @@ export function EditProfileScreen() {
       <TextField
         label={s.phone}
         value={phone}
-        onChangeText={setPhone}
+        onChangeText={(text) => setPhone(onKzPhoneInput(text))}
         keyboardType="phone-pad"
-        placeholder="+7 701 234 56 78"
+        placeholder="+7 (701) 234-56-78"
       />
       <Text style={styles.phoneHint}>{s.phoneHint}</Text>
       <TextField label={s.bio} value={bio} onChangeText={setBio} multiline />

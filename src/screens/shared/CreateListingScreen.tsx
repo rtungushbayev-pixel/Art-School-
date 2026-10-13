@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { shrinkAsset } from '../../lib/imageResize';
 import { errorText } from '../../lib/errors';
-import { Alert, Image, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Platform, StyleSheet, Text, View } from 'react-native';
+import { formatKzPhone, isCompleteKzPhone, KZ_PHONE_PREFIX, onKzPhoneInput } from '../../lib/phone';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -35,8 +36,8 @@ const STRINGS = {
     description: 'Описание',
     descriptionPlaceholder: 'Техника, размер, год создания…',
     price: 'Цена (₸)',
-    contacts: 'Контакты для связи',
-    contactsPlaceholder: 'Телефон, WhatsApp или Telegram',
+    contacts: 'Телефон для связи',
+    badPhone: 'Введите номер полностью: +7 (XXX) XXX-XX-XX',
     submit: 'Отправить на проверку',
   },
   kk: {
@@ -57,8 +58,8 @@ const STRINGS = {
     description: 'Сипаттама',
     descriptionPlaceholder: 'Техника, өлшемі, жасалған жылы…',
     price: 'Бағасы (₸)',
-    contacts: 'Байланыс деректері',
-    contactsPlaceholder: 'Телефон, WhatsApp немесе Telegram',
+    contacts: 'Байланыс телефоны',
+    badPhone: 'Нөмірді толық енгізіңіз: +7 (XXX) XXX-XX-XX',
     submit: 'Тексеруге жіберу',
   },
   en: {
@@ -79,8 +80,8 @@ const STRINGS = {
     description: 'Description',
     descriptionPlaceholder: 'Technique, size, year created…',
     price: 'Price (₸)',
-    contacts: 'Contact details',
-    contactsPlaceholder: 'Phone, WhatsApp or Telegram',
+    contacts: 'Contact phone',
+    badPhone: 'Enter the full number: +7 (XXX) XXX-XX-XX',
     submit: 'Submit for review',
   },
 };
@@ -93,7 +94,7 @@ export function CreateListingScreen() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
-  const [contactInfo, setContactInfo] = useState('');
+  const [contactInfo, setContactInfo] = useState(KZ_PHONE_PREFIX);
   const [uploading, setUploading] = useState(false);
 
   // Телефон не подставляется сам: объявление видят все, контакт автор указывает осознанно.
@@ -104,11 +105,13 @@ export function CreateListingScreen() {
       Alert.alert(s.needGallery);
       return;
     }
+    // Без обязательного квадрата: на Android рамку обрезки можно растянуть
+    // как угодно, на iPhone фото берётся целиком (системная обрезка там
+    // только квадратная).
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       quality: 0.8,
-      allowsEditing: true,
-      aspect: [1, 1],
+      allowsEditing: Platform.OS === 'android',
     });
     if (!result.canceled && result.assets[0]) {
       setAsset(result.assets[0]);
@@ -123,6 +126,11 @@ export function CreateListingScreen() {
     }
     if (!title.trim()) {
       Alert.alert(s.needTitle);
+      return;
+    }
+    const phoneFilled = contactInfo.replace(/\D/g, '').length > 1;
+    if (phoneFilled && !isCompleteKzPhone(contactInfo)) {
+      Alert.alert(s.badPhone);
       return;
     }
     const priceNumber = Number(price.trim().replace(',', '.'));
@@ -153,7 +161,7 @@ export function CreateListingScreen() {
           title: title.trim(),
           description: description.trim() || null,
           price: priceNumber,
-          contact_info: contactInfo.trim() || null,
+          contact_info: phoneFilled ? formatKzPhone(contactInfo) : null,
         })
         .select()
         .single();
@@ -181,7 +189,7 @@ export function CreateListingScreen() {
 
       <View style={styles.imagePicker}>
         {asset ? (
-          <Image source={{ uri: asset.uri }} style={styles.preview} />
+          <Image source={{ uri: asset.uri }} style={styles.preview} resizeMode="contain" />
         ) : (
           <Text onPress={pickImage} style={styles.pickText}>
             {s.tapToPick}
@@ -206,8 +214,10 @@ export function CreateListingScreen() {
       <TextField
         label={s.contacts}
         value={contactInfo}
-        onChangeText={setContactInfo}
-        placeholder={s.contactsPlaceholder}
+        onChangeText={(text) => setContactInfo(onKzPhoneInput(text))}
+        keyboardType="phone-pad"
+        textContentType="telephoneNumber"
+        placeholder="+7 (701) 234-56-78"
       />
 
       <Button title={s.submit} onPress={onPublish} loading={uploading} />

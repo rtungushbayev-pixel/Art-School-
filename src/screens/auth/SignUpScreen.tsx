@@ -8,6 +8,7 @@ import { LanguageSwitcher } from '../../components/LanguageSwitcher';
 import { useAuth, type SignUpAccountType } from '../../hooks/useAuth';
 import { fetchSignupGroups, type SignupGroup } from '../../lib/schedule';
 import { checkSignupCode, isValidPhone, normalizePhone } from '../../lib/signupCodes';
+import { KZ_PHONE_PREFIX, onKzPhoneInput } from '../../lib/phone';
 import { useStrings } from '../../i18n';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { AuthStackParamList } from '../../navigation/types';
@@ -141,7 +142,7 @@ export function SignUpScreen({ navigation }: Props) {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState(KZ_PHONE_PREFIX);
   const [code, setCode] = useState('');
   const [groups, setGroups] = useState<SignupGroup[]>([]);
   const [groupsLoading, setGroupsLoading] = useState(true);
@@ -160,7 +161,8 @@ export function SignUpScreen({ navigation }: Props) {
 
   const onSubmit = async () => {
     // У ученика имя берётся из списка школы, поэтому поля имени нет.
-    if ((!isStudent && !fullName.trim()) || !email.trim() || !password || !phone.trim() || !code.trim()) {
+    const phoneEmpty = phone.replace(/\D/g, '').length <= 1;
+    if ((!isStudent && !fullName.trim()) || !email.trim() || !password || phoneEmpty || !code.trim()) {
       Alert.alert(s.fillAll);
       return;
     }
@@ -268,9 +270,9 @@ export function SignUpScreen({ navigation }: Props) {
       <TextField
         label={s.phone}
         value={phone}
-        onChangeText={setPhone}
+        onChangeText={(text) => setPhone(onKzPhoneInput(text))}
         keyboardType="phone-pad"
-        placeholder="+7 701 234 56 78"
+        placeholder="+7 (701) 234-56-78"
         textContentType="telephoneNumber"
       />
       <TextField
