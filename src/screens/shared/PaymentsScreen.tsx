@@ -31,7 +31,11 @@ import { useStrings } from '../../i18n';
 
 const STRINGS = {
   ru: {
-    confirmAmount: 'Сколько поступило в Kaspi, ₸',
+    paidYes: 'Да, оплачено',
+    paidNo: 'Нет, не оплачено',
+    paidOther: 'Другая сумма',
+    otherAmount: 'Сколько поступило, ₸',
+    saveOther: 'Записать эту сумму',
     payKaspi: 'Оплатить через Kaspi',
     iPaid: 'Я оплатил',
     claimAmount: 'Сколько оплатили, ₸',
@@ -44,8 +48,6 @@ const STRINGS = {
     rejectedClaim: (amount: string) => `Не подтверждено: ${amount}. Свяжитесь со школой.`,
     claimsTitle: 'Сообщения об оплате через Kaspi',
     claimBy: (name: string, date: string) => `${name} · ${date}`,
-    confirm: 'Подтвердить',
-    reject: 'Отклонить',
     noLink: 'Оплата через Kaspi пока не настроена. Оплатите в школе.',
     deleteCharge: 'Удалить начисление?',
     deletePayment: 'Удалить оплату?',
@@ -68,7 +70,11 @@ const STRINGS = {
     deleteHint: 'Удерживайте запись, чтобы удалить ошибочную',
   },
   kk: {
-    confirmAmount: 'Kaspi-ге қанша түсті, ₸',
+    paidYes: 'Иә, төленді',
+    paidNo: 'Жоқ, төленбеді',
+    paidOther: 'Басқа сома',
+    otherAmount: 'Қанша түсті, ₸',
+    saveOther: 'Осы соманы жазу',
     payKaspi: 'Kaspi арқылы төлеу',
     iPaid: 'Мен төледім',
     claimAmount: 'Қанша төледіңіз, ₸',
@@ -81,8 +87,6 @@ const STRINGS = {
     rejectedClaim: (amount: string) => `Расталмады: ${amount}. Мектеппен байланысыңыз.`,
     claimsTitle: 'Kaspi арқылы төлем туралы хабарламалар',
     claimBy: (name: string, date: string) => `${name} · ${date}`,
-    confirm: 'Растау',
-    reject: 'Қабылдамау',
     noLink: 'Kaspi арқылы төлем әлі бапталмаған. Мектепте төлеңіз.',
     deleteCharge: 'Есептеуді жою керек пе?',
     deletePayment: 'Төлемді жою керек пе?',
@@ -105,7 +109,11 @@ const STRINGS = {
     deleteHint: 'Қате жазбаны жою үшін оны басып тұрыңыз',
   },
   en: {
-    confirmAmount: 'Amount received in Kaspi, ₸',
+    paidYes: 'Yes, paid',
+    paidNo: 'No, not paid',
+    paidOther: 'Different amount',
+    otherAmount: 'Amount received, ₸',
+    saveOther: 'Record this amount',
     payKaspi: 'Pay with Kaspi',
     iPaid: 'I have paid',
     claimAmount: 'Amount paid, ₸',
@@ -118,8 +126,6 @@ const STRINGS = {
     rejectedClaim: (amount: string) => `Not confirmed: ${amount}. Please contact the school.`,
     claimsTitle: 'Kaspi payment reports',
     claimBy: (name: string, date: string) => `${name} · ${date}`,
-    confirm: 'Confirm',
-    reject: 'Reject',
     noLink: 'Kaspi payment is not set up yet. Please pay at the school.',
     deleteCharge: 'Delete this charge?',
     deletePayment: 'Delete this payment?',
@@ -166,6 +172,8 @@ export function PaymentsScreen() {
   const [claimNote, setClaimNote] = useState('');
   const [claimSending, setClaimSending] = useState(false);
   const [confirmAmounts, setConfirmAmounts] = useState<Record<string, string>>({});
+  // Заявки, у которых открыто поле «Другая сумма».
+  const [otherOpen, setOtherOpen] = useState<Record<string, boolean>>({});
 
   const load = useCallback(async () => {
     if (!studentId) return;
@@ -244,10 +252,11 @@ export function PaymentsScreen() {
     setClaimSending(false);
   };
 
-  const decide = async (claim: PaymentClaim, confirm: boolean) => {
+  // «Да» — записываем сумму из заявки; «Другая сумма» — то, что ввёл сотрудник.
+  const decide = async (claim: PaymentClaim, confirm: boolean, otherAmount = false) => {
     let amount: number | null = null;
-    if (confirm) {
-      amount = Number((confirmAmounts[claim.id] ?? String(Math.round(claim.amount))).replace(/\s/g, '').replace(',', '.'));
+    if (confirm && otherAmount) {
+      amount = Number((confirmAmounts[claim.id] ?? '').replace(/\s/g, '').replace(',', '.'));
       if (!Number.isFinite(amount) || amount <= 0) {
         Alert.alert(s.claimBad);
         return;
@@ -353,22 +362,32 @@ export function PaymentsScreen() {
                 <Text style={styles.entryTitle}>{formatMoney(c.amount)}</Text>
                 <Text style={styles.entryMeta}>{s.claimBy(c.claimer?.full_name ?? '', claimDate(c.created_at))}</Text>
                 {c.note ? <Text style={styles.entryMeta}>{c.note}</Text> : null}
-                <View style={{ height: spacing.sm }} />
-                <TextField
-                  label={s.confirmAmount}
-                  value={confirmAmounts[c.id] ?? String(Math.round(c.amount))}
-                  onChangeText={(v) => setConfirmAmounts((prev) => ({ ...prev, [c.id]: v }))}
-                  keyboardType="decimal-pad"
-                  maxLength={12}
-                />
                 <View style={[styles.actions, { marginTop: spacing.sm }]}>
                   <View style={styles.action}>
-                    <Button title={s.confirm} onPress={() => decide(c, true)} />
+                    <Button title={s.paidYes} onPress={() => decide(c, true)} />
                   </View>
                   <View style={styles.action}>
-                    <Button title={s.reject} variant="secondary" onPress={() => decide(c, false)} />
+                    <Button title={s.paidNo} variant="danger" onPress={() => decide(c, false)} />
                   </View>
                 </View>
+                {otherOpen[c.id] ? (
+                  <>
+                    <TextField
+                      label={s.otherAmount}
+                      value={confirmAmounts[c.id] ?? ''}
+                      onChangeText={(v) => setConfirmAmounts((prev) => ({ ...prev, [c.id]: v }))}
+                      keyboardType="decimal-pad"
+                      maxLength={12}
+                    />
+                    <Button title={s.saveOther} variant="secondary" onPress={() => decide(c, true, true)} />
+                  </>
+                ) : (
+                  <Button
+                    title={s.paidOther}
+                    variant="secondary"
+                    onPress={() => setOtherOpen((prev) => ({ ...prev, [c.id]: true }))}
+                  />
+                )}
               </Card>
             ))}
         </>

@@ -163,8 +163,12 @@ export function ProfileScreen() {
                 variant="secondary"
                 onPress={() => navigation.navigate('AttendanceSummary')}
               />
-              <View style={{ height: spacing.sm }} />
-              <Button title={s.branchQr} variant="secondary" onPress={() => navigation.navigate('BranchQr')} />
+              {FEATURES.qrCheckIn ? (
+                <>
+                  <View style={{ height: spacing.sm }} />
+                  <Button title={s.branchQr} variant="secondary" onPress={() => navigation.navigate('BranchQr')} />
+                </>
+              ) : null}
             </>
           ) : null}
           {isStaffRole(profile.role) ? (

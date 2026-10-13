@@ -6,6 +6,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
+import { FEATURES } from '../../lib/features';
 import { useAuth } from '../../hooks/useAuth';
 import { fetchChildren } from '../../lib/parents';
 import type { Profile } from '../../types/database';
@@ -167,7 +168,7 @@ export function ScheduleScreen() {
 
   return (
     <Screen scroll refreshing={loading} onRefresh={load}>
-      {profile?.role === 'student' || profile?.role === 'parent' ? (
+      {FEATURES.qrCheckIn && (profile?.role === 'student' || profile?.role === 'parent') ? (
         <View style={styles.checkIn}>
           <Button title={s.checkIn} onPress={() => (navigation as any).navigate('CheckIn')} />
         </View>
