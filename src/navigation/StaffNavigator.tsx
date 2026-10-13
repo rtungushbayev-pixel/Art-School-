@@ -44,6 +44,7 @@ import { ChatScreen } from '../screens/shared/ChatScreen';
 import { EventsScreen } from '../screens/shared/EventsScreen';
 import { EventDetailScreen } from '../screens/shared/EventDetailScreen';
 import { EditEventScreen } from '../screens/staff/EditEventScreen';
+import { KaspiSettingsScreen } from '../screens/staff/KaspiSettingsScreen';
 import { colors } from '../theme/colors';
 import { useStrings } from '../i18n';
 
@@ -90,6 +91,7 @@ const STRINGS = {
     events: 'Выставки и конкурсы',
     event: 'Событие',
     editEvent: 'Событие',
+    kaspi: 'Kaspi',
   },
   kk: {
     messages: 'Хабарламалар',
@@ -133,6 +135,7 @@ const STRINGS = {
     events: 'Көрмелер мен байқаулар',
     event: 'Іс-шара',
     editEvent: 'Іс-шара',
+    kaspi: 'Kaspi',
   },
   en: {
     messages: 'Messages',
@@ -176,6 +179,7 @@ const STRINGS = {
     events: 'Exhibitions and competitions',
     event: 'Event',
     editEvent: 'Event',
+    kaspi: 'Kaspi',
   },
 };
 
@@ -237,6 +241,7 @@ export function StaffNavigator() {
       <Stack.Screen name="Events" component={EventsScreen} options={{ title: s.events }} />
       <Stack.Screen name="EventDetail" component={EventDetailScreen} options={{ title: s.event }} />
       <Stack.Screen name="EditEvent" component={EditEventScreen} options={{ title: s.editEvent }} />
+      <Stack.Screen name="KaspiSettings" component={KaspiSettingsScreen} options={{ title: s.kaspi }} />
       <Stack.Screen name="Support" component={SupportScreen} options={{ title: s.tickets }} />
       <Stack.Screen
         name="NewSupportTicket"

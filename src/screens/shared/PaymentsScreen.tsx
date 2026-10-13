@@ -1,17 +1,24 @@
 import React, { useCallback, useState } from 'react';
 import { isAdminRole } from '../../lib/roles';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
+import { TextField } from '../../components/TextField';
+import { errorText } from '../../lib/errors';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import {
+  createPaymentClaim,
+  decidePaymentClaim,
   deleteBillingEntry,
   fetchBalances,
+  fetchPaymentClaims,
+  fetchPaymentLink,
+  type PaymentClaim,
   fetchBillingEntries,
   formatMoney,
   paymentMethodLabel,
@@ -24,6 +31,21 @@ import { useStrings } from '../../i18n';
 
 const STRINGS = {
   ru: {
+    payKaspi: 'Оплатить через Kaspi',
+    iPaid: 'Я оплатил',
+    claimAmount: 'Сколько оплатили, ₸',
+    claimNote: 'Комментарий (необязательно)',
+    claimSend: 'Сообщить об оплате',
+    claimSent: 'Спасибо! Администратор проверит поступление и подтвердит оплату.',
+    claimBad: 'Укажите сумму числом',
+    claimFailed: 'Не удалось отправить',
+    pendingClaim: (amount: string) => `На проверке: ${amount}`,
+    rejectedClaim: (amount: string) => `Не подтверждено: ${amount}. Свяжитесь со школой.`,
+    claimsTitle: 'Сообщения об оплате через Kaspi',
+    claimBy: (name: string, date: string) => `${name} · ${date}`,
+    confirm: 'Подтвердить',
+    reject: 'Отклонить',
+    noLink: 'Оплата через Kaspi пока не настроена. Оплатите в школе.',
     deleteCharge: 'Удалить начисление?',
     deletePayment: 'Удалить оплату?',
     cancel: 'Отмена',
@@ -45,6 +67,21 @@ const STRINGS = {
     deleteHint: 'Удерживайте запись, чтобы удалить ошибочную',
   },
   kk: {
+    payKaspi: 'Kaspi арқылы төлеу',
+    iPaid: 'Мен төледім',
+    claimAmount: 'Қанша төледіңіз, ₸',
+    claimNote: 'Түсініктеме (міндетті емес)',
+    claimSend: 'Төлем туралы хабарлау',
+    claimSent: 'Рақмет! Әкімші түскен төлемді тексеріп, растайды.',
+    claimBad: 'Соманы санмен көрсетіңіз',
+    claimFailed: 'Жіберу мүмкін болмады',
+    pendingClaim: (amount: string) => `Тексерілуде: ${amount}`,
+    rejectedClaim: (amount: string) => `Расталмады: ${amount}. Мектеппен байланысыңыз.`,
+    claimsTitle: 'Kaspi арқылы төлем туралы хабарламалар',
+    claimBy: (name: string, date: string) => `${name} · ${date}`,
+    confirm: 'Растау',
+    reject: 'Қабылдамау',
+    noLink: 'Kaspi арқылы төлем әлі бапталмаған. Мектепте төлеңіз.',
     deleteCharge: 'Есептеуді жою керек пе?',
     deletePayment: 'Төлемді жою керек пе?',
     cancel: 'Бас тарту',
@@ -66,6 +103,21 @@ const STRINGS = {
     deleteHint: 'Қате жазбаны жою үшін оны басып тұрыңыз',
   },
   en: {
+    payKaspi: 'Pay with Kaspi',
+    iPaid: 'I have paid',
+    claimAmount: 'Amount paid, ₸',
+    claimNote: 'Comment (optional)',
+    claimSend: 'Report payment',
+    claimSent: 'Thank you! The administrator will check the payment and confirm it.',
+    claimBad: 'Please enter the amount as a number',
+    claimFailed: 'Could not send',
+    pendingClaim: (amount: string) => `Being checked: ${amount}`,
+    rejectedClaim: (amount: string) => `Not confirmed: ${amount}. Please contact the school.`,
+    claimsTitle: 'Kaspi payment reports',
+    claimBy: (name: string, date: string) => `${name} · ${date}`,
+    confirm: 'Confirm',
+    reject: 'Reject',
+    noLink: 'Kaspi payment is not set up yet. Please pay at the school.',
     deleteCharge: 'Delete this charge?',
     deletePayment: 'Delete this payment?',
     cancel: 'Cancel',
@@ -104,6 +156,12 @@ export function PaymentsScreen() {
   const [entries, setEntries] = useState<BillingEntry[]>([]);
   const [balances, setBalances] = useState<StudentBalance[]>([]);
   const [loading, setLoading] = useState(true);
+  const [link, setLink] = useState<string | null>(null);
+  const [claims, setClaims] = useState<PaymentClaim[]>([]);
+  const [claimOpen, setClaimOpen] = useState(false);
+  const [claimAmount, setClaimAmount] = useState('');
+  const [claimNote, setClaimNote] = useState('');
+  const [claimSending, setClaimSending] = useState(false);
 
   const load = useCallback(async () => {
     if (!studentId) return;
@@ -117,11 +175,17 @@ export function PaymentsScreen() {
       setEntries(entryRows);
       setBalances(balanceRows);
       setStudentName((student as { full_name: string } | null)?.full_name ?? '');
+      const [paymentLink, claimRows] = await Promise.all([
+        isStaff ? Promise.resolve(null) : fetchPaymentLink(studentId),
+        fetchPaymentClaims({ studentId }).catch(() => [] as PaymentClaim[]),
+      ]);
+      setLink(paymentLink);
+      setClaims(claimRows);
     } catch {
       // Нет сети — оставляем то, что уже показано.
     }
     setLoading(false);
-  }, [studentId]);
+  }, [studentId, isStaff]);
 
   useFocusEffect(
     useCallback(() => {
@@ -155,10 +219,48 @@ export function PaymentsScreen() {
   if (!studentId) return null;
 
   const mainBalance = balances[0];
+  const debt = mainBalance && mainBalance.balance < 0 ? -mainBalance.balance : 0;
+
+  const sendClaim = async () => {
+    const amount = Number(claimAmount.replace(/\s/g, '').replace(',', '.'));
+    if (!Number.isFinite(amount) || amount <= 0) {
+      Alert.alert(s.claimBad);
+      return;
+    }
+    setClaimSending(true);
+    try {
+      await createPaymentClaim(studentId, Math.round(amount * 100) / 100, claimNote.trim() || null);
+      setClaimOpen(false);
+      setClaimNote('');
+      Alert.alert(s.claimSent);
+      load();
+    } catch (e) {
+      Alert.alert(s.claimFailed, errorText(e));
+    }
+    setClaimSending(false);
+  };
+
+  const decide = async (claim: PaymentClaim, confirm: boolean) => {
+    try {
+      await decidePaymentClaim(claim.id, confirm);
+      load();
+    } catch (e) {
+      Alert.alert(s.claimFailed, errorText(e));
+    }
+  };
+
+  const claimDate = (iso: string) => {
+    const d = new Date(iso);
+    return `${formatDayMonth(d)} ${d.getFullYear()}`;
+  };
 
   return (
     <Screen scroll refreshing={loading} onRefresh={load}>
-      {isStaff ? <Text style={styles.header}>{studentName}</Text> : <Text style={styles.header}>{s.myPayments}</Text>}
+      {isStaff || studentId !== profile?.id ? (
+        <Text style={styles.header}>{studentName}</Text>
+      ) : (
+        <Text style={styles.header}>{s.myPayments}</Text>
+      )}
 
       <Card style={styles.balanceCard}>
         <Text style={styles.balanceLabel}>{s.balance}</Text>
@@ -189,6 +291,68 @@ export function PaymentsScreen() {
           </Text>
         ) : null}
       </Card>
+
+      {!isStaff ? (
+        <>
+          {claims
+            .filter((c) => c.status !== 'confirmed')
+            .slice(0, 3)
+            .map((c) => (
+              <Text key={c.id} style={c.status === 'pending' ? styles.claimPending : styles.claimRejected}>
+                {c.status === 'pending' ? s.pendingClaim(formatMoney(c.amount)) : s.rejectedClaim(formatMoney(c.amount))}
+              </Text>
+            ))}
+          {debt > 0 && link ? (
+            <View style={styles.kaspi}>
+              <Button title={s.payKaspi} onPress={() => Linking.openURL(link).catch(() => {})} />
+            </View>
+          ) : null}
+          {debt > 0 && !link ? <Text style={styles.hint}>{s.noLink}</Text> : null}
+          {link ? (
+            claimOpen ? (
+              <Card>
+                <TextField label={s.claimAmount} value={claimAmount} onChangeText={setClaimAmount} keyboardType="decimal-pad" maxLength={12} />
+                <TextField label={s.claimNote} value={claimNote} onChangeText={setClaimNote} maxLength={500} />
+                <Button title={s.claimSend} onPress={sendClaim} loading={claimSending} />
+              </Card>
+            ) : (
+              <View style={styles.kaspi}>
+                <Button
+                  title={s.iPaid}
+                  variant="secondary"
+                  onPress={() => {
+                    setClaimAmount(debt > 0 ? String(Math.round(debt)) : '');
+                    setClaimOpen(true);
+                  }}
+                />
+              </View>
+            )
+          ) : null}
+        </>
+      ) : null}
+
+      {isStaff && claims.some((c) => c.status === 'pending') ? (
+        <>
+          <Text style={styles.sectionTitle}>{s.claimsTitle}</Text>
+          {claims
+            .filter((c) => c.status === 'pending')
+            .map((c) => (
+              <Card key={c.id}>
+                <Text style={styles.entryTitle}>{formatMoney(c.amount)}</Text>
+                <Text style={styles.entryMeta}>{s.claimBy(c.claimer?.full_name ?? '', claimDate(c.created_at))}</Text>
+                {c.note ? <Text style={styles.entryMeta}>{c.note}</Text> : null}
+                <View style={[styles.actions, { marginTop: spacing.sm }]}>
+                  <View style={styles.action}>
+                    <Button title={s.confirm} onPress={() => decide(c, true)} />
+                  </View>
+                  <View style={styles.action}>
+                    <Button title={s.reject} variant="secondary" onPress={() => decide(c, false)} />
+                  </View>
+                </View>
+              </Card>
+            ))}
+        </>
+      ) : null}
 
       {isStaff ? (
         <View style={styles.actions}>
@@ -254,5 +418,8 @@ const styles = StyleSheet.create({
   entryTitle: { fontSize: 15, fontWeight: '600', color: colors.text },
   entryMeta: { color: colors.textMuted, marginTop: 2, fontSize: 13 },
   amount: { fontWeight: '700', fontSize: 15 },
+  kaspi: { marginBottom: spacing.sm },
+  claimPending: { color: colors.warning, fontWeight: '600', textAlign: 'center', marginBottom: spacing.sm },
+  claimRejected: { color: colors.danger, textAlign: 'center', marginBottom: spacing.sm },
   hint: { color: colors.textMuted, textAlign: 'center', fontSize: 12, marginBottom: spacing.lg },
 });

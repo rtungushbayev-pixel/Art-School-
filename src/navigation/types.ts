@@ -87,6 +87,7 @@ export type StaffStackParamList = {
   Events: undefined;
   EventDetail: { eventId: string };
   EditEvent: { eventId?: string };
+  KaspiSettings: undefined;
   MaterialRequests: undefined;
   NewMaterialRequest: undefined;
   MaterialRequest: { requestId: string };
@@ -108,6 +109,7 @@ export type ParentTabParamList = {
 export type ParentStackParamList = {
   ParentTabs: NavigatorScreenParams<ParentTabParamList> | undefined;
   CheckIn: undefined;
+  Payments: { studentId?: string } | undefined;
   Chats: undefined;
   Chat: { chatId: string };
   Events: undefined;

@@ -20,6 +20,7 @@ import { ChatsScreen } from '../screens/shared/ChatsScreen';
 import { ChatScreen } from '../screens/shared/ChatScreen';
 import { EventsScreen } from '../screens/shared/EventsScreen';
 import { EventDetailScreen } from '../screens/shared/EventDetailScreen';
+import { PaymentsScreen } from '../screens/shared/PaymentsScreen';
 import { colors } from '../theme/colors';
 import { useStrings } from '../i18n';
 
@@ -41,6 +42,7 @@ const STRINGS = {
     chats: 'Чаты',
     events: 'Выставки и конкурсы',
     event: 'Событие',
+    payments: 'Оплаты',
   },
   kk: {
     messages: 'Хабарламалар',
@@ -59,6 +61,7 @@ const STRINGS = {
     chats: 'Чаттар',
     events: 'Көрмелер мен байқаулар',
     event: 'Іс-шара',
+    payments: 'Төлемдер',
   },
   en: {
     messages: 'Messages',
@@ -77,6 +80,7 @@ const STRINGS = {
     chats: 'Chats',
     events: 'Exhibitions and competitions',
     event: 'Event',
+    payments: 'Payments',
   },
 };
 
@@ -101,6 +105,7 @@ export function ParentNavigator() {
       <Stack.Screen name="Chat" component={ChatScreen} options={{ title: s.chats }} />
       <Stack.Screen name="Events" component={EventsScreen} options={{ title: s.events }} />
       <Stack.Screen name="EventDetail" component={EventDetailScreen} options={{ title: s.event }} />
+      <Stack.Screen name="Payments" component={PaymentsScreen} options={{ title: s.payments }} />
       <Stack.Screen name="Support" component={SupportScreen} options={{ title: s.help }} />
       <Stack.Screen name="NewSupportTicket" component={NewSupportTicketScreen} options={{ title: s.help }} />
       <Stack.Screen name="SupportTicket" component={SupportTicketScreen} options={{ title: s.ticket }} />

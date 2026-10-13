@@ -6,6 +6,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { Avatar } from '../../components/Avatar';
 import { Button } from '../../components/Button';
+import { FEATURES } from '../../lib/features';
 import { fetchChildTeachers, startChat, type ChildTeacher } from '../../lib/chats';
 import { errorText } from '../../lib/errors';
 import { ProgressNoteCard } from '../../components/ProgressNoteCard';
@@ -38,6 +39,7 @@ type GalleryItem =
 
 const STRINGS = {
   ru: {
+    payments: 'Оплаты',
     chatFailed: 'Не удалось открыть чат',
     writeTeacher: (name: string, group: string) => `Написать преподавателю: ${name} (${group})`,
     locale: 'ru-RU',
@@ -57,6 +59,7 @@ const STRINGS = {
     fromClass: 'С занятия',
   },
   kk: {
+    payments: 'Төлемдер',
     chatFailed: 'Чатты ашу мүмкін болмады',
     writeTeacher: (name: string, group: string) => `Мұғалімге жазу: ${name} (${group})`,
     locale: 'kk-KZ',
@@ -76,6 +79,7 @@ const STRINGS = {
     fromClass: 'Сабақтан',
   },
   en: {
+    payments: 'Payments',
     chatFailed: 'Could not open the chat',
     writeTeacher: (name: string, group: string) => `Message the teacher: ${name} (${group})`,
     locale: 'en-US',
@@ -166,6 +170,11 @@ export function ChildDetailScreen({ route, navigation }: Props) {
         </View>
       ) : null}
 
+      {FEATURES.payments ? (
+        <View style={styles.writeTeacher}>
+          <Button title={s.payments} onPress={() => navigation.navigate('Payments', { studentId: childId })} />
+        </View>
+      ) : null}
       {viewer
         ? teachers.map((t) => (
             <View key={t.teacher_id} style={styles.writeTeacher}>

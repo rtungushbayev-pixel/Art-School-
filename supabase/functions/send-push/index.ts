@@ -19,6 +19,10 @@
 //                                               преподавателем → собеседнику
 //   school_event      { id: event_id }         — сотрудник → всем ученикам и
 //                                               родителям (новая выставка/конкурс)
+//   payment_claim     { id: claim_id }         — родитель/ученик «Я оплатил» →
+//                                               администраторам
+//   debt_reminder     { id: 'ГГГГ-ММ-ДД' }     — администратор → должникам и их
+//                                               родителям (не чаще раза в день)
 //
 // Каждое событие рассылается не более одного раза (таблица push_events).
 // Получатели, отключившие категорию в настройках (profiles.notify_*),
@@ -42,7 +46,9 @@ type PushEvent =
   | 'attendance_absent'
   | 'lesson_change'
   | 'chat_message'
-  | 'school_event';
+  | 'school_event'
+  | 'payment_claim'
+  | 'debt_reminder';
 type NotificationCategory = 'announcements' | 'comments' | 'moderation' | 'support' | 'attendance';
 
 interface RequestBody {
@@ -362,6 +368,50 @@ async function buildMessage(admin: SupabaseClient, caller: Caller, { event, id }
         title: `${kinds[schoolEvent.kind] ?? 'Событие'}: ${schoolEvent.title}`,
         body: truncate(`${d}.${m}.${y}. Подробности и запись — в приложении.`),
         data: { type: 'school_event', eventId: schoolEvent.id },
+      };
+    }
+
+    case 'payment_claim': {
+      const { data: claim } = await admin
+        .from('payment_claims')
+        .select('id, amount, claimed_by, student:student_id ( full_name )')
+        .eq('id', id)
+        .single();
+      if (!claim) throw new HttpError(404, 'Заявка не найдена');
+      if (claim.claimed_by !== caller.id) throw new HttpError(403, 'Это не ваша заявка');
+      const { data: admins, error } = await admin.from('profiles').select('id').eq('role', 'admin');
+      if (error) throw error;
+      const student = claim.student as unknown as { full_name: string } | null;
+      const amount = Math.round(Number(claim.amount)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+      return {
+        dedupKey: `payment_claim:${claim.id}`,
+        category: 'support',
+        recipientIds: (admins ?? []).map((row: { id: string }) => row.id),
+        title: 'Оплата через Kaspi: проверьте поступление',
+        body: truncate(`${student?.full_name ?? ''}: ${amount} ₸. Подтвердите в «Оплатах учеников».`),
+        data: { type: 'payment_claim' },
+      };
+    }
+
+    case 'debt_reminder': {
+      if (caller.role !== 'admin') throw new HttpError(403, 'Только администратор');
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(id)) throw new HttpError(400, 'Неверная дата');
+      const { data: debtors, error } = await admin.from('student_balances').select('student_id').lt('balance', 0);
+      if (error) throw error;
+      const studentIds = [...new Set((debtors ?? []).map((row: { student_id: string }) => row.student_id))];
+      if (studentIds.length === 0) return null;
+      const { data: links, error: linksError } = await admin
+        .from('parent_children')
+        .select('parent_id')
+        .in('student_id', studentIds);
+      if (linksError) throw linksError;
+      return {
+        dedupKey: `debt_reminder:${id}`,
+        category: 'announcements',
+        recipientIds: [...studentIds, ...(links ?? []).map((row: { parent_id: string }) => row.parent_id)],
+        title: 'Напоминание об оплате',
+        body: 'По оплате занятий есть задолженность. Подробности и оплата через Kaspi — в разделе «Оплаты».',
+        data: { type: 'debt_reminder' },
       };
     }
 
