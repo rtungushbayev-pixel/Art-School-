@@ -59,6 +59,15 @@
         }
       ],
       [
+        "expo-camera",
+        {
+          "cameraPermission": "Камера нужна, чтобы отсканировать QR-код у входа в филиал и отметиться на занятии.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": true
+        }
+      ],
+      [
         "expo-build-properties",
         {
           "android": {

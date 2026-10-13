@@ -15,6 +15,7 @@ import { SupportScreen } from '../screens/shared/SupportScreen';
 import { NewSupportTicketScreen } from '../screens/shared/NewSupportTicketScreen';
 import { SupportTicketScreen } from '../screens/shared/SupportTicketScreen';
 import { PortfolioScreen } from '../screens/shared/PortfolioScreen';
+import { CheckInScreen } from '../screens/shared/CheckInScreen';
 import { colors } from '../theme/colors';
 import { useStrings } from '../i18n';
 
@@ -32,6 +33,7 @@ const STRINGS = {
     notifications: 'Уведомления',
     profile: 'Профиль',
     photo: 'Фото',
+    checkIn: 'Отметиться по QR',
   },
   kk: {
     messages: 'Хабарламалар',
@@ -46,6 +48,7 @@ const STRINGS = {
     notifications: 'Хабарландырулар',
     profile: 'Профиль',
     photo: 'Фото',
+    checkIn: 'QR арқылы белгілену',
   },
   en: {
     messages: 'Messages',
@@ -60,6 +63,7 @@ const STRINGS = {
     notifications: 'Notifications',
     profile: 'Profile',
     photo: 'Photo',
+    checkIn: 'Check in with QR',
   },
 };
 
@@ -79,6 +83,7 @@ export function ParentNavigator() {
       <Stack.Screen name="Messages" component={AnnouncementsScreen} options={{ title: s.messages }} />
       <Stack.Screen name="Children" component={ChildrenScreen} options={{ title: s.children }} />
       <Stack.Screen name="AddChild" component={AddChildScreen} options={{ title: s.addChild }} />
+      <Stack.Screen name="CheckIn" component={CheckInScreen} options={{ title: s.checkIn }} />
       <Stack.Screen name="Support" component={SupportScreen} options={{ title: s.help }} />
       <Stack.Screen name="NewSupportTicket" component={NewSupportTicketScreen} options={{ title: s.help }} />
       <Stack.Screen name="SupportTicket" component={SupportTicketScreen} options={{ title: s.ticket }} />

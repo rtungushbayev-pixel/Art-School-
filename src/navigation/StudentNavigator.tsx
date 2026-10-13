@@ -19,6 +19,7 @@ import { FriendsScreen } from '../screens/shared/FriendsScreen';
 import { SupportScreen } from '../screens/shared/SupportScreen';
 import { NewSupportTicketScreen } from '../screens/shared/NewSupportTicketScreen';
 import { SupportTicketScreen } from '../screens/shared/SupportTicketScreen';
+import { CheckInScreen } from '../screens/shared/CheckInScreen';
 import { colors } from '../theme/colors';
 import { useStrings } from '../i18n';
 
@@ -40,6 +41,7 @@ const STRINGS = {
     payments: 'Оплаты',
     help: 'Помощь',
     ticket: 'Обращение',
+    checkIn: 'Отметиться по QR',
   },
   kk: {
     messages: 'Хабарламалар',
@@ -58,6 +60,7 @@ const STRINGS = {
     payments: 'Төлемдер',
     help: 'Көмек',
     ticket: 'Өтініш',
+    checkIn: 'QR арқылы белгілену',
   },
   en: {
     messages: 'Messages',
@@ -76,6 +79,7 @@ const STRINGS = {
     payments: 'Payments',
     help: 'Help',
     ticket: 'Request',
+    checkIn: 'Check in with QR',
   },
 };
 
@@ -110,6 +114,7 @@ export function StudentNavigator() {
       <Stack.Screen name="ListingDetail" component={ListingDetailScreen} options={{ title: s.listing }} />
       <Stack.Screen name="CreateListing" component={CreateListingScreen} options={{ title: s.sellWork }} />
       <Stack.Screen name="Payments" component={PaymentsScreen} options={{ title: s.payments }} />
+      <Stack.Screen name="CheckIn" component={CheckInScreen} options={{ title: s.checkIn }} />
       <Stack.Screen name="Support" component={SupportScreen} options={{ title: s.help }} />
       <Stack.Screen
         name="NewSupportTicket"

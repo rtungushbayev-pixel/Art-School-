@@ -36,6 +36,7 @@ const STRINGS = {
     roleOffice: 'Администрация (заявки на материалы)',
     materials: 'Заявки на материалы',
     attendanceSummary: 'Сводка посещаемости',
+    branchQr: 'QR-коды филиалов',
     cancel: 'Отмена',
     language: 'Язык приложения',
     studentPayments: 'Оплаты учеников',
@@ -55,6 +56,7 @@ const STRINGS = {
     roleOffice: 'Әкімшілік (материалдарға өтінімдер)',
     materials: 'Материалдарға өтінімдер',
     attendanceSummary: 'Қатысу жиынтығы',
+    branchQr: 'Филиалдардың QR-кодтары',
     cancel: 'Бас тарту',
     language: 'Қолданба тілі',
     studentPayments: 'Оқушылардың төлемдері',
@@ -74,6 +76,7 @@ const STRINGS = {
     roleOffice: 'Administration (supply requests)',
     materials: 'Supply requests',
     attendanceSummary: 'Attendance summary',
+    branchQr: 'Branch QR codes',
     cancel: 'Cancel',
     language: 'App language',
     studentPayments: 'Student payments',
@@ -157,6 +160,8 @@ export function ProfileScreen() {
                 variant="secondary"
                 onPress={() => navigation.navigate('AttendanceSummary')}
               />
+              <View style={{ height: spacing.sm }} />
+              <Button title={s.branchQr} variant="secondary" onPress={() => navigation.navigate('BranchQr')} />
             </>
           ) : null}
           {headsBranch || isAdminRole(profile.role) ? (
