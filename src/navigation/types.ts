@@ -16,6 +16,8 @@ export type StudentTabParamList = {
 export type StudentStackParamList = {
   StudentTabs: NavigatorScreenParams<StudentTabParamList> | undefined;
   CheckIn: undefined;
+  Events: undefined;
+  EventDetail: { eventId: string };
   Messages: undefined;
   Market: undefined;
   Friends: { focusSearch?: boolean; showBlocked?: boolean } | undefined;
@@ -82,6 +84,9 @@ export type StaffStackParamList = {
   BranchQr: undefined;
   Chats: undefined;
   Chat: { chatId: string };
+  Events: undefined;
+  EventDetail: { eventId: string };
+  EditEvent: { eventId?: string };
   MaterialRequests: undefined;
   NewMaterialRequest: undefined;
   MaterialRequest: { requestId: string };
@@ -105,6 +110,8 @@ export type ParentStackParamList = {
   CheckIn: undefined;
   Chats: undefined;
   Chat: { chatId: string };
+  Events: undefined;
+  EventDetail: { eventId: string };
   Portfolio: { userId: string };
   Messages: undefined;
   Children: undefined;

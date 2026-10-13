@@ -29,6 +29,7 @@ import { useStrings } from '../../i18n';
 
 const STRINGS = {
   ru: {
+    events: 'Выставки и конкурсы',
     checkIn: 'Отметиться по QR',
     thisWeek: 'Эта неделя',
     nextWeek: 'Следующая неделя',
@@ -48,6 +49,7 @@ const STRINGS = {
     roomShort: (room: string) => `, каб. ${room}`,
   },
   kk: {
+    events: 'Көрмелер мен байқаулар',
     checkIn: 'QR арқылы белгілену',
     thisWeek: 'Осы апта',
     nextWeek: 'Келесі апта',
@@ -67,6 +69,7 @@ const STRINGS = {
     roomShort: (room: string) => `, ${room} каб.`,
   },
   en: {
+    events: 'Exhibitions and competitions',
     checkIn: 'Check in with QR',
     thisWeek: 'This week',
     nextWeek: 'Next week',
@@ -169,6 +172,9 @@ export function ScheduleScreen() {
           <Button title={s.checkIn} onPress={() => (navigation as any).navigate('CheckIn')} />
         </View>
       ) : null}
+      <View style={styles.checkIn}>
+        <Button title={s.events} variant="secondary" onPress={() => (navigation as any).navigate('Events')} />
+      </View>
 
       <View style={styles.weekNav}>
         <Pressable hitSlop={12} onPress={() => setWeekOffset((w) => w - 1)}>

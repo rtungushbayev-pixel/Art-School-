@@ -17,6 +17,8 @@
 //                                               группы и их родителям (отмена/перенос)
 //   chat_message      { id: message_id }       — участник чата родителя с
 //                                               преподавателем → собеседнику
+//   school_event      { id: event_id }         — сотрудник → всем ученикам и
+//                                               родителям (новая выставка/конкурс)
 //
 // Каждое событие рассылается не более одного раза (таблица push_events).
 // Получатели, отключившие категорию в настройках (profiles.notify_*),
@@ -39,7 +41,8 @@ type PushEvent =
   | 'support_message'
   | 'attendance_absent'
   | 'lesson_change'
-  | 'chat_message';
+  | 'chat_message'
+  | 'school_event';
 type NotificationCategory = 'announcements' | 'comments' | 'moderation' | 'support' | 'attendance';
 
 interface RequestBody {
@@ -332,6 +335,33 @@ async function buildMessage(admin: SupabaseClient, caller: Caller, { event, id }
         title: toTeacher ? `${caller.full_name} (родитель: ${child})` : `${caller.full_name} · преподаватель`,
         body: truncate(message.body),
         data: { type: 'chat_message', chatId: message.chat_id },
+      };
+    }
+
+    case 'school_event': {
+      requireStaff(caller);
+      const { data: schoolEvent } = await admin
+        .from('school_events')
+        .select('id, title, kind, starts_on')
+        .eq('id', id)
+        .single();
+      if (!schoolEvent) throw new HttpError(404, 'Событие не найдено');
+      const { data: people, error } = await admin.from('profiles').select('id').in('role', ['student', 'parent']);
+      if (error) throw error;
+      const kinds: Record<string, string> = {
+        exhibition: 'Выставка',
+        competition: 'Конкурс',
+        masterclass: 'Мастер-класс',
+        other: 'Событие',
+      };
+      const [y, m, d] = String(schoolEvent.starts_on).split('-');
+      return {
+        dedupKey: `school_event:${schoolEvent.id}`,
+        category: 'announcements',
+        recipientIds: (people ?? []).map((row: { id: string }) => row.id),
+        title: `${kinds[schoolEvent.kind] ?? 'Событие'}: ${schoolEvent.title}`,
+        body: truncate(`${d}.${m}.${y}. Подробности и запись — в приложении.`),
+        data: { type: 'school_event', eventId: schoolEvent.id },
       };
     }
 

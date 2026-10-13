@@ -18,6 +18,8 @@ import { PortfolioScreen } from '../screens/shared/PortfolioScreen';
 import { CheckInScreen } from '../screens/shared/CheckInScreen';
 import { ChatsScreen } from '../screens/shared/ChatsScreen';
 import { ChatScreen } from '../screens/shared/ChatScreen';
+import { EventsScreen } from '../screens/shared/EventsScreen';
+import { EventDetailScreen } from '../screens/shared/EventDetailScreen';
 import { colors } from '../theme/colors';
 import { useStrings } from '../i18n';
 
@@ -37,6 +39,8 @@ const STRINGS = {
     photo: 'Фото',
     checkIn: 'Отметиться по QR',
     chats: 'Чаты',
+    events: 'Выставки и конкурсы',
+    event: 'Событие',
   },
   kk: {
     messages: 'Хабарламалар',
@@ -53,6 +57,8 @@ const STRINGS = {
     photo: 'Фото',
     checkIn: 'QR арқылы белгілену',
     chats: 'Чаттар',
+    events: 'Көрмелер мен байқаулар',
+    event: 'Іс-шара',
   },
   en: {
     messages: 'Messages',
@@ -69,6 +75,8 @@ const STRINGS = {
     photo: 'Photo',
     checkIn: 'Check in with QR',
     chats: 'Chats',
+    events: 'Exhibitions and competitions',
+    event: 'Event',
   },
 };
 
@@ -91,6 +99,8 @@ export function ParentNavigator() {
       <Stack.Screen name="CheckIn" component={CheckInScreen} options={{ title: s.checkIn }} />
       <Stack.Screen name="Chats" component={ChatsScreen} options={{ title: s.chats }} />
       <Stack.Screen name="Chat" component={ChatScreen} options={{ title: s.chats }} />
+      <Stack.Screen name="Events" component={EventsScreen} options={{ title: s.events }} />
+      <Stack.Screen name="EventDetail" component={EventDetailScreen} options={{ title: s.event }} />
       <Stack.Screen name="Support" component={SupportScreen} options={{ title: s.help }} />
       <Stack.Screen name="NewSupportTicket" component={NewSupportTicketScreen} options={{ title: s.help }} />
       <Stack.Screen name="SupportTicket" component={SupportTicketScreen} options={{ title: s.ticket }} />

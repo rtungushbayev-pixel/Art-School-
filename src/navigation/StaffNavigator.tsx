@@ -41,6 +41,9 @@ import { MaterialSummaryScreen } from '../screens/materials/MaterialSummaryScree
 import { BranchQrScreen } from '../screens/staff/BranchQrScreen';
 import { ChatsScreen } from '../screens/shared/ChatsScreen';
 import { ChatScreen } from '../screens/shared/ChatScreen';
+import { EventsScreen } from '../screens/shared/EventsScreen';
+import { EventDetailScreen } from '../screens/shared/EventDetailScreen';
+import { EditEventScreen } from '../screens/staff/EditEventScreen';
 import { colors } from '../theme/colors';
 import { useStrings } from '../i18n';
 
@@ -84,6 +87,9 @@ const STRINGS = {
     attendanceSummary: 'Сводка посещаемости',
     branchQr: 'QR-коды филиалов',
     chats: 'Чаты',
+    events: 'Выставки и конкурсы',
+    event: 'Событие',
+    editEvent: 'Событие',
   },
   kk: {
     messages: 'Хабарламалар',
@@ -124,6 +130,9 @@ const STRINGS = {
     attendanceSummary: 'Қатысу жиынтығы',
     branchQr: 'Филиалдардың QR-кодтары',
     chats: 'Чаттар',
+    events: 'Көрмелер мен байқаулар',
+    event: 'Іс-шара',
+    editEvent: 'Іс-шара',
   },
   en: {
     messages: 'Messages',
@@ -164,6 +173,9 @@ const STRINGS = {
     attendanceSummary: 'Attendance summary',
     branchQr: 'Branch QR codes',
     chats: 'Chats',
+    events: 'Exhibitions and competitions',
+    event: 'Event',
+    editEvent: 'Event',
   },
 };
 
@@ -222,6 +234,9 @@ export function StaffNavigator() {
       <Stack.Screen name="BranchQr" component={BranchQrScreen} options={{ title: s.branchQr }} />
       <Stack.Screen name="Chats" component={ChatsScreen} options={{ title: s.chats }} />
       <Stack.Screen name="Chat" component={ChatScreen} options={{ title: s.chats }} />
+      <Stack.Screen name="Events" component={EventsScreen} options={{ title: s.events }} />
+      <Stack.Screen name="EventDetail" component={EventDetailScreen} options={{ title: s.event }} />
+      <Stack.Screen name="EditEvent" component={EditEventScreen} options={{ title: s.editEvent }} />
       <Stack.Screen name="Support" component={SupportScreen} options={{ title: s.tickets }} />
       <Stack.Screen
         name="NewSupportTicket"
