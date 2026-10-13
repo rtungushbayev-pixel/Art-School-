@@ -301,6 +301,12 @@ async function buildMessage(admin: SupabaseClient, caller: Caller, { event, id }
       if (caller.role !== 'admin' && lesson.group?.teacher_id !== caller.id) {
         throw new HttpError(403, 'Это не ваша группа');
       }
+      // Не больше 3 рассылок по одному изменению занятия.
+      const { count: sentBefore } = await admin
+        .from('push_events')
+        .select('key', { count: 'exact', head: true })
+        .like('key', `lesson_change:${change.id}:%`);
+      if ((sentBefore ?? 0) >= 3) return null;
       const recipientIds = await resolveAudience(admin, 'group', lesson.group_id);
       const [, m, d] = String(change.lesson_date).split('-');
       const groupName = lesson.group?.name ?? '';
@@ -348,10 +354,14 @@ async function buildMessage(admin: SupabaseClient, caller: Caller, { event, id }
       requireStaff(caller);
       const { data: schoolEvent } = await admin
         .from('school_events')
-        .select('id, title, kind, starts_on')
+        .select('id, title, kind, starts_on, created_by')
         .eq('id', id)
         .single();
       if (!schoolEvent) throw new HttpError(404, 'Событие не найдено');
+      // Рассылает только автор события (или администратор).
+      if (schoolEvent.created_by !== caller.id && caller.role !== 'admin') {
+        throw new HttpError(403, 'Это не ваше событие');
+      }
       const { data: people, error } = await admin.from('profiles').select('id').in('role', ['student', 'parent']);
       if (error) throw error;
       const kinds: Record<string, string> = {
@@ -395,7 +405,8 @@ async function buildMessage(admin: SupabaseClient, caller: Caller, { event, id }
 
     case 'debt_reminder': {
       if (caller.role !== 'admin') throw new HttpError(403, 'Только администратор');
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(id)) throw new HttpError(400, 'Неверная дата');
+      // Не чаще раза в день: ключ — сегодняшняя дата по Алматы (не из запроса).
+      const today = new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString().slice(0, 10);
       const { data: debtors, error } = await admin.from('student_balances').select('student_id').lt('balance', 0);
       if (error) throw error;
       const studentIds = [...new Set((debtors ?? []).map((row: { student_id: string }) => row.student_id))];
@@ -406,7 +417,7 @@ async function buildMessage(admin: SupabaseClient, caller: Caller, { event, id }
         .in('student_id', studentIds);
       if (linksError) throw linksError;
       return {
-        dedupKey: `debt_reminder:${id}`,
+        dedupKey: `debt_reminder:${today}`,
         category: 'announcements',
         recipientIds: [...studentIds, ...(links ?? []).map((row: { parent_id: string }) => row.parent_id)],
         title: 'Напоминание об оплате',

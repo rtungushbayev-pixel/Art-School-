@@ -145,7 +145,8 @@ Deno.serve(async (req) => {
     await admin.from('bitrix_sync').update({ error: null }).eq('id', 1);
     return json(200, { ok: true, ...result });
   } catch (e) {
-    const message = e instanceof Error ? e.message : String(e);
+    // В тексте сетевой ошибки бывает полный адрес вебхука с ключом — вырезаем.
+    const message = (e instanceof Error ? e.message : String(e)).split(webhook.trim()).join('[webhook]');
     console.error(message);
     await admin.from('bitrix_sync').update({ error: message.slice(0, 500) }).eq('id', 1);
     return json(502, { error: 'bitrix unavailable' });

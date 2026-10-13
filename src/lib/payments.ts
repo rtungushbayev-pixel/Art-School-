@@ -125,8 +125,13 @@ export async function fetchPaymentClaims(options: { studentId?: string; pendingO
   return ((data as PaymentClaim[]) ?? []).map((c) => ({ ...c, amount: Number(c.amount) }));
 }
 
-export async function decidePaymentClaim(claimId: string, confirm: boolean): Promise<void> {
-  const { error } = await supabase.rpc('decide_payment_claim', { p_claim_id: claimId, p_confirm: confirm });
+// amount — сумма, которую администратор увидел в Kaspi Pay (её и запишем).
+export async function decidePaymentClaim(claimId: string, confirm: boolean, amount: number | null): Promise<void> {
+  const { error } = await supabase.rpc('decide_payment_claim', {
+    p_claim_id: claimId,
+    p_confirm: confirm,
+    p_amount: amount,
+  });
   if (error) throw error;
 }
 

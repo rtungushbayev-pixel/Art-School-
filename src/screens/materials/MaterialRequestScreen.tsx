@@ -27,6 +27,7 @@ import type { StaffStackParamList } from '../../navigation/types';
 
 const STRINGS = {
   ru: {
+    alreadyDecided: 'Заявка уже рассмотрена. Изменить её может только администратор.',
     notFound: 'Заявка не найдена или уже отменена',
     teacher: 'Руководитель',
     branch: 'Филиал',
@@ -53,6 +54,7 @@ const STRINGS = {
     failed: 'Не удалось сохранить',
   },
   kk: {
+    alreadyDecided: 'Өтінім қаралды. Оны тек әкімші өзгерте алады.',
     notFound: 'Өтінім табылмады немесе тоқтатылды',
     teacher: 'Жетекші',
     branch: 'Филиал',
@@ -79,6 +81,7 @@ const STRINGS = {
     failed: 'Сақтау мүмкін болмады',
   },
   en: {
+    alreadyDecided: 'This request has already been decided. Only the administrator can change it.',
     notFound: 'Request not found or already cancelled',
     teacher: 'Branch head',
     branch: 'Branch',
@@ -175,7 +178,8 @@ export function MaterialRequestScreen() {
       navigation.goBack();
     } catch (e) {
       setSaving(null);
-      Alert.alert(s.failed, errorText(e));
+      const t = errorText(e) ?? '';
+      Alert.alert(s.failed, t.includes('already_decided') ? s.alreadyDecided : t);
     }
   };
 

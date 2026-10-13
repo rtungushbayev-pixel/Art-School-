@@ -31,6 +31,7 @@ import { useStrings } from '../../i18n';
 
 const STRINGS = {
   ru: {
+    confirmAmount: 'Сколько поступило в Kaspi, ₸',
     payKaspi: 'Оплатить через Kaspi',
     iPaid: 'Я оплатил',
     claimAmount: 'Сколько оплатили, ₸',
@@ -67,6 +68,7 @@ const STRINGS = {
     deleteHint: 'Удерживайте запись, чтобы удалить ошибочную',
   },
   kk: {
+    confirmAmount: 'Kaspi-ге қанша түсті, ₸',
     payKaspi: 'Kaspi арқылы төлеу',
     iPaid: 'Мен төледім',
     claimAmount: 'Қанша төледіңіз, ₸',
@@ -103,6 +105,7 @@ const STRINGS = {
     deleteHint: 'Қате жазбаны жою үшін оны басып тұрыңыз',
   },
   en: {
+    confirmAmount: 'Amount received in Kaspi, ₸',
     payKaspi: 'Pay with Kaspi',
     iPaid: 'I have paid',
     claimAmount: 'Amount paid, ₸',
@@ -162,6 +165,7 @@ export function PaymentsScreen() {
   const [claimAmount, setClaimAmount] = useState('');
   const [claimNote, setClaimNote] = useState('');
   const [claimSending, setClaimSending] = useState(false);
+  const [confirmAmounts, setConfirmAmounts] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     if (!studentId) return;
@@ -241,8 +245,16 @@ export function PaymentsScreen() {
   };
 
   const decide = async (claim: PaymentClaim, confirm: boolean) => {
+    let amount: number | null = null;
+    if (confirm) {
+      amount = Number((confirmAmounts[claim.id] ?? String(Math.round(claim.amount))).replace(/\s/g, '').replace(',', '.'));
+      if (!Number.isFinite(amount) || amount <= 0) {
+        Alert.alert(s.claimBad);
+        return;
+      }
+    }
     try {
-      await decidePaymentClaim(claim.id, confirm);
+      await decidePaymentClaim(claim.id, confirm, amount);
       load();
     } catch (e) {
       Alert.alert(s.claimFailed, errorText(e));
@@ -341,6 +353,14 @@ export function PaymentsScreen() {
                 <Text style={styles.entryTitle}>{formatMoney(c.amount)}</Text>
                 <Text style={styles.entryMeta}>{s.claimBy(c.claimer?.full_name ?? '', claimDate(c.created_at))}</Text>
                 {c.note ? <Text style={styles.entryMeta}>{c.note}</Text> : null}
+                <View style={{ height: spacing.sm }} />
+                <TextField
+                  label={s.confirmAmount}
+                  value={confirmAmounts[c.id] ?? String(Math.round(c.amount))}
+                  onChangeText={(v) => setConfirmAmounts((prev) => ({ ...prev, [c.id]: v }))}
+                  keyboardType="decimal-pad"
+                  maxLength={12}
+                />
                 <View style={[styles.actions, { marginTop: spacing.sm }]}>
                   <View style={styles.action}>
                     <Button title={s.confirm} onPress={() => decide(c, true)} />

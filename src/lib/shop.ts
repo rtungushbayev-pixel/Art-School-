@@ -26,8 +26,8 @@ export async function fetchShopListings(): Promise<ShopListing[]> {
 // Если копия старше недели — просим сервер обновить её. Сервер сам не даст
 // читать сайт чаще раза в неделю. Возвращает true, если список обновился.
 export async function refreshShopIfStale(): Promise<boolean> {
-  const { data } = await supabase.from('shop_sync').select('synced_at').eq('id', 1).maybeSingle();
-  const syncedAt = data?.synced_at ? new Date(data.synced_at).getTime() : 0;
+  const { data } = await supabase.rpc('shop_synced_at');
+  const syncedAt = typeof data === 'string' ? new Date(data).getTime() : 0;
   if (Date.now() - syncedAt < WEEK_MS) return false;
   const { data: result, error } = await supabase.functions.invoke('sync-shop', { body: {} });
   return !error && Boolean((result as { ok?: boolean } | null)?.ok);

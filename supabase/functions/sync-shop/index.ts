@@ -13,10 +13,14 @@
 
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.117.2';
 
-const SITES = ['https://kasteyevshop.kz', 'http://kasteyevshop.kz'];
+const SITES = ['https://kasteyevshop.kz'];
+// Фото и страницы берём только с сайта школы (защита от подмены адресов).
+const ALLOWED_HOSTS = new Set(['kasteyevshop.kz', 'www.kasteyevshop.kz']);
+const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const MAX_LISTINGS = 500;
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const MAX_PAGES = 30;
-const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
 interface Listing {
   id: string;
@@ -58,15 +62,17 @@ function field(block: string, cls: string): string | null {
 }
 
 async function fetchText(url: string): Promise<string> {
+  if (!isAllowed(url)) throw new Error('host not allowed');
   const res = await fetch(url, {
     headers: { 'User-Agent': 'KasteyevSchool-app/1.0 (+weekly listing sync)' },
     signal: AbortSignal.timeout(20000),
+    redirect: 'manual',
   });
   if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
   return await res.text();
 }
 
-// Сначала https (когда его включат), иначе http.
+// Только https: http-ответ можно подменить по дороге.
 async function openSite(): Promise<{ base: string; home: string }> {
   let lastError: unknown = null;
   for (const base of SITES) {
@@ -79,13 +85,57 @@ async function openSite(): Promise<{ base: string; home: string }> {
   throw lastError ?? new Error('site unavailable');
 }
 
+function isAllowed(url: string): boolean {
+  try {
+    const u = new URL(url);
+    return u.protocol === 'https:' && ALLOWED_HOSTS.has(u.hostname);
+  } catch {
+    return false;
+  }
+}
+
+// Читаем ответ частями и обрываем, если он больше лимита.
+async function readLimited(res: Response, limit: number): Promise<Uint8Array | null> {
+  const reader = res.body?.getReader();
+  if (!reader) return null;
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > limit) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+  const out = new Uint8Array(size);
+  let offset = 0;
+  for (const c of chunks) {
+    out.set(c, offset);
+    offset += c.byteLength;
+  }
+  return out;
+}
+
+// Адрес фото — только с сайта школы по https, иначе без фото.
+function resolveImage(src: string, base: string): string | null {
+  try {
+    const url = new URL(src, base).toString();
+    return isAllowed(url) ? url : null;
+  } catch {
+    return null;
+  }
+}
+
 function parseListings(html: string, base: string, into: Map<string, Listing>) {
   const blocks = html.split('<div class="prod_item">').slice(1);
   for (const block of blocks) {
     const link = block.match(/href="(\/ru\/(\d+)-[^"\/]+\/)"/);
     if (!link) continue;
     const id = link[2];
-    if (into.has(id)) continue;
+    if (into.has(id) || into.size >= MAX_LISTINGS) continue;
     const title = field(block, 'prod_title');
     if (!title) continue;
     const img = block.match(/<div class="prod_img">[\s\S]*?<img[^>]*src="([^"]+)"/);
@@ -96,7 +146,7 @@ function parseListings(html: string, base: string, into: Map<string, Listing>) {
       price: field(block, 'prod_price')?.slice(0, 50) ?? null,
       size: field(block, 'prod_item_size')?.slice(0, 50) ?? null,
       url: `${base}${link[1]}`,
-      source_image: img ? new URL(img[1], base).toString() : null,
+      source_image: img ? resolveImage(img[1], base) : null,
       sort_order: into.size,
     });
   }
@@ -105,7 +155,7 @@ function parseListings(html: string, base: string, into: Map<string, Listing>) {
 // Копия фото в хранилище: путь зависит от адреса фото, поэтому при замене
 // фото на сайте появится новый файл, а старый удалится.
 async function copyImage(admin: SupabaseClient, listing: Listing): Promise<string | null> {
-  if (!listing.source_image) return null;
+  if (!listing.source_image || !isAllowed(listing.source_image)) return null;
   const hash = Array.from(
     new Uint8Array(await crypto.subtle.digest('SHA-1', new TextEncoder().encode(listing.source_image)))
   )
@@ -113,12 +163,12 @@ async function copyImage(admin: SupabaseClient, listing: Listing): Promise<strin
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
   const path = `${listing.id}-${hash}.jpg`;
-  const res = await fetch(listing.source_image, { signal: AbortSignal.timeout(20000) });
+  const res = await fetch(listing.source_image, { signal: AbortSignal.timeout(20000), redirect: 'manual' });
   if (!res.ok) return null;
-  const type = res.headers.get('content-type') ?? 'image/jpeg';
-  if (!type.startsWith('image/')) return null;
-  const bytes = new Uint8Array(await res.arrayBuffer());
-  if (bytes.byteLength === 0 || bytes.byteLength > MAX_IMAGE_BYTES) return null;
+  const type = (res.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase();
+  if (!ALLOWED_TYPES.has(type)) return null;
+  const bytes = await readLimited(res, MAX_IMAGE_BYTES);
+  if (!bytes || bytes.byteLength === 0) return null;
   const { error } = await admin.storage.from('shop-images').upload(path, bytes, { contentType: type, upsert: true });
   if (error) return null;
   return admin.storage.from('shop-images').getPublicUrl(path).data.publicUrl;
@@ -165,7 +215,7 @@ async function sync(admin: SupabaseClient) {
   const unused = (files ?? []).map((f) => f.name).filter((name) => !used.has(name));
   if (unused.length > 0) await admin.storage.from('shop-images').remove(unused);
 
-  return { count: rows.length, removed: gone.length, base };
+  return { count: rows.length, removed: gone.length };
 }
 
 Deno.serve(async (req) => {
@@ -201,7 +251,7 @@ Deno.serve(async (req) => {
   let claim = admin.from('shop_sync').update({ synced_at: now.toISOString(), error: null }).eq('id', 1);
   if (!force) claim = claim.or(`synced_at.is.null,synced_at.lt.${weekAgo}`);
   const { data: claimed, error: claimError } = await claim.select('id');
-  if (claimError) return json(500, { error: claimError.message });
+  if (claimError) return json(500, { error: 'internal error' });
   if (!claimed || claimed.length === 0) return json(200, { skipped: true });
 
   try {
@@ -212,6 +262,7 @@ Deno.serve(async (req) => {
     const retryAt = new Date(now.getTime() - WEEK_MS + 24 * 60 * 60 * 1000).toISOString();
     const message = e instanceof Error ? e.message : String(e);
     await admin.from('shop_sync').update({ synced_at: retryAt, error: message.slice(0, 500) }).eq('id', 1);
-    return json(502, { error: message });
+    console.error(message);
+    return json(502, { error: 'sync failed' });
   }
 });

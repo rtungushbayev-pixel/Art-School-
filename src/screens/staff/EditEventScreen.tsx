@@ -12,6 +12,7 @@ import type { StaffStackParamList } from '../../navigation/types';
 
 const STRINGS = {
   ru: {
+    tooMany: 'Не больше 3 новых событий в сутки. Попробуйте завтра.',
     title: 'Название',
     titlePlaceholder: 'Например: Весенняя выставка учеников',
     kind: 'Тип',
@@ -29,6 +30,7 @@ const STRINGS = {
     hintNew: 'После сохранения ученики и родители получат уведомление.',
   },
   kk: {
+    tooMany: 'Тәулігіне 3 жаңа іс-шарадан артық емес. Ертең қайталаңыз.',
     title: 'Атауы',
     titlePlaceholder: 'Мысалы: Оқушылардың көктемгі көрмесі',
     kind: 'Түрі',
@@ -46,6 +48,7 @@ const STRINGS = {
     hintNew: 'Сақтағаннан кейін оқушылар мен ата-аналарға хабарлама барады.',
   },
   en: {
+    tooMany: 'No more than 3 new events a day. Please try tomorrow.',
     title: 'Title',
     titlePlaceholder: 'For example: Spring student exhibition',
     kind: 'Type',
@@ -131,7 +134,8 @@ export function EditEventScreen() {
       navigation.goBack();
     } catch (e) {
       setSaving(false);
-      Alert.alert(s.failed, errorText(e));
+      const t = errorText(e) ?? '';
+      Alert.alert(s.failed, t.includes('rate_limited') ? s.tooMany : t);
     }
   };
 
