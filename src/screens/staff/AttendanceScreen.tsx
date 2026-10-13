@@ -6,7 +6,13 @@ import { Card } from '../../components/Card';
 import { Avatar } from '../../components/Avatar';
 import { Button } from '../../components/Button';
 import { fetchGroupMembers } from '../../lib/groups';
-import { fetchGroupAttendance, localISODate, markAttendance } from '../../lib/attendance';
+import {
+  fetchGroupAttendance,
+  fetchGroupFacePasses,
+  localISODate,
+  markAttendance,
+  syncFacePasses,
+} from '../../lib/attendance';
 import { errorText } from '../../lib/errors';
 import { useStrings } from '../../i18n';
 import { colors, radius, spacing } from '../../theme/colors';
@@ -26,6 +32,7 @@ const STRINGS = {
   ru: {
     statuses: { present: 'Был', late: 'Опоздал', absent: 'Нет', excused: 'Уваж.' } as Record<AttendanceStatus, string>,
     hint: 'Отметьте каждого ученика. Если отметить «Нет», родители сразу получат уведомление.',
+    face: (time: string) => `Прошёл по лицу в ${time}`,
     today: 'Сегодня',
     allPresent: 'Остальные пришли',
     marked: (done: number, total: number) => `Отмечено ${done} из ${total}`,
@@ -35,6 +42,7 @@ const STRINGS = {
   kk: {
     statuses: { present: 'Келді', late: 'Кешікті', absent: 'Жоқ', excused: 'Себепті' } as Record<AttendanceStatus, string>,
     hint: 'Әр оқушыны белгілеңіз. «Жоқ» деп белгілесеңіз, ата-анаға бірден хабарлама барады.',
+    face: (time: string) => `Бет арқылы ${time} кірді`,
     today: 'Бүгін',
     allPresent: 'Қалғандары келді',
     marked: (done: number, total: number) => `${total} ішінен ${done} белгіленді`,
@@ -44,6 +52,7 @@ const STRINGS = {
   en: {
     statuses: { present: 'Here', late: 'Late', absent: 'Absent', excused: 'Excused' } as Record<AttendanceStatus, string>,
     hint: 'Mark every student. If you mark someone absent, their parents get a notification right away.',
+    face: (time: string) => `Face check-in at ${time}`,
     today: 'Today',
     allPresent: 'Everyone else is here',
     marked: (done: number, total: number) => `${done} of ${total} marked`,
@@ -61,6 +70,7 @@ export function AttendanceScreen() {
   const [date, setDate] = useState(() => new Date());
   const [students, setStudents] = useState<Profile[]>([]);
   const [statuses, setStatuses] = useState<Record<string, AttendanceStatus>>({});
+  const [passes, setPasses] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [savingAll, setSavingAll] = useState(false);
 
@@ -70,11 +80,31 @@ export function AttendanceScreen() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [members, rows] = await Promise.all([fetchGroupMembers(groupId), fetchGroupAttendance(groupId, dateKey)]);
+      // Сначала забираем свежие проходы через терминал (Битрикс24).
+      await syncFacePasses();
+      const [members, rows, faces] = await Promise.all([
+        fetchGroupMembers(groupId),
+        fetchGroupAttendance(groupId, dateKey),
+        fetchGroupFacePasses(groupId, dateKey),
+      ]);
       setStudents(members.sort((a, b) => a.full_name.localeCompare(b.full_name)));
       const map: Record<string, AttendanceStatus> = {};
       for (const row of rows) map[row.student_id] = row.status;
-      setStatuses(map);
+      setPasses(faces);
+      // Прошёл через терминал, но ещё не отмечен — ставим «Был».
+      for (const member of members) {
+        if (faces[member.id] && !map[member.id]) {
+          map[member.id] = 'present';
+          markAttendance(groupId, member.id, dateKey, 'present').catch(() => {
+            setStatuses((prev) => {
+              const next = { ...prev };
+              delete next[member.id];
+              return next;
+            });
+          });
+        }
+      }
+      setStatuses({ ...map });
     } catch {
       // Нет сети — оставляем то, что уже показано.
     }
@@ -145,9 +175,18 @@ export function AttendanceScreen() {
         <Card key={student.id}>
           <View style={styles.studentRow}>
             <Avatar uri={student.avatar_url} name={student.full_name} size={32} />
-            <Text style={styles.studentName} numberOfLines={1}>
-              {student.full_name}
-            </Text>
+            <View style={styles.studentInfo}>
+              <Text style={styles.studentName} numberOfLines={1}>
+                {student.full_name}
+              </Text>
+              {passes[student.id] ? (
+                <Text style={styles.face}>
+                  {s.face(
+                    new Date(passes[student.id]).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+                  )}
+                </Text>
+              ) : null}
+            </View>
           </View>
           <View style={styles.statusRow}>
             {STATUS_ORDER.map((status) => {
@@ -187,7 +226,9 @@ const styles = StyleSheet.create({
   progress: { color: colors.textMuted, fontSize: 13, textAlign: 'center', marginBottom: spacing.md },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.xl },
   studentRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
-  studentName: { flex: 1, fontWeight: '600', fontSize: 15, color: colors.text },
+  studentInfo: { flex: 1 },
+  studentName: { fontWeight: '600', fontSize: 15, color: colors.text },
+  face: { color: colors.success, fontSize: 12, marginTop: 1 },
   statusRow: { flexDirection: 'row', gap: spacing.xs },
   statusButton: {
     flex: 1,

@@ -37,3 +37,25 @@ export async function markAttendance(
     sendPushNotification({ event: 'attendance_absent', id: data });
   }
 }
+
+// Проходы через терминал распознавания лиц (Битрикс24): просим сервер забрать
+// новые проходы. Если интеграция не настроена или Битрикс недоступен — тихо
+// работаем без неё.
+export async function syncFacePasses(): Promise<void> {
+  try {
+    await supabase.functions.invoke('bitrix-sync', { body: {} });
+  } catch {
+    // Посещаемость отмечается и без терминала.
+  }
+}
+
+// Первый проход за день у учеников группы: studentId → время прохода.
+export async function fetchGroupFacePasses(groupId: string, date: string): Promise<Record<string, string>> {
+  const { data, error } = await supabase.rpc('group_face_passes', { p_group_id: groupId, p_date: date });
+  if (error) return {};
+  const map: Record<string, string> = {};
+  for (const row of (data as { student_id: string; passed_at: string }[]) ?? []) {
+    map[row.student_id] = row.passed_at;
+  }
+  return map;
+}
