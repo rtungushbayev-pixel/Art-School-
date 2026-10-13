@@ -63,7 +63,8 @@ export type PushEvent =
   | { event: 'listing_moderated'; id: string } // id объявления о продаже
   | { event: 'announcement'; id: string } // id объявления
   | { event: 'support_message'; id: string } // id сообщения в обращении
-  | { event: 'attendance_absent'; id: string }; // id отметки «Нет» — пуш родителям
+  | { event: 'attendance_absent'; id: string } // id отметки «Нет» — пуш родителям
+  | { event: 'lesson_change'; id: string }; // id отмены/переноса — ученикам и родителям группы
 
 export async function sendPushNotification(pushEvent: PushEvent) {
   try {

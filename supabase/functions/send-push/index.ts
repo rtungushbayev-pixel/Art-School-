@@ -13,6 +13,8 @@
 //                                               сотрудник → автору обращения
 //   attendance_absent { id: attendance_id }   — преподаватель → родителям ученика,
 //                                               которого отметил «Нет» на занятии
+//   lesson_change     { id: lesson_change_id } — преподаватель группы → ученикам
+//                                               группы и их родителям (отмена/перенос)
 //
 // Каждое событие рассылается не более одного раза (таблица push_events).
 // Получатели, отключившие категорию в настройках (profiles.notify_*),
@@ -33,7 +35,8 @@ type PushEvent =
   | 'listing_moderated'
   | 'announcement'
   | 'support_message'
-  | 'attendance_absent';
+  | 'attendance_absent'
+  | 'lesson_change';
 type NotificationCategory = 'announcements' | 'comments' | 'moderation' | 'support' | 'attendance';
 
 interface RequestBody {
@@ -266,6 +269,40 @@ async function buildMessage(admin: SupabaseClient, caller: Caller, { event, id }
           `${student?.full_name ?? 'Ваш ребёнок'} отсутствует на занятии${group?.name ? ` группы «${group.name}»` : ''} ${d}.${m}.${y}. Если это ошибка, свяжитесь с преподавателем.`
         ),
         data: { type: 'attendance', studentId: mark.student_id },
+      };
+    }
+
+    case 'lesson_change': {
+      requireStaff(caller);
+      const { data: change } = await admin
+        .from('lesson_changes')
+        .select('id, lesson_date, cancelled, start_time, room, note, lesson:lesson_id ( group_id, start_time, group:group_id ( name, teacher_id ) )')
+        .eq('id', id)
+        .single();
+      if (!change) throw new HttpError(404, 'Изменение не найдено');
+      const lesson = change.lesson as unknown as {
+        group_id: string;
+        start_time: string;
+        group: { name: string; teacher_id: string | null } | null;
+      } | null;
+      if (!lesson) return null;
+      if (caller.role !== 'admin' && lesson.group?.teacher_id !== caller.id) {
+        throw new HttpError(403, 'Это не ваша группа');
+      }
+      const recipientIds = await resolveAudience(admin, 'group', lesson.group_id);
+      const [, m, d] = String(change.lesson_date).split('-');
+      const groupName = lesson.group?.name ?? '';
+      const time = String(change.start_time ?? lesson.start_time).slice(0, 5);
+      const details = change.cancelled
+        ? 'Занятие отменено.'
+        : `Новое время: ${time}${change.room ? `, каб. ${change.room}` : ''}.`;
+      return {
+        dedupKey: `lesson_change:${change.id}:${change.cancelled}:${change.start_time}:${change.room}`,
+        category: 'announcements',
+        recipientIds,
+        title: change.cancelled ? `Отмена занятия ${d}.${m}` : `Изменение занятия ${d}.${m}`,
+        body: truncate(`${groupName}. ${details}${change.note ? ` ${change.note}` : ''}`),
+        data: { type: 'announcement' },
       };
     }
 

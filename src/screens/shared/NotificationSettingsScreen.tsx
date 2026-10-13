@@ -12,9 +12,16 @@ import { useStrings } from '../../i18n';
 import { colors, spacing } from '../../theme/colors';
 import type { Profile } from '../../types/database';
 
-type SettingKey = 'notify_announcements' | 'notify_comments' | 'notify_moderation' | 'notify_support' | 'notify_attendance';
+type SettingKey =
+  | 'notify_announcements'
+  | 'notify_comments'
+  | 'notify_moderation'
+  | 'notify_support'
+  | 'notify_attendance'
+  | 'notify_reminders';
 
 const SETTING_KEYS: SettingKey[] = [
+  'notify_reminders',
   'notify_attendance',
   'notify_announcements',
   'notify_comments',
@@ -27,6 +34,10 @@ type SettingText = Record<SettingKey, { title: string; description: string }>;
 const STRINGS = {
   ru: {
     settings: {
+      notify_reminders: {
+        title: 'Напоминания о занятиях',
+        description: 'За 2 часа до занятия',
+      },
       notify_attendance: {
         title: 'Посещаемость',
         description: 'Ребёнок отсутствует на занятии',
@@ -58,6 +69,10 @@ const STRINGS = {
   },
   kk: {
     settings: {
+      notify_reminders: {
+        title: 'Сабақ туралы еске салу',
+        description: 'Сабаққа 2 сағат қалғанда',
+      },
       notify_attendance: {
         title: 'Сабаққа қатысу',
         description: 'Бала сабаққа келмеді',
@@ -89,6 +104,10 @@ const STRINGS = {
   },
   en: {
     settings: {
+      notify_reminders: {
+        title: 'Class reminders',
+        description: '2 hours before each class',
+      },
       notify_attendance: {
         title: 'Attendance',
         description: 'Your child is absent from a class',
@@ -134,6 +153,7 @@ export function NotificationSettingsScreen() {
           notify_moderation: profile.notify_moderation,
           notify_support: profile.notify_support,
           notify_attendance: profile.notify_attendance ?? true,
+          notify_reminders: profile.notify_reminders ?? true,
         }
       : null
   );
@@ -203,7 +223,11 @@ export function NotificationSettingsScreen() {
 
       <Text style={styles.sectionTitle}>{s.sendNotifications}</Text>
       <Card style={styles.list}>
-        {SETTING_KEYS.filter((key) => key !== 'notify_attendance' || profile.role === 'parent').map((key, index) => (
+        {SETTING_KEYS.filter(
+          (key) =>
+            (key !== 'notify_attendance' || profile.role === 'parent') &&
+            (key !== 'notify_reminders' || profile.role === 'parent' || profile.role === 'student')
+        ).map((key, index) => (
           <View key={key} style={[styles.row, index > 0 && styles.rowDivider]}>
             <View style={styles.rowText}>
               <Text style={styles.rowTitle}>{s.settings[key].title}</Text>

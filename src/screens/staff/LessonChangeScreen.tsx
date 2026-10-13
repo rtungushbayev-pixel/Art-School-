@@ -7,6 +7,7 @@ import { Card } from '../../components/Card';
 import { TextField } from '../../components/TextField';
 import { Button } from '../../components/Button';
 import { supabase } from '../../lib/supabase';
+import { sendPushNotification } from '../../lib/notifications';
 import { dayName, formatDayMonth, formatTime, parseDateKey } from '../../lib/schedule';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { Lesson, LessonChange } from '../../types/database';
@@ -146,7 +147,7 @@ export function LessonChangeScreen({ route }: Props) {
       return;
     }
     setSaving(true);
-    const { error } = await supabase.from('lesson_changes').upsert(
+    const { data: saved, error } = await supabase.from('lesson_changes').upsert(
       {
         lesson_id: lessonId,
         lesson_date: date,
@@ -157,12 +158,14 @@ export function LessonChangeScreen({ route }: Props) {
         note: note.trim() || null,
       },
       { onConflict: 'lesson_id,lesson_date' }
-    );
+    ).select('id').single();
     setSaving(false);
     if (error) {
       Alert.alert(s.saveFailed, error.message);
       return;
     }
+    // Ученики группы и их родители узнают об отмене или переносе сразу.
+    if (saved?.id) sendPushNotification({ event: 'lesson_change', id: saved.id as string });
     navigation.goBack();
   };
 

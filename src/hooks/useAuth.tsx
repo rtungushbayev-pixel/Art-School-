@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { AppState } from 'react-native';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { clearPushToken, syncPushToken } from '../lib/notifications';
+import { syncLessonReminders } from '../lib/lessonReminders';
 import { AUTH_REDIRECT_URL, PASSWORD_RESET_URL, listenForAuthLinks } from '../lib/authLinks';
 import type { Profile } from '../types/database';
 
@@ -90,6 +92,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       syncPushToken();
     }
   }, [profile?.id]);
+
+  // Напоминания о занятиях пересчитываются при входе, смене настройки и
+  // каждом возвращении в приложение (расписание могли изменить).
+  useEffect(() => {
+    syncLessonReminders(profile);
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') syncLessonReminders(profile);
+    });
+    return () => sub.remove();
+  }, [profile?.id, profile?.notify_reminders]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
