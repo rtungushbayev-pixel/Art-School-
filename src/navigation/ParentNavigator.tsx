@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { ParentStackParamList } from './types';
 import { ParentTabs } from './ParentTabs';
 import { ChildDetailScreen } from '../screens/parent/ChildDetailScreen';
+import { AnnouncementDetailScreen } from '../screens/shared/AnnouncementDetailScreen';
 import { PostDetailScreen } from '../screens/shared/PostDetailScreen';
 import { EditProfileScreen } from '../screens/shared/EditProfileScreen';
 import { NotificationSettingsScreen } from '../screens/shared/NotificationSettingsScreen';
@@ -102,6 +103,7 @@ export function ParentNavigator() {
     >
       <Stack.Screen name="ParentTabs" component={ParentTabs} options={{ headerShown: false }} />
       <Stack.Screen name="Messages" component={AnnouncementsScreen} options={{ title: s.messages }} />
+      <Stack.Screen name="AnnouncementDetail" component={AnnouncementDetailScreen} options={{ title: s.messages }} />
       <Stack.Screen name="Children" component={ChildrenScreen} options={{ title: s.children }} />
       <Stack.Screen name="AddChild" component={AddChildScreen} options={{ title: s.addChild }} />
       <Stack.Screen name="CheckIn" component={CheckInScreen} options={{ title: s.checkIn }} />

@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { StudentStackParamList } from './types';
 import { StudentTabs } from './StudentTabs';
 import { PostDetailScreen } from '../screens/shared/PostDetailScreen';
+import { AnnouncementDetailScreen } from '../screens/shared/AnnouncementDetailScreen';
 import { CreatePostScreen } from '../screens/shared/CreatePostScreen';
 import { EditProfileScreen } from '../screens/shared/EditProfileScreen';
 import { NotificationSettingsScreen } from '../screens/shared/NotificationSettingsScreen';
@@ -109,6 +110,7 @@ export function StudentNavigator() {
     >
       <Stack.Screen name="StudentTabs" component={StudentTabs} options={{ headerShown: false }} />
       <Stack.Screen name="Messages" component={AnnouncementsScreen} options={{ title: s.messages }} />
+      <Stack.Screen name="AnnouncementDetail" component={AnnouncementDetailScreen} options={{ title: s.messages }} />
       <Stack.Screen name="Market" component={MarketplaceScreen} options={{ title: s.market }} />
       <Stack.Screen name="Friends" component={FriendsScreen} options={{ title: s.friends }} />
       <Stack.Screen name="PostDetail" component={PostDetailScreen} options={{ title: s.post }} />

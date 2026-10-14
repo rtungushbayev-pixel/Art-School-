@@ -1,6 +1,8 @@
 import React, { useCallback, useState } from 'react';
-import { StyleSheet, Text } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { Pressable, StyleSheet, Text } from 'react-native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { StudentStackParamList } from '../../navigation/types';
 import { Screen } from '../../components/Screen';
 import { AnnouncementCard } from '../../components/AnnouncementCard';
 import { fetchAnnouncements, AnnouncementWithAuthor } from '../../lib/announcements';
@@ -15,6 +17,7 @@ const STRINGS = {
 
 export function AnnouncementsScreen() {
   const s = useStrings(STRINGS);
+  const navigation = useNavigation<NativeStackNavigationProp<StudentStackParamList>>();
   const [items, setItems] = useState<AnnouncementWithAuthor[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -37,7 +40,9 @@ export function AnnouncementsScreen() {
     <Screen scroll refreshing={loading} onRefresh={load}>
       {items.length === 0 && !loading ? <Text style={styles.empty}>{s.empty}</Text> : null}
       {items.map((item) => (
-        <AnnouncementCard key={item.id} announcement={item} />
+        <Pressable key={item.id} onPress={() => navigation.navigate('AnnouncementDetail', { announcementId: item.id })}>
+          <AnnouncementCard announcement={item} preview />
+        </Pressable>
       ))}
     </Screen>
   );

@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { StaffStackParamList } from './types';
 import { StaffTabs } from './StaffTabs';
 import { ComposeAnnouncementScreen } from '../screens/staff/ComposeAnnouncementScreen';
+import { AnnouncementDetailScreen } from '../screens/shared/AnnouncementDetailScreen';
 import { StaffAnnouncementsScreen } from '../screens/staff/AnnouncementsScreen';
 import { MarketplaceScreen } from '../screens/shared/MarketplaceScreen';
 import { FriendsScreen } from '../screens/shared/FriendsScreen';
@@ -201,6 +202,7 @@ export function StaffNavigator() {
     >
       <Stack.Screen name="StaffTabs" component={StaffTabs} options={{ headerShown: false }} />
       <Stack.Screen name="Messages" component={StaffAnnouncementsScreen} options={{ title: s.messages }} />
+      <Stack.Screen name="AnnouncementDetail" component={AnnouncementDetailScreen} options={{ title: s.messages }} />
       <Stack.Screen name="Market" component={MarketplaceScreen} options={{ title: s.market }} />
       <Stack.Screen name="Friends" component={FriendsScreen} options={{ title: s.friends }} />
       <Stack.Screen

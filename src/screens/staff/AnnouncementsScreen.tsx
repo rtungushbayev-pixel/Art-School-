@@ -53,8 +53,8 @@ export function StaffAnnouncementsScreen() {
 
       {items.length === 0 && !loading ? <Text style={styles.empty}>{s.empty}</Text> : null}
       {items.map((item) => (
-        <Pressable key={item.id} onPress={() => navigation.navigate('ComposeAnnouncement', { announcementId: item.id })}>
-          <AnnouncementCard announcement={item} editable />
+        <Pressable key={item.id} onPress={() => navigation.navigate('AnnouncementDetail', { announcementId: item.id })}>
+          <AnnouncementCard announcement={item} preview />
         </Pressable>
       ))}
     </Screen>

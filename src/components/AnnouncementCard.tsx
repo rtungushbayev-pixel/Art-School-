@@ -31,9 +31,11 @@ const AUDIENCE_COLORS: Record<AnnouncementAudience, string> = {
 interface AnnouncementCardProps {
   announcement: AnnouncementWithAuthor;
   editable?: boolean;
+  // В списке — первые строки текста; целиком сообщение открывается отдельным экраном.
+  preview?: boolean;
 }
 
-export function AnnouncementCard({ announcement, editable }: AnnouncementCardProps) {
+export function AnnouncementCard({ announcement, editable, preview }: AnnouncementCardProps) {
   const s = useStrings(STRINGS);
   return (
     <Card>
@@ -42,7 +44,9 @@ export function AnnouncementCard({ announcement, editable }: AnnouncementCardPro
         <Text style={styles.title}>{announcement.title}</Text>
         {editable ? <Text style={styles.editIcon}>✏️</Text> : null}
       </View>
-      <Text style={styles.body}>{announcement.body}</Text>
+      <Text style={styles.body} numberOfLines={preview ? 3 : undefined}>
+        {announcement.body}
+      </Text>
       <View style={styles.metaRow}>
         <Text style={styles.meta}>{announcement.author?.full_name ?? s.administration}</Text>
         <View style={[styles.audienceTag, { backgroundColor: AUDIENCE_COLORS[announcement.audience] }]}>

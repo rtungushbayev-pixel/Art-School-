@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { OfficeTabParamList, StaffStackParamList } from './types';
 import { makeTabScreenOptions, type TabConfig } from './tabOptions';
 import { MaterialRequestsScreen } from '../screens/materials/MaterialRequestsScreen';
+import { AnnouncementDetailScreen } from '../screens/shared/AnnouncementDetailScreen';
 import { MaterialRequestScreen } from '../screens/materials/MaterialRequestScreen';
 import { ProfileScreen } from '../screens/shared/ProfileScreen';
 import { EditProfileScreen } from '../screens/shared/EditProfileScreen';
@@ -99,6 +100,7 @@ export function OfficeNavigator() {
         options={{ title: s.notifications }}
       />
       <Stack.Screen name="Messages" component={AnnouncementsScreen} options={{ title: s.messages }} />
+      <Stack.Screen name="AnnouncementDetail" component={AnnouncementDetailScreen} options={{ title: s.messages }} />
       <Stack.Screen name="Support" component={SupportScreen} options={{ title: s.tickets }} />
       <Stack.Screen name="NewSupportTicket" component={NewSupportTicketScreen} options={{ title: s.help }} />
       <Stack.Screen name="SupportTicket" component={SupportTicketScreen} options={{ title: s.ticket }} />

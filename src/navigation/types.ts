@@ -21,6 +21,7 @@ export type StudentStackParamList = {
   Events: undefined;
   EventDetail: { eventId: string };
   Messages: undefined;
+  AnnouncementDetail: { announcementId: string };
   Market: undefined;
   Friends: { focusSearch?: boolean; showBlocked?: boolean } | undefined;
   PostDetail: { postId: string };
@@ -51,6 +52,7 @@ export type StaffStackParamList = {
   StaffTabs: NavigatorScreenParams<StaffTabParamList> | undefined;
   ProfileSettings: undefined;
   Messages: undefined;
+  AnnouncementDetail: { announcementId: string };
   Market: undefined;
   Friends: { focusSearch?: boolean; showBlocked?: boolean } | undefined;
   ComposeAnnouncement: { announcementId?: string } | undefined;
@@ -121,6 +123,7 @@ export type ParentStackParamList = {
   EventDetail: { eventId: string };
   Portfolio: { userId: string };
   Messages: undefined;
+  AnnouncementDetail: { announcementId: string };
   Children: undefined;
   AddChild: undefined;
   ChildDetail: { childId: string };

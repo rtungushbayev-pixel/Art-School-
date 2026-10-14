@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
@@ -63,6 +63,24 @@ export function LoginScreen({ navigation }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  // Автозаполнение из памяти телефона вставляет пароль целиком, а не по букве —
+  // тогда входим сразу, без нажатия «Войти».
+  const [autofilled, setAutofilled] = useState(false);
+  const autoTried = useRef(false);
+
+  const onPasswordChange = (next: string) => {
+    if (next.length - password.length >= 4) setAutofilled(true);
+    setPassword(next);
+  };
+
+  useEffect(() => {
+    if (!autofilled || autoTried.current || loading || !email.trim() || !password) return;
+    autoTried.current = true;
+    // Короткая пауза: автозаполнение может дописать email чуть позже пароля.
+    const timer = setTimeout(() => onSubmit(), 300);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autofilled, email, password]);
 
   const onSubmit = async () => {
     if (!email || !password) {
@@ -99,13 +117,19 @@ export function LoginScreen({ navigation }: Props) {
         onChangeText={setEmail}
         autoCapitalize="none"
         keyboardType="email-address"
+        autoComplete="email"
+        textContentType="username"
         placeholder="you@example.com"
       />
       <TextField
         label={s.password}
         value={password}
-        onChangeText={setPassword}
+        onChangeText={onPasswordChange}
         secureTextEntry
+        autoComplete="current-password"
+        textContentType="password"
+        returnKeyType="go"
+        onSubmitEditing={onSubmit}
         placeholder="••••••••"
       />
 
