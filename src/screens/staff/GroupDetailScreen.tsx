@@ -9,8 +9,9 @@ import { Avatar } from '../../components/Avatar';
 import { Button } from '../../components/Button';
 import { RosterSection } from '../../components/RosterSection';
 import { GroupBranchPicker } from '../../components/GroupBranchPicker';
+import { GroupTeacherPicker } from '../../components/GroupTeacherPicker';
 import { useAuth } from '../../hooks/useAuth';
-import { isAdminRole, isStaffRole } from '../../lib/roles';
+import { isAdminRole } from '../../lib/roles';
 import { supabase } from '../../lib/supabase';
 import { fetchGroupMembers, removeStudentFromGroup } from '../../lib/groups';
 import { dayShort } from '../../lib/schedule';
@@ -77,8 +78,7 @@ export function GroupDetailScreen({ route }: Props) {
   // (на сервере — can_manage_group).
   // Состав группы меняет только администратор (group_members_write_admin).
   const isAdmin = isAdminRole(profile?.role);
-  // Группа не привязана к преподавателю: вести её может любой сотрудник.
-  const canManage = isStaffRole(profile?.role);
+  const canManage = isAdmin || (!!group && group.teacher_id === profile?.id);
   const [members, setMembers] = useState<Profile[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
 
@@ -132,6 +132,13 @@ export function GroupDetailScreen({ route }: Props) {
     <Screen scroll>
       <Text style={styles.title}>{group.name}</Text>
       {group.description ? <Text style={styles.description}>{group.description}</Text> : null}
+      {isAdmin ? (
+        <GroupTeacherPicker
+          groupId={groupId}
+          teacherId={group.teacher_id}
+          onChange={(id) => setGroup((g) => (g ? { ...g, teacher_id: id } : g))}
+        />
+      ) : null}
       {isAdmin ? <GroupBranchPicker groupId={groupId} branchId={group.branch_id} /> : null}
       {canManage && members.length > 0 ? (
         <>

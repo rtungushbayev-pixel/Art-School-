@@ -298,7 +298,9 @@ async function buildMessage(admin: SupabaseClient, caller: Caller, { event, id }
         group: { name: string; teacher_id: string | null } | null;
       } | null;
       if (!lesson) return null;
-      // Группы не закреплены за преподавателями: переносить может любой сотрудник.
+      if (caller.role !== 'admin' && lesson.group?.teacher_id !== caller.id) {
+        throw new HttpError(403, 'Это не ваша группа');
+      }
       // Не больше 3 рассылок по одному изменению занятия.
       const { count: sentBefore } = await admin
         .from('push_events')
