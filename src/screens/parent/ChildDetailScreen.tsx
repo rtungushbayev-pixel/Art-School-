@@ -132,7 +132,7 @@ export function ChildDetailScreen({ route, navigation }: Props) {
         fetchStudentAttendance(childId, localISODate(since)).catch(() => [] as Attendance[]),
       ]);
       setAttendance(marks);
-      setTeachers(await fetchChildTeachers(childId).catch(() => [] as ChildTeacher[]));
+      if (FEATURES.parentChats) setTeachers(await fetchChildTeachers(childId).catch(() => [] as ChildTeacher[]));
       setGroups(groupNames);
       setNotes(progress);
       const items: GalleryItem[] = [
@@ -180,7 +180,7 @@ export function ChildDetailScreen({ route, navigation }: Props) {
         </View>
       ) : null}
       {/* Группы без закреплённого преподавателя: родитель выбирает, кому написать. */}
-      {viewer && teachers.length > 0 ? (
+      {FEATURES.parentChats && viewer && teachers.length > 0 ? (
         <View style={styles.writeTeacher}>
           <Button title={s.writeTeacher} variant="secondary" onPress={() => setTeachersOpen((v) => !v)} />
           {teachersOpen ? (

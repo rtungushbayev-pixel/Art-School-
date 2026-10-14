@@ -159,7 +159,7 @@ export function ProfileScreen() {
               ) : null}
             </>
           ) : null}
-          {isStaffRole(profile.role) ? (
+          {FEATURES.parentChats && isStaffRole(profile.role) ? (
             <>
               <View style={{ height: spacing.sm }} />
               <Button title={s.chats} variant="secondary" onPress={() => navigation.navigate('Chats')} />

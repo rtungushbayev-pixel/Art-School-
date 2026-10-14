@@ -467,7 +467,7 @@ export function UserProfileScreen() {
           {parents.length > 0 ? (
             <Text style={styles.parents}>{s.parents(parents.map((p) => p.full_name).join(', '))}</Text>
           ) : null}
-          {parents.map((parent) => (
+          {FEATURES.parentChats && parents.map((parent) => (
             <View key={parent.id} style={{ marginBottom: spacing.sm }}>
               <Button
                 title={s.writeParent(parent.full_name)}

@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { Button } from '../../components/Button';
+import { FEATURES } from '../../lib/features';
 import { DeleteAccountButton } from '../../components/DeleteAccountButton';
 import { ProfileHeader } from '../../components/ProfileHeader';
 import { useAuth } from '../../hooks/useAuth';
@@ -61,8 +62,12 @@ export function ParentProfileScreen() {
     <Screen scroll>
       <ProfileHeader profile={profile} onAvatarPress={onAvatarPress} avatarUploading={avatarUploading} />
       <Button title={s.myChildren} onPress={() => navigation.navigate('Children')} />
-      <View style={{ height: spacing.sm }} />
-      <Button title={s.chats} variant="secondary" onPress={() => navigation.navigate('Chats')} />
+      {FEATURES.parentChats ? (
+        <>
+          <View style={{ height: spacing.sm }} />
+          <Button title={s.chats} variant="secondary" onPress={() => navigation.navigate('Chats')} />
+        </>
+      ) : null}
       <View style={{ height: spacing.sm }} />
       <Button
         title={s.profileSettings}
