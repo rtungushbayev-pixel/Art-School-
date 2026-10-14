@@ -25,6 +25,7 @@ const STRINGS = {
     subject: 'Тема (необязательно)',
     subjectPlaceholder: 'Коротко, о чём обращение',
     send: 'Отправить',
+    change: 'Изменить',
   },
   kk: {
     describeWhat: 'Не болғанын сипаттаңыз',
@@ -36,6 +37,7 @@ const STRINGS = {
     subject: 'Тақырып (міндетті емес)',
     subjectPlaceholder: 'Өтініш не туралы, қысқаша',
     send: 'Жіберу',
+    change: 'Өзгерту',
   },
   en: {
     describeWhat: 'Please describe what happened',
@@ -47,6 +49,7 @@ const STRINGS = {
     subject: 'Subject (optional)',
     subjectPlaceholder: 'Briefly, what the request is about',
     send: 'Send',
+    change: 'Change',
   },
 };
 
@@ -58,6 +61,8 @@ export function NewSupportTicketScreen() {
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [saving, setSaving] = useState(false);
+  // Тема уже выбрана на прошлом экране — список тем раскрывается только по «Изменить».
+  const [picking, setPicking] = useState(false);
 
   const onSend = async () => {
     if (!body.trim()) {
@@ -79,25 +84,41 @@ export function NewSupportTicketScreen() {
 
   return (
     <Screen scroll>
-      <Text style={styles.title}>{s.title}</Text>
       <Text style={styles.label}>{s.reason}</Text>
-      <View style={styles.categories}>
-        {supportCategories().map((opt) => {
-          const active = category === opt.value;
-          return (
-            <Pressable
-              key={opt.value}
-              onPress={() => setCategory(opt.value)}
-              style={[styles.category, active && styles.categoryActive]}
-            >
-              <Text style={[styles.categoryTitle, active && styles.categoryTextActive]}>
-                {supportCategoryLabel(opt.value)}
-              </Text>
-              <Text style={[styles.categoryHint, active && styles.categoryTextActive]}>{opt.hint}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      {picking ? (
+        <View style={styles.categories}>
+          {supportCategories().map((opt) => {
+            const active = category === opt.value;
+            return (
+              <Pressable
+                key={opt.value}
+                onPress={() => {
+                  setCategory(opt.value);
+                  setPicking(false);
+                }}
+                style={[styles.category, active && styles.categoryActive]}
+              >
+                <Text style={[styles.categoryTitle, active && styles.categoryTextActive]}>
+                  {supportCategoryLabel(opt.value)}
+                </Text>
+                <Text style={[styles.categoryHint, active && styles.categoryTextActive]}>{opt.hint}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : (
+        <View style={[styles.category, styles.categoryActive, styles.selected]}>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.categoryTitle, styles.categoryTextActive]}>{supportCategoryLabel(category)}</Text>
+            <Text style={[styles.categoryHint, styles.categoryTextActive]}>
+              {supportCategories().find((o) => o.value === category)?.hint}
+            </Text>
+          </View>
+          <Text style={styles.change} onPress={() => setPicking(true)}>
+            {s.change}
+          </Text>
+        </View>
+      )}
 
       <TextField
         label={s.details}
@@ -108,6 +129,7 @@ export function NewSupportTicketScreen() {
         numberOfLines={6}
         maxLength={4000}
         style={styles.textarea}
+        autoFocus
       />
       <TextField
         label={s.subject}
@@ -123,7 +145,6 @@ export function NewSupportTicketScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 26, fontWeight: '800', color: colors.text, marginBottom: spacing.md },
   label: { marginBottom: spacing.xs, color: colors.textMuted, fontSize: 13, fontWeight: '600' },
   categories: { gap: spacing.sm, marginBottom: spacing.md },
   category: {
@@ -137,5 +158,7 @@ const styles = StyleSheet.create({
   categoryTitle: { fontWeight: '700', color: colors.text },
   categoryHint: { color: colors.textMuted, fontSize: 13, marginTop: 2 },
   categoryTextActive: { color: colors.white },
+  selected: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.md },
+  change: { color: colors.white, fontWeight: '700', textDecorationLine: 'underline' },
   textarea: { minHeight: 120, textAlignVertical: 'top' },
 });
