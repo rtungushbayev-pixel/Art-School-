@@ -9,6 +9,7 @@ import { SvgXml } from 'react-native-svg';
 import { LOGO_RU_XML } from '../../components/logoRuXml';
 import { LanguageSwitcher } from '../../components/LanguageSwitcher';
 import { useAuth } from '../../hooks/useAuth';
+import { useStartKioskPairing } from '../../lib/kioskMode';
 import { useLanguage, useStrings } from '../../i18n';
 import { colors, spacing } from '../../theme/colors';
 import type { AuthStackParamList } from '../../navigation/types';
@@ -17,6 +18,7 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
 const STRINGS = {
   ru: {
+    kiosk: 'Режим планшета (QR филиала)',
     fillAll: 'Заполните все поля',
     loginFailed: 'Не удалось войти',
     school: 'Школа искусств и дизайна',
@@ -28,6 +30,7 @@ const STRINGS = {
     forgot: 'Забыли пароль?',
   },
   kk: {
+    kiosk: 'Планшет режимі (филиал QR-ы)',
     fillAll: 'Барлық өрістерді толтырыңыз',
     loginFailed: 'Кіру мүмкін болмады',
     school: 'Өнер және дизайн мектебі',
@@ -39,6 +42,7 @@ const STRINGS = {
     forgot: 'Құпиясөзді ұмыттыңыз ба?',
   },
   en: {
+    kiosk: 'Tablet mode (branch QR)',
     fillAll: 'Please fill in all fields',
     loginFailed: 'Could not sign in',
     school: 'School of Art and Design',
@@ -53,6 +57,7 @@ const STRINGS = {
 
 export function LoginScreen({ navigation }: Props) {
   const { signIn } = useAuth();
+  const startKiosk = useStartKioskPairing();
   const s = useStrings(STRINGS);
   const { lang } = useLanguage();
   const [email, setEmail] = useState('');
@@ -117,11 +122,15 @@ export function LoginScreen({ navigation }: Props) {
           {s.signUp}
         </Text>
       </View>
+      <Text style={styles.kiosk} onPress={startKiosk}>
+        {s.kiosk}
+      </Text>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  kiosk: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.xl, fontSize: 13 },
   header: { marginTop: spacing.lg, marginBottom: spacing.xl, alignItems: 'center' },
   title: { fontSize: 24, fontWeight: '800', color: colors.primary, textAlign: 'center', marginTop: spacing.md },
   subtitle: { fontSize: 15, color: colors.textMuted, marginTop: spacing.xs },

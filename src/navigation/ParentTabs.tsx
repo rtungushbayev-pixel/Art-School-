@@ -6,20 +6,24 @@ import { makeTabScreenOptions, type TabConfig } from './tabOptions';
 import { ScheduleScreen } from '../screens/shared/ScheduleScreen';
 import { ParentProfileScreen } from '../screens/parent/ParentProfileScreen';
 import { FeedScreen } from '../screens/shared/FeedScreen';
+import { CheckInScreen } from '../screens/shared/CheckInScreen';
 import { useStrings } from '../i18n';
 
 const STRINGS = {
   ru: {
+    scan: 'Сканировать QR',
     schedule: 'Расписание',
     community: 'Комьюнити',
     profile: 'Профиль',
   },
   kk: {
+    scan: 'QR сканерлеу',
     schedule: 'Кесте',
     community: 'Қауымдастық',
     profile: 'Профиль',
   },
   en: {
+    scan: 'Scan QR',
     schedule: 'Schedule',
     community: 'Community',
     profile: 'Profile',
@@ -31,6 +35,7 @@ const Tab = createBottomTabNavigator<ParentTabParamList>();
 const TAB_CONFIG: Record<keyof ParentTabParamList, TabConfig> = {
   ScheduleTab: { color: paint.sky, icon: 'calendar', iconOutline: 'calendar-outline' },
   FeedTab: { color: paint.coral, icon: 'color-palette', iconOutline: 'color-palette-outline' },
+  ScanTab: { color: paint.teal, icon: 'qr-code', iconOutline: 'qr-code-outline' },
   ProfileTab: { color: colors.primary, icon: 'person-circle', iconOutline: 'person-circle-outline' },
 };
 
@@ -41,6 +46,7 @@ export function ParentTabs() {
     <Tab.Navigator initialRouteName="FeedTab" screenOptions={makeTabScreenOptions(TAB_CONFIG, { showFriends: false, showMarket: false })}>
       <Tab.Screen name="ScheduleTab" component={ScheduleScreen} options={{ title: s.schedule }} />
       <Tab.Screen name="FeedTab" component={FeedScreen} options={{ title: s.community }} />
+      <Tab.Screen name="ScanTab" component={CheckInScreen} options={{ title: s.scan }} />
       <Tab.Screen name="ProfileTab" component={ParentProfileScreen} options={{ title: s.profile }} />
     </Tab.Navigator>
   );

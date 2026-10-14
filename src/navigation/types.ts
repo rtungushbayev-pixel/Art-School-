@@ -10,6 +10,7 @@ export type AuthStackParamList = {
 export type StudentTabParamList = {
   ScheduleTab: undefined;
   FeedTab: undefined;
+  ScanTab: undefined;
   ProfileTab: undefined;
 };
 
@@ -105,6 +106,7 @@ export type OfficeTabParamList = {
 export type ParentTabParamList = {
   ScheduleTab: undefined;
   FeedTab: undefined;
+  ScanTab: undefined;
   ProfileTab: undefined;
 };
 

@@ -6,7 +6,6 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
-import { FEATURES } from '../../lib/features';
 import { useAuth } from '../../hooks/useAuth';
 import { fetchChildren } from '../../lib/parents';
 import type { Profile } from '../../types/database';
@@ -31,7 +30,6 @@ import { useStrings } from '../../i18n';
 const STRINGS = {
   ru: {
     events: 'Выставки и конкурсы',
-    checkIn: 'Отметиться по QR',
     thisWeek: 'Эта неделя',
     nextWeek: 'Следующая неделя',
     lastWeek: 'Прошлая неделя',
@@ -51,7 +49,6 @@ const STRINGS = {
   },
   kk: {
     events: 'Көрмелер мен байқаулар',
-    checkIn: 'QR арқылы белгілену',
     thisWeek: 'Осы апта',
     nextWeek: 'Келесі апта',
     lastWeek: 'Өткен апта',
@@ -71,7 +68,6 @@ const STRINGS = {
   },
   en: {
     events: 'Exhibitions and competitions',
-    checkIn: 'Check in with QR',
     thisWeek: 'This week',
     nextWeek: 'Next week',
     lastWeek: 'Last week',
@@ -168,11 +164,6 @@ export function ScheduleScreen() {
 
   return (
     <Screen scroll refreshing={loading} onRefresh={load}>
-      {FEATURES.qrCheckIn && (profile?.role === 'student' || profile?.role === 'parent') ? (
-        <View style={styles.checkIn}>
-          <Button title={s.checkIn} onPress={() => (navigation as any).navigate('CheckIn')} />
-        </View>
-      ) : null}
       <View style={styles.checkIn}>
         <Button title={s.events} variant="secondary" onPress={() => (navigation as any).navigate('Events')} />
       </View>

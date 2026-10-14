@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useIsFocused } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
@@ -11,7 +12,8 @@ import { colors, radius, spacing } from '../../theme/colors';
 
 const STRINGS = {
   ru: {
-    hint: 'Наведите камеру на QR-код у входа в филиал.',
+    expired: 'Код уже сменился. Отсканируйте QR на планшете ещё раз.',
+    hint: 'Наведите камеру на QR-код на планшете у входа в филиал.',
     needCamera: 'Чтобы отметиться, разрешите доступ к камере.',
     allow: 'Разрешить камеру',
     checking: 'Отмечаем…',
@@ -25,6 +27,7 @@ const STRINGS = {
     failed: 'Не удалось отметиться',
   },
   kk: {
+    expired: 'Код ауысып кетті. Планшеттегі QR-ды қайта сканерлеңіз.',
     hint: 'Камераны филиал кіреберісіндегі QR-кодқа бағыттаңыз.',
     needCamera: 'Белгілену үшін камераға рұқсат беріңіз.',
     allow: 'Камераға рұқсат беру',
@@ -39,6 +42,7 @@ const STRINGS = {
     failed: 'Белгілену мүмкін болмады',
   },
   en: {
+    expired: 'The code has already changed. Scan the QR on the tablet again.',
     hint: 'Point the camera at the QR code at the branch entrance.',
     needCamera: 'Allow camera access to check in.',
     allow: 'Allow camera',
@@ -66,6 +70,8 @@ export function CheckInScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [state, setState] = useState<State>({ kind: 'scanning' });
   const busy = useRef(false);
+  // Камера работает только пока вкладка открыта.
+  const focused = useIsFocused();
 
   const onScanned = async (data: string) => {
     if (busy.current) return;
@@ -81,7 +87,14 @@ export function CheckInScreen() {
       setState(results.length === 0 ? { kind: 'error', message: s.nothing } : { kind: 'done', results });
     } catch (e) {
       const text = errorText(e) ?? '';
-      setState({ kind: 'error', message: text.includes('invalid_code') ? s.invalid : `${s.failed}${text ? `: ${text}` : ''}` });
+      setState({
+        kind: 'error',
+        message: text.includes('expired_code')
+          ? s.expired
+          : text.includes('invalid_code')
+            ? s.invalid
+            : `${s.failed}${text ? `: ${text}` : ''}`,
+      });
     }
   };
 
@@ -107,12 +120,14 @@ export function CheckInScreen() {
         <>
           <Text style={styles.hint}>{s.hint}</Text>
           <View style={styles.cameraBox}>
-            <CameraView
-              style={StyleSheet.absoluteFill}
-              facing="back"
-              barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
-              onBarcodeScanned={({ data }) => onScanned(data)}
-            />
+            {focused ? (
+              <CameraView
+                style={StyleSheet.absoluteFill}
+                facing="back"
+                barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+                onBarcodeScanned={({ data }) => onScanned(data)}
+              />
+            ) : null}
           </View>
         </>
       ) : null}
