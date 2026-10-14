@@ -10,7 +10,7 @@ import { Button } from '../../components/Button';
 import { RosterSection } from '../../components/RosterSection';
 import { GroupBranchPicker } from '../../components/GroupBranchPicker';
 import { useAuth } from '../../hooks/useAuth';
-import { isAdminRole } from '../../lib/roles';
+import { isAdminRole, isStaffRole } from '../../lib/roles';
 import { supabase } from '../../lib/supabase';
 import { fetchGroupMembers, removeStudentFromGroup } from '../../lib/groups';
 import { dayShort } from '../../lib/schedule';
@@ -77,7 +77,8 @@ export function GroupDetailScreen({ route }: Props) {
   // (на сервере — can_manage_group).
   // Состав группы меняет только администратор (group_members_write_admin).
   const isAdmin = isAdminRole(profile?.role);
-  const canManage = isAdmin || (!!group && group.teacher_id === profile?.id);
+  // Группа не привязана к преподавателю: вести её может любой сотрудник.
+  const canManage = isStaffRole(profile?.role);
   const [members, setMembers] = useState<Profile[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
 

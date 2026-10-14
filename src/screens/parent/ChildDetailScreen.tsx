@@ -41,7 +41,8 @@ const STRINGS = {
   ru: {
     payments: 'Оплаты',
     chatFailed: 'Не удалось открыть чат',
-    writeTeacher: (name: string, group: string) => `Написать преподавателю: ${name} (${group})`,
+    writeTeacher: 'Написать преподавателю',
+    chooseTeacher: 'Кому написать?',
     locale: 'ru-RU',
     noName: 'Без имени',
     progress: 'Прогресс',
@@ -61,7 +62,8 @@ const STRINGS = {
   kk: {
     payments: 'Төлемдер',
     chatFailed: 'Чатты ашу мүмкін болмады',
-    writeTeacher: (name: string, group: string) => `Мұғалімге жазу: ${name} (${group})`,
+    writeTeacher: 'Мұғалімге жазу',
+    chooseTeacher: 'Кімге жазу керек?',
     locale: 'kk-KZ',
     noName: 'Аты жоқ',
     progress: 'Үлгерім',
@@ -81,7 +83,8 @@ const STRINGS = {
   en: {
     payments: 'Payments',
     chatFailed: 'Could not open the chat',
-    writeTeacher: (name: string, group: string) => `Message the teacher: ${name} (${group})`,
+    writeTeacher: 'Message a teacher',
+    chooseTeacher: 'Who do you want to message?',
     locale: 'en-US',
     noName: 'No name',
     progress: 'Progress',
@@ -112,6 +115,7 @@ export function ChildDetailScreen({ route, navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [attendance, setAttendance] = useState<Attendance[]>([]);
   const [teachers, setTeachers] = useState<ChildTeacher[]>([]);
+  const [teachersOpen, setTeachersOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -175,24 +179,35 @@ export function ChildDetailScreen({ route, navigation }: Props) {
           <Button title={s.payments} onPress={() => navigation.navigate('Payments', { studentId: childId })} />
         </View>
       ) : null}
-      {viewer
-        ? teachers.map((t) => (
-            <View key={t.teacher_id} style={styles.writeTeacher}>
-              <Button
-                title={s.writeTeacher(t.full_name, t.group_name)}
-                variant="secondary"
-                onPress={async () => {
-                  try {
-                    const chatId = await startChat(viewer.id, t.teacher_id, childId);
-                    navigation.navigate('Chat', { chatId });
-                  } catch (e) {
-                    Alert.alert(s.chatFailed, errorText(e));
-                  }
-                }}
-              />
+      {/* Группы без закреплённого преподавателя: родитель выбирает, кому написать. */}
+      {viewer && teachers.length > 0 ? (
+        <View style={styles.writeTeacher}>
+          <Button title={s.writeTeacher} variant="secondary" onPress={() => setTeachersOpen((v) => !v)} />
+          {teachersOpen ? (
+            <View style={styles.teacherList}>
+              <Text style={styles.teacherHint}>{s.chooseTeacher}</Text>
+              {teachers.map((t) => (
+                <Pressable
+                  key={t.teacher_id}
+                  style={styles.teacherRow}
+                  onPress={async () => {
+                    try {
+                      const chatId = await startChat(viewer.id, t.teacher_id, childId);
+                      setTeachersOpen(false);
+                      navigation.navigate('Chat', { chatId });
+                    } catch (e) {
+                      Alert.alert(s.chatFailed, errorText(e));
+                    }
+                  }}
+                >
+                  <Avatar uri={t.avatar_url} name={t.full_name} size={32} />
+                  <Text style={styles.teacherName}>{t.full_name}</Text>
+                </Pressable>
+              ))}
             </View>
-          ))
-        : null}
+          ) : null}
+        </View>
+      ) : null}
 
       <View style={styles.segment}>
         {(
@@ -308,6 +323,10 @@ const styles = StyleSheet.create({
   absent: { color: colors.danger },
   late: { color: colors.warning },
   writeTeacher: { marginBottom: spacing.sm },
+  teacherList: { marginTop: spacing.sm, borderRadius: radius.md, backgroundColor: colors.surface, padding: spacing.sm },
+  teacherHint: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.xs },
+  teacherRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.sm },
+  teacherName: { color: colors.text, fontWeight: '600' },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.primary, marginBottom: spacing.sm },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.md },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: spacing.md },
