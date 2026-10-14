@@ -74,9 +74,11 @@ function parseResponse(body: Record<string, unknown>): { passes: Pass[]; lastId:
   for (const row of list) {
     const id = Number(pick(row, ['id', 'ID', 'passId', 'PASS_ID']));
     const dealId = Number(pick(row, ['dealId', 'DEAL_ID', 'deal_id', 'dealID']));
-    const passedAt = toTimestamp(pick(row, ['time', 'TIME', 'date', 'DATE', 'passedAt', 'datetime', 'DATE_CREATE', 'createdAt']));
-    const registry = pick(row, ['number', 'NUMBER', 'registryNumber', 'regNumber', 'REGISTRY_NUMBER', 'registry']);
-    if (!Number.isFinite(id) || !Number.isFinite(dealId) || !passedAt) continue;
+    const passedAt = toTimestamp(pick(row, ['eventAt', 'time', 'TIME', 'date', 'DATE', 'passedAt', 'datetime', 'DATE_CREATE', 'createdAt']));
+    const registry = pick(row, ['registryNo', 'number', 'NUMBER', 'registryNumber', 'regNumber', 'REGISTRY_NUMBER', 'registry']);
+    // Нужен только вход в здание; выход («out») не отмечаем.
+    const direction = String(pick(row, ['direction', 'DIRECTION']) ?? 'in').toLowerCase();
+    if (!Number.isFinite(id) || !Number.isFinite(dealId) || !passedAt || direction === 'out') continue;
     passes.push({ id, deal_id: dealId, passed_at: passedAt, registry_no: registry != null ? String(registry).slice(0, 100) : null });
   }
   const rawLast = Array.isArray(result) ? body.lastId ?? body.LAST_ID : pick(result, ['lastId', 'LAST_ID', 'last_id']) ?? body.lastId;
@@ -107,7 +109,7 @@ async function sync(admin: SupabaseClient, url: string, sinceId: number) {
     if (next === cursor) break;
     cursor = next;
     await admin.from('bitrix_sync').update({ last_id: cursor }).eq('id', 1);
-    if (passes.length < LIMIT) break;
+    if (passes.length < LIMIT && (lastId ?? 0) <= cursor) break;
   }
   return { added: total, lastId: cursor };
 }
