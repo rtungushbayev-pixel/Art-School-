@@ -4,6 +4,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
 import { errorText } from '../lib/errors';
 import { useStrings } from '../i18n';
+import { useAuth } from '../hooks/useAuth';
+import { isAdminRole } from '../lib/roles';
+import { ExternalIdsEditor } from './ExternalIdsEditor';
 import { colors, radius, spacing } from '../theme/colors';
 
 interface RosterEntry {
@@ -18,6 +21,7 @@ type CodeKind = 'student' | 'parent';
 
 const STRINGS = {
   ru: {
+    externalIds: 'Коды 1С и Битрикс24',
     title: 'Коды учеников',
     hint: 'Список учеников группы от школы. У каждого два кода: код ученика (для регистрации ребёнка, одноразовый) и код для родителей (выдаётся лично родителям).',
     namePlaceholder: 'ФИО ученика',
@@ -42,6 +46,7 @@ const STRINGS = {
       `Код для родителей ученика ${name} в приложении KasteyevSchool: ${code}. При регистрации выберите «Родитель» и введите код. Не передавайте его посторонним: по нему видны успехи и фото ребёнка.`,
   },
   kk: {
+    externalIds: '1С және Битрикс24 кодтары',
     title: 'Оқушы кодтары',
     hint: 'Мектептен келген топ оқушыларының тізімі. Әрқайсысында екі код бар: оқушы коды (баланы тіркеуге, бір реттік) және ата-аналарға арналған код (ата-аналарға жеке беріледі).',
     namePlaceholder: 'Оқушының аты-жөні',
@@ -66,6 +71,7 @@ const STRINGS = {
       `KasteyevSchool қолданбасындағы ${name} оқушысының ата-аналарына арналған код: ${code}. Тіркелу кезінде «Ата-ана» таңдап, кодты енгізіңіз. Оны бөгде адамдарға бермеңіз: ол арқылы баланың жетістіктері мен фотолары көрінеді.`,
   },
   en: {
+    externalIds: '1C and Bitrix24 codes',
     title: 'Student codes',
     hint: "The school's list of students in this group. Each has two codes: the student code (for the child's sign-up, single use) and the parent code (given to parents personally).",
     namePlaceholder: "Student's full name",
@@ -96,6 +102,10 @@ const STRINGS = {
 // к аккаунту меняет только сервер (protect_roster_fields).
 export function RosterSection({ groupId }: { groupId: string }) {
   const s = useStrings(STRINGS);
+  const { profile } = useAuth();
+  const isAdmin = isAdminRole(profile?.role);
+  // Строка, у которой открыты коды 1С и Битрикс24 (только администратор).
+  const [externalOpen, setExternalOpen] = useState<string | null>(null);
   const [entries, setEntries] = useState<RosterEntry[]>([]);
   const [name, setName] = useState('');
   const [adding, setAdding] = useState(false);
@@ -197,23 +207,34 @@ export function RosterSection({ groupId }: { groupId: string }) {
 
       {entries.length === 0 ? <Text style={styles.empty}>{s.empty}</Text> : null}
       {entries.map((entry) => (
-        <Pressable key={entry.id} style={styles.row} onPress={() => onActions(entry)} accessibilityLabel={s.actions}>
-          <View style={styles.rowText}>
-            <Text style={styles.name}>{entry.full_name}</Text>
-            <Text style={[styles.status, entry.student_id ? styles.statusDone : null]}>
-              {entry.student_id ? s.registered : s.waiting}
-            </Text>
-            {entry.student_id ? null : (
-              <Text style={styles.codeLine} selectable>
-                {s.studentCode}: <Text style={styles.code}>{entry.code}</Text>
+        <View key={entry.id}>
+          <Pressable style={styles.row} onPress={() => onActions(entry)} accessibilityLabel={s.actions}>
+            <View style={styles.rowText}>
+              <Text style={styles.name}>{entry.full_name}</Text>
+              <Text style={[styles.status, entry.student_id ? styles.statusDone : null]}>
+                {entry.student_id ? s.registered : s.waiting}
               </Text>
-            )}
-            <Text style={styles.codeLine} selectable>
-              {s.parentCode}: <Text style={styles.code}>{entry.parent_code}</Text>
-            </Text>
-          </View>
-          <Ionicons name="ellipsis-horizontal" size={18} color={colors.textMuted} />
-        </Pressable>
+              {entry.student_id ? null : (
+                <Text style={styles.codeLine} selectable>
+                  {s.studentCode}: <Text style={styles.code}>{entry.code}</Text>
+                </Text>
+              )}
+              <Text style={styles.codeLine} selectable>
+                {s.parentCode}: <Text style={styles.code}>{entry.parent_code}</Text>
+              </Text>
+              {isAdmin ? (
+                <Text
+                  style={styles.externalLink}
+                  onPress={() => setExternalOpen((prev) => (prev === entry.id ? null : entry.id))}
+                >
+                  {s.externalIds} {externalOpen === entry.id ? '▴' : '▾'}
+                </Text>
+              ) : null}
+            </View>
+            <Ionicons name="ellipsis-horizontal" size={18} color={colors.textMuted} />
+          </Pressable>
+          {isAdmin && externalOpen === entry.id ? <ExternalIdsEditor rosterId={entry.id} /> : null}
+        </View>
       ))}
     </View>
   );
@@ -251,5 +272,6 @@ const styles = StyleSheet.create({
   status: { color: colors.warning, fontSize: 12, marginTop: 1 },
   statusDone: { color: colors.success },
   codeLine: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
+  externalLink: { color: colors.primary, fontSize: 12, fontWeight: '600', marginTop: spacing.xs },
   code: { fontFamily: 'monospace', fontWeight: '700', color: colors.text, letterSpacing: 1 },
 });

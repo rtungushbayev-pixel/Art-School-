@@ -24,7 +24,6 @@ import {
 } from '../../lib/parents';
 import { Card } from '../../components/Card';
 import { BranchHeadPicker } from '../../components/BranchHeadPicker';
-import { ExternalIdsEditor } from '../../components/ExternalIdsEditor';
 import { startChat } from '../../lib/chats';
 import { errorText } from '../../lib/errors';
 import { Avatar } from '../../components/Avatar';
@@ -417,7 +416,6 @@ export function UserProfileScreen() {
         </View>
       ) : null}
       {isAdminRole(viewer?.role) && isStaffRole(profile.role) ? <BranchHeadPicker userId={profile.id} /> : null}
-      {isAdminRole(viewer?.role) && profile.role === 'student' ? <ExternalIdsEditor studentId={profile.id} /> : null}
       {isAdminRole(viewer?.role) && viewer?.id !== profile.id ? (
         <View style={styles.roleAction}>
           {ROLE_ORDER.filter((role) => role !== profile.role).map((role) => (

@@ -113,7 +113,8 @@ export function DeleteAccountButton() {
 }
 
 const styles = StyleSheet.create({
-  link: { color: colors.danger, textAlign: 'center', marginTop: spacing.lg, marginBottom: spacing.md, fontWeight: '600' },
+  // Неброская ссылка: удаление аккаунта не должно бросаться в глаза.
+  link: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.xl, marginBottom: spacing.md, fontSize: 12 },
   busy: { opacity: 0.5 },
   confirm: { marginTop: spacing.lg },
   cancel: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.md, marginBottom: spacing.md },
