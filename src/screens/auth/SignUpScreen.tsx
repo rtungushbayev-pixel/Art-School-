@@ -133,7 +133,7 @@ const STRINGS = {
     staffCode: 'Invitation code',
     codePlaceholder: 'For example, A1B2C-3D4E5',
     studentHint: "The school gives you the code and group. Your name will be taken from the school list, and your group's schedule will appear automatically.",
-    parentHint: "The school gives you the parent code (it is different from the student's code). After signing up you will immediately see your child's schedule, progress and artworks. If several of your children study at the school, sign up with one child's code and add the others later in your profile: \"My children\" → \"Add a child\", using their parent codes.",
+    parentHint: "The school gives you the parent code (it is different from the student's code). After signing up you will immediately see your child's schedule, progress and artworks. If several of your children study at the school, sign up with one child's code and add the others later in your profile: \"My children\" → \"Add child\", using their parent codes.",
     staffHint: 'The invitation code is given by the school administration.',
     signUp: 'Sign up',
     haveAccount: 'Already have an account?',
