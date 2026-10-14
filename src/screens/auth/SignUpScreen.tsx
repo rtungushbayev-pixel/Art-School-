@@ -45,6 +45,8 @@ const STRINGS = {
     passwordHint: `Не короче ${MIN_PASSWORD} символов`,
     phone: 'Номер телефона',
     yourGroup: 'Ваша группа',
+    yourBranch: 'Ваш филиал',
+    otherBranch: 'Другие',
     noGroups: 'Группы пока не созданы. Обратитесь в администрацию школы.',
     studentCode: 'Код ученика из школы',
     childCode: 'Код для родителей из школы',
@@ -83,6 +85,8 @@ const STRINGS = {
     passwordHint: `Кемінде ${MIN_PASSWORD} таңба`,
     phone: 'Телефон нөмірі',
     yourGroup: 'Сіздің тобыңыз',
+    yourBranch: 'Сіздің филиалыңыз',
+    otherBranch: 'Басқалары',
     noGroups: 'Топтар әлі құрылмаған. Мектеп әкімшілігіне хабарласыңыз.',
     studentCode: 'Мектеп берген оқушы коды',
     childCode: 'Мектеп берген ата-аналар коды',
@@ -121,6 +125,8 @@ const STRINGS = {
     passwordHint: `At least ${MIN_PASSWORD} characters`,
     phone: 'Phone number',
     yourGroup: 'Your group',
+    yourBranch: 'Your branch',
+    otherBranch: 'Other',
     noGroups: 'No groups have been created yet. Please contact the school administration.',
     studentCode: 'Student code from the school',
     childCode: 'Parent code from the school',
@@ -147,6 +153,8 @@ export function SignUpScreen({ navigation }: Props) {
   const [groups, setGroups] = useState<SignupGroup[]>([]);
   const [groupsLoading, setGroupsLoading] = useState(true);
   const [groupId, setGroupId] = useState<string | null>(null);
+  // Групп больше сотни: сначала филиал, потом группы только этого филиала.
+  const [branchKey, setBranchKey] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -242,17 +250,44 @@ export function SignUpScreen({ navigation }: Props) {
           ) : groups.length === 0 ? (
             <Text style={styles.hint}>{s.noGroups}</Text>
           ) : (
-            <View style={styles.groups}>
-              {groups.map((group) => (
-                <Pressable
-                  key={group.id}
-                  onPress={() => setGroupId(group.id)}
-                  style={[styles.groupChip, groupId === group.id && styles.groupChipActive]}
-                >
-                  <Text style={[styles.groupText, groupId === group.id && styles.groupTextActive]}>{group.name}</Text>
-                </Pressable>
-              ))}
-            </View>
+            <>
+              <Text style={styles.subLabel}>{s.yourBranch}</Text>
+              <View style={styles.groups}>
+                {branchesOf(groups, s.otherBranch).map((b) => (
+                  <Pressable
+                    key={b.key}
+                    onPress={() => {
+                      setBranchKey(b.key);
+                      setGroupId(null);
+                    }}
+                    style={[styles.groupChip, branchKey === b.key && styles.groupChipActive]}
+                  >
+                    <Text style={[styles.groupText, branchKey === b.key && styles.groupTextActive]}>{b.name}</Text>
+                  </Pressable>
+                ))}
+              </View>
+              {branchKey ? (
+                <>
+                  <Text style={styles.subLabel}>{s.chooseGroup}</Text>
+                  <View style={styles.groups}>
+                    {groups
+                      .filter((g) => (g.branch_id ?? 'none') === branchKey)
+                      .sort((a, b) => a.name.localeCompare(b.name, 'ru', { numeric: true, sensitivity: 'base' }))
+                      .map((group) => (
+                        <Pressable
+                          key={group.id}
+                          onPress={() => setGroupId(group.id)}
+                          style={[styles.groupChip, groupId === group.id && styles.groupChipActive]}
+                        >
+                          <Text style={[styles.groupText, groupId === group.id && styles.groupTextActive]}>
+                            {shortGroupName(group)}
+                          </Text>
+                        </Pressable>
+                      ))}
+                  </View>
+                </>
+              ) : null}
+            </>
           )}
         </>
       ) : (
@@ -310,7 +345,23 @@ export function SignUpScreen({ navigation }: Props) {
   );
 }
 
+// Филиалы в том порядке, в каком их отдаёт сервер (по sort_order).
+function branchesOf(groups: SignupGroup[], other: string): { key: string; name: string }[] {
+  const seen = new Map<string, string>();
+  for (const g of groups) {
+    const key = g.branch_id ?? 'none';
+    if (!seen.has(key)) seen.set(key, g.branch_name ?? other);
+  }
+  return [...seen.entries()].map(([key, name]) => ({ key, name }));
+}
+
+// «1-1 ИЗО · Ауэзова» → «1-1 ИЗО»: филиал уже выбран выше.
+function shortGroupName(group: SignupGroup): string {
+  return group.branch_name ? group.name.replace(` · ${group.branch_name}`, '') : group.name;
+}
+
 const styles = StyleSheet.create({
+  subLabel: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.xs },
   title: { fontSize: 22, fontWeight: '700', color: colors.primary, marginTop: spacing.lg, marginBottom: spacing.lg },
   label: { fontSize: 14, fontWeight: '600', color: colors.text, marginBottom: spacing.sm },
   segment: {

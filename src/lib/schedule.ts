@@ -142,6 +142,8 @@ export async function fetchStudentGroupIds(studentId: string): Promise<string[]>
 export interface SignupGroup {
   id: string;
   name: string;
+  branch_id: string | null;
+  branch_name: string | null;
 }
 
 // Доступно и до входа: список групп для экрана регистрации.
