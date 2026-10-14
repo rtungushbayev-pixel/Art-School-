@@ -18,9 +18,9 @@ const STRINGS = {
     send: 'Отправить ссылку',
     enterEmail: 'Введите email',
     failed: 'Не удалось отправить письмо',
-    sentTitle: 'Письмо отправлено',
+    sentTitle: 'Запрос принят',
     sent: (email: string) =>
-      `Проверьте почту ${email}. Откройте ссылку из письма на этом телефоне и задайте новый пароль. Если письма нет, загляните в «Спам».`,
+      `Если ${email} зарегистрирован в приложении, на него придёт письмо. Откройте ссылку из письма на этом телефоне и задайте новый пароль. Если письма нет, загляните в «Спам» и проверьте, что адрес введён тот же, что при регистрации.`,
     back: 'Вернуться ко входу',
   },
   kk: {
@@ -29,9 +29,9 @@ const STRINGS = {
     send: 'Сілтеме жіберу',
     enterEmail: 'Email енгізіңіз',
     failed: 'Хат жіберу мүмкін болмады',
-    sentTitle: 'Хат жіберілді',
+    sentTitle: 'Сұраныс қабылданды',
     sent: (email: string) =>
-      `${email} поштасын тексеріңіз. Хаттағы сілтемені осы телефонда ашып, жаңа құпиясөз орнатыңыз. Хат келмесе, «Спам» бумасын қараңыз.`,
+      `Егер ${email} қолданбада тіркелген болса, оған хат келеді. Хаттағы сілтемені осы телефонда ашып, жаңа құпиясөз орнатыңыз. Хат келмесе, «Спам» бумасын қараңыз және тіркелгендегі мекенжайды енгізгеніңізді тексеріңіз.`,
     back: 'Кіру бетіне оралу',
   },
   en: {
@@ -40,9 +40,9 @@ const STRINGS = {
     send: 'Send link',
     enterEmail: 'Enter your email',
     failed: 'Could not send the email',
-    sentTitle: 'Email sent',
+    sentTitle: 'Request received',
     sent: (email: string) =>
-      `Check ${email}. Open the link from the email on this phone and set a new password. If you don't see it, check your spam folder.`,
+      `If ${email} is registered in the app, an email is on its way. Open the link from the email on this phone and set a new password. If you don't see it, check your spam folder and make sure this is the address you signed up with.`,
     back: 'Back to sign in',
   },
 };
