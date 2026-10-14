@@ -69,7 +69,9 @@ export type PushEvent =
   | { event: 'school_event'; id: string } // id новой выставки/конкурса — ученикам и родителям
   | { event: 'payment_claim'; id: string } // id заявки «Я оплатил» — администраторам
   | { event: 'group_request'; id: string } // id запроса на замену преподавателя — администраторам
-  | { event: 'group_request_decided'; id: string }; // решение по запросу — автору
+  | { event: 'group_request_decided'; id: string } // решение по запросу — автору
+  | { event: 'group_replacement'; id: string } // преподаватель просит замену — всем сотрудникам
+  | { event: 'group_replacement_taken'; id: string }; // замену взяли — автору и администраторам
 
 export async function sendPushNotification(pushEvent: PushEvent) {
   try {

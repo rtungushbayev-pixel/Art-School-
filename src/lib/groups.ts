@@ -51,17 +51,21 @@ export interface GroupTeacherRequest {
   id: string;
   group_id: string;
   requested_by: string;
-  status: 'pending' | 'approved' | 'rejected';
+  kind: 'takeover' | 'replacement';
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  taken_by: string | null;
   created_at: string;
   requester: { full_name: string } | null;
 }
 
-// Запросы на замену преподавателя группы: свои видит преподаватель,
-// все — администратор (RLS group_teacher_requests_select).
+const REQUEST_FIELDS = 'id, group_id, requested_by, kind, status, taken_by, created_at, requester:requested_by ( full_name )';
+
+// Открытые запросы по группе: свои видит преподаватель, запросы на замену —
+// все сотрудники, всё — администратор (RLS group_teacher_requests_select).
 export async function fetchGroupTeacherRequests(groupId: string): Promise<GroupTeacherRequest[]> {
   const { data, error } = await supabase
     .from('group_teacher_requests')
-    .select('id, group_id, requested_by, status, created_at, requester:requested_by ( full_name )')
+    .select(REQUEST_FIELDS)
     .eq('group_id', groupId)
     .eq('status', 'pending')
     .order('created_at');
@@ -69,10 +73,38 @@ export async function fetchGroupTeacherRequests(groupId: string): Promise<GroupT
   return (data as unknown as GroupTeacherRequest[]) ?? [];
 }
 
+// Я просил замену, и группу до сих пор ведёт тот, кто меня заменил, —
+// значит, могу вернуть группу себе без администратора.
+export async function canReturnGroup(groupId: string, myId: string, teacherId: string | null): Promise<boolean> {
+  if (!teacherId) return false;
+  const { data, error } = await supabase
+    .from('group_teacher_requests')
+    .select('id')
+    .eq('group_id', groupId)
+    .eq('requested_by', myId)
+    .eq('kind', 'replacement')
+    .eq('status', 'approved')
+    .eq('taken_by', teacherId)
+    .limit(1);
+  if (error) return false;
+  return (data ?? []).length > 0;
+}
+
 export async function requestGroupTakeover(groupId: string): Promise<string> {
   const { data, error } = await supabase.rpc('request_group_takeover', { p_group_id: groupId });
   if (error) throw error;
   return data as string;
+}
+
+export async function requestGroupReplacement(groupId: string): Promise<string> {
+  const { data, error } = await supabase.rpc('request_group_replacement', { p_group_id: groupId });
+  if (error) throw error;
+  return data as string;
+}
+
+export async function cancelGroupReplacement(requestId: string) {
+  const { error } = await supabase.rpc('cancel_group_replacement', { p_request_id: requestId });
+  if (error) throw error;
 }
 
 export async function decideGroupRequest(requestId: string, approve: boolean) {

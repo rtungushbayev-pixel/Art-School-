@@ -8,7 +8,9 @@ import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { useAuth } from '../../hooks/useAuth';
 import { fetchChildren } from '../../lib/parents';
-import type { Profile } from '../../types/database';
+import type { Branch, Profile } from '../../types/database';
+import { fetchBranches } from '../../lib/materials';
+import { supabase } from '../../lib/supabase';
 import {
   addDays,
   changeKey,
@@ -35,6 +37,7 @@ const STRINGS = {
     lastWeek: 'Прошлая неделя',
     child: 'Ребёнок',
     allGroups: 'Все группы',
+    myGroups: 'Мои группы',
     emptyStaff: 'Пока нет занятий в расписании',
     emptyParentChild: 'Ребёнок пока не записан в группу, или у группы нет занятий',
     emptyParentNoChild: 'Добавьте ребёнка в Профиль → «Мои дети», и здесь появится его расписание',
@@ -54,6 +57,7 @@ const STRINGS = {
     lastWeek: 'Өткен апта',
     child: 'Бала',
     allGroups: 'Барлық топтар',
+    myGroups: 'Менің топтарым',
     emptyStaff: 'Кестеде әзірге сабақ жоқ',
     emptyParentChild: 'Бала әзірге топқа жазылмаған немесе топта сабақ жоқ',
     emptyParentNoChild: 'Баланы Профиль → «Менің балаларым» бөліміне қосыңыз, сонда мұнда оның кестесі шығады',
@@ -73,6 +77,7 @@ const STRINGS = {
     lastWeek: 'Last week',
     child: 'Child',
     allGroups: 'All groups',
+    myGroups: 'My groups',
     emptyStaff: 'No classes in the schedule yet',
     emptyParentChild: 'Your child is not in a group yet, or the group has no classes',
     emptyParentNoChild: 'Add your child in Profile → “My children” and their schedule will appear here',
@@ -105,6 +110,9 @@ export function ScheduleScreen() {
   const isParent = profile?.role === 'parent';
   const [children, setChildren] = useState<Profile[]>([]);
   const [childId, setChildId] = useState<string | null>(null);
+  // Сотрудник: свои группы или все группы одного филиала (групп в школе много).
+  const [scope, setScope] = useState<string | null>(null);
+  const [scopes, setScopes] = useState<{ id: string; name: string }[]>([]);
 
   const today = toDateKey(new Date());
   const weekStart = useMemo(() => addDays(startOfWeek(new Date()), weekOffset * 7), [weekOffset]);
@@ -124,6 +132,22 @@ export function ScheduleScreen() {
         groupIds = selected ? await fetchStudentGroupIds(selected.id) : [];
       } else if (!isStaff) {
         groupIds = await fetchStudentGroupIds(profile.id);
+      } else {
+        const [{ data: groupRows }, branchList] = await Promise.all([
+          supabase.from('groups').select('id, branch_id, teacher_id'),
+          fetchBranches().catch(() => [] as Branch[]),
+        ]);
+        const all = (groupRows as { id: string; branch_id: string | null; teacher_id: string | null }[]) ?? [];
+        const mine = all.filter((g) => g.teacher_id === profile.id);
+        const options = [
+          ...(mine.length > 0 ? [{ id: 'mine', name: s.myGroups }] : []),
+          ...branchList.filter((b) => all.some((g) => g.branch_id === b.id)).map((b) => ({ id: b.id, name: b.name })),
+        ];
+        setScopes(options);
+        const current = options.find((o) => o.id === scope)?.id ?? options[0]?.id ?? null;
+        if (current !== scope) setScope(current);
+        groupIds =
+          current === 'mine' ? mine.map((g) => g.id) : current ? all.filter((g) => g.branch_id === current).map((g) => g.id) : null;
       }
       const lessonRows = await fetchScheduleLessons(groupIds);
       const changeRows = await fetchLessonChanges(
@@ -137,7 +161,7 @@ export function ScheduleScreen() {
       // Нет сети — оставляем то, что уже показано; потянуть вниз, чтобы повторить.
     }
     setLoading(false);
-  }, [profile, isStaff, isParent, childId, weekDates]);
+  }, [profile, isStaff, isParent, childId, weekDates, scope, s.myGroups]);
 
   useFocusEffect(
     useCallback(() => {
@@ -191,6 +215,22 @@ export function ScheduleScreen() {
               label={child.full_name || s.child}
               active={childId === child.id}
               onPress={() => setChildId(child.id)}
+            />
+          ))}
+        </ScrollView>
+      ) : null}
+
+      {isStaff && scopes.length > 1 ? (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filters}>
+          {scopes.map((o) => (
+            <Chip
+              key={o.id}
+              label={o.name}
+              active={scope === o.id}
+              onPress={() => {
+                setGroupFilter(null);
+                setScope(o.id);
+              }}
             />
           ))}
         </ScrollView>

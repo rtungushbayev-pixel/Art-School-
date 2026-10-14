@@ -26,6 +26,10 @@
 //   group_request     { id: request_id }       — преподаватель просит заменить
 //                                               преподавателя группы → администраторам
 //   group_request_decided { id: request_id }   — администратор → автору запроса
+//   group_replacement { id: request_id }       — преподаватель группы просит замену →
+//                                               администраторам и преподавателям
+//   group_replacement_taken { id: request_id } — преподаватель взял группу на замену →
+//                                               администраторам и автору запроса
 //
 // Каждое событие рассылается не более одного раза (таблица push_events).
 // Получатели, отключившие категорию в настройках (profiles.notify_*),
@@ -53,7 +57,9 @@ type PushEvent =
   | 'payment_claim'
   | 'debt_reminder'
   | 'group_request'
-  | 'group_request_decided';
+  | 'group_request_decided'
+  | 'group_replacement'
+  | 'group_replacement_taken';
 type NotificationCategory = 'announcements' | 'comments' | 'moderation' | 'support' | 'attendance';
 
 interface RequestBody {
@@ -466,6 +472,43 @@ async function buildMessage(admin: SupabaseClient, caller: Caller, { event, id }
         body: truncate(
           approved ? `Группа «${groupName}» теперь ваша.` : `Администратор не одобрил замену в группе «${groupName}».`
         ),
+        data,
+      };
+    }
+
+    case 'group_replacement':
+    case 'group_replacement_taken': {
+      const { data: request } = await admin
+        .from('group_teacher_requests')
+        .select('id, group_id, requested_by, taken_by, kind, status, group:group_id ( name )')
+        .eq('id', id)
+        .single();
+      if (!request || request.kind !== 'replacement') throw new HttpError(404, 'Запрос не найден');
+      const groupName = (request.group as unknown as { name: string } | null)?.name ?? '';
+      const data = { type: 'group_request', groupId: request.group_id };
+      if (event === 'group_replacement') {
+        if (request.requested_by !== caller.id) throw new HttpError(403, 'Это не ваш запрос');
+        if (request.status !== 'pending') return null;
+        const { data: staff, error } = await admin.from('profiles').select('id').in('role', ['staff', 'admin']);
+        if (error) throw error;
+        return {
+          dedupKey: `group_replacement:${request.id}`,
+          category: 'support',
+          recipientIds: (staff ?? []).map((row: { id: string }) => row.id),
+          title: `Нужна замена: ${groupName}`,
+          body: truncate(`${caller.full_name} просит замену в группе «${groupName}». Откройте группу, чтобы взять её.`),
+          data,
+        };
+      }
+      if (request.status !== 'approved' || request.taken_by !== caller.id) return null;
+      const { data: admins, error } = await admin.from('profiles').select('id').eq('role', 'admin');
+      if (error) throw error;
+      return {
+        dedupKey: `group_replacement_taken:${request.id}`,
+        category: 'support',
+        recipientIds: [request.requested_by, ...(admins ?? []).map((row: { id: string }) => row.id)],
+        title: 'Замена найдена',
+        body: truncate(`${caller.full_name} взял(а) группу «${groupName}» на замену.`),
         data,
       };
     }

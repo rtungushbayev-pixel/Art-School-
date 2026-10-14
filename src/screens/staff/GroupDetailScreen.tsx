@@ -141,9 +141,14 @@ export function GroupDetailScreen({ route }: Props) {
         />
       ) : null}
       {isAdmin ? <GroupBranchPicker groupId={groupId} branchId={group.branch_id} /> : null}
-      {isAdmin ? <GroupTeacherRequests groupId={groupId} mode="admin" onDecided={load} /> : null}
-      {profile?.role === 'staff' && group.teacher_id !== profile.id ? (
-        <GroupTeacherRequests groupId={groupId} mode="teacher" />
+      {profile && (isAdmin || profile.role === 'staff') ? (
+        <GroupTeacherRequests
+          groupId={groupId}
+          teacherId={group.teacher_id}
+          myId={profile.id}
+          mode={isAdmin ? 'admin' : group.teacher_id === profile.id ? 'owner' : 'teacher'}
+          onChanged={load}
+        />
       ) : null}
       {canManage && members.length > 0 ? (
         <>
