@@ -10,6 +10,7 @@ import { Button } from '../../components/Button';
 import { RosterSection } from '../../components/RosterSection';
 import { GroupBranchPicker } from '../../components/GroupBranchPicker';
 import { GroupTeacherPicker } from '../../components/GroupTeacherPicker';
+import { GroupTeacherRequests } from '../../components/GroupTeacherRequests';
 import { useAuth } from '../../hooks/useAuth';
 import { isAdminRole } from '../../lib/roles';
 import { supabase } from '../../lib/supabase';
@@ -140,6 +141,10 @@ export function GroupDetailScreen({ route }: Props) {
         />
       ) : null}
       {isAdmin ? <GroupBranchPicker groupId={groupId} branchId={group.branch_id} /> : null}
+      {isAdmin ? <GroupTeacherRequests groupId={groupId} mode="admin" onDecided={load} /> : null}
+      {profile?.role === 'staff' && group.teacher_id !== profile.id ? (
+        <GroupTeacherRequests groupId={groupId} mode="teacher" />
+      ) : null}
       {canManage && members.length > 0 ? (
         <>
           <View style={{ height: spacing.sm }} />

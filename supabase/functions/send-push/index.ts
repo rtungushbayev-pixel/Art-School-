@@ -23,6 +23,9 @@
 //                                               администраторам
 //   debt_reminder     { id: 'ГГГГ-ММ-ДД' }     — администратор → должникам и их
 //                                               родителям (не чаще раза в день)
+//   group_request     { id: request_id }       — преподаватель просит заменить
+//                                               преподавателя группы → администраторам
+//   group_request_decided { id: request_id }   — администратор → автору запроса
 //
 // Каждое событие рассылается не более одного раза (таблица push_events).
 // Получатели, отключившие категорию в настройках (profiles.notify_*),
@@ -48,7 +51,9 @@ type PushEvent =
   | 'chat_message'
   | 'school_event'
   | 'payment_claim'
-  | 'debt_reminder';
+  | 'debt_reminder'
+  | 'group_request'
+  | 'group_request_decided';
 type NotificationCategory = 'announcements' | 'comments' | 'moderation' | 'support' | 'attendance';
 
 interface RequestBody {
@@ -423,6 +428,45 @@ async function buildMessage(admin: SupabaseClient, caller: Caller, { event, id }
         title: 'Напоминание об оплате',
         body: 'По оплате занятий есть задолженность. Подробности и оплата через Kaspi — в разделе «Оплаты».',
         data: { type: 'debt_reminder' },
+      };
+    }
+
+    case 'group_request':
+    case 'group_request_decided': {
+      const { data: request } = await admin
+        .from('group_teacher_requests')
+        .select('id, group_id, requested_by, status, decided_by, group:group_id ( name )')
+        .eq('id', id)
+        .single();
+      if (!request) throw new HttpError(404, 'Запрос не найден');
+      const groupName = (request.group as unknown as { name: string } | null)?.name ?? '';
+      const data = { type: 'group_request', groupId: request.group_id };
+      if (event === 'group_request') {
+        if (request.requested_by !== caller.id) throw new HttpError(403, 'Это не ваш запрос');
+        if (request.status !== 'pending') return null;
+        const { data: admins, error } = await admin.from('profiles').select('id').eq('role', 'admin');
+        if (error) throw error;
+        return {
+          dedupKey: `group_request:${request.id}`,
+          category: 'support',
+          recipientIds: (admins ?? []).map((row: { id: string }) => row.id),
+          title: 'Запрос на замену преподавателя',
+          body: truncate(`${caller.full_name} просит взять группу «${groupName}».`),
+          data,
+        };
+      }
+      if (caller.role !== 'admin' || request.decided_by !== caller.id) throw new HttpError(403, 'Только администратор');
+      if (request.status === 'pending') return null;
+      const approved = request.status === 'approved';
+      return {
+        dedupKey: `group_request_decided:${request.id}`,
+        category: 'support',
+        recipientIds: [request.requested_by],
+        title: approved ? 'Замена одобрена' : 'Замена отклонена',
+        body: truncate(
+          approved ? `Группа «${groupName}» теперь ваша.` : `Администратор не одобрил замену в группе «${groupName}».`
+        ),
+        data,
       };
     }
 

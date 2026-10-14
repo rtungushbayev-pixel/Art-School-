@@ -18,16 +18,19 @@ const STRINGS = {
     newGroup: '+ Новая группа',
     people: 'Ученики и родители',
     empty: 'Группы ещё не созданы',
+    replaceRequest: 'Запрос на замену преподавателя',
   },
   kk: {
     newGroup: '+ Жаңа топ',
     people: 'Оқушылар мен ата-аналар',
     empty: 'Топтар әлі құрылмаған',
+    replaceRequest: 'Мұғалімді ауыстыру сұранысы',
   },
   en: {
     newGroup: '+ New group',
     people: 'Students and parents',
     empty: 'No groups have been created yet',
+    replaceRequest: 'Teacher replacement request',
   },
 };
 
@@ -38,14 +41,20 @@ export function GroupsScreen() {
   // Группы создаёт только администратор (на сервере — политика groups_write_admin).
   const canCreate = isAdminRole(profile?.role);
   const [groups, setGroups] = useState<Group[]>([]);
+  // Группы с открытыми запросами на замену преподавателя (видит администратор).
+  const [requested, setRequested] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
     const { data } = await supabase.from('groups').select('*').order('name');
     setGroups((data as Group[]) ?? []);
+    if (canCreate) {
+      const { data: requests } = await supabase.from('group_teacher_requests').select('group_id').eq('status', 'pending');
+      setRequested(new Set(((requests as { group_id: string }[]) ?? []).map((r) => r.group_id)));
+    }
     setLoading(false);
-  }, []);
+  }, [canCreate]);
 
   useFocusEffect(
     useCallback(() => {
@@ -66,6 +75,7 @@ export function GroupsScreen() {
           <Card>
             <Text style={styles.groupName}>{g.name}</Text>
             {g.description ? <Text style={styles.groupDesc}>{g.description}</Text> : null}
+            {requested.has(g.id) ? <Text style={styles.request}>● {s.replaceRequest}</Text> : null}
           </Card>
         </Pressable>
       ))}
@@ -78,4 +88,5 @@ const styles = StyleSheet.create({
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.xl },
   groupName: { fontSize: 16, fontWeight: '700', color: colors.text },
   groupDesc: { color: colors.textMuted, marginTop: spacing.xs },
+  request: { color: colors.danger, marginTop: spacing.xs, fontWeight: '600', fontSize: 13 },
 });

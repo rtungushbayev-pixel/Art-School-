@@ -46,3 +46,36 @@ export async function removeStudentFromGroup(groupId: string, studentId: string)
     .eq('student_id', studentId);
   if (error) throw error;
 }
+
+export interface GroupTeacherRequest {
+  id: string;
+  group_id: string;
+  requested_by: string;
+  status: 'pending' | 'approved' | 'rejected';
+  created_at: string;
+  requester: { full_name: string } | null;
+}
+
+// Запросы на замену преподавателя группы: свои видит преподаватель,
+// все — администратор (RLS group_teacher_requests_select).
+export async function fetchGroupTeacherRequests(groupId: string): Promise<GroupTeacherRequest[]> {
+  const { data, error } = await supabase
+    .from('group_teacher_requests')
+    .select('id, group_id, requested_by, status, created_at, requester:requested_by ( full_name )')
+    .eq('group_id', groupId)
+    .eq('status', 'pending')
+    .order('created_at');
+  if (error) throw error;
+  return (data as unknown as GroupTeacherRequest[]) ?? [];
+}
+
+export async function requestGroupTakeover(groupId: string): Promise<string> {
+  const { data, error } = await supabase.rpc('request_group_takeover', { p_group_id: groupId });
+  if (error) throw error;
+  return data as string;
+}
+
+export async function decideGroupRequest(requestId: string, approve: boolean) {
+  const { error } = await supabase.rpc('decide_group_request', { p_request_id: requestId, p_approve: approve });
+  if (error) throw error;
+}

@@ -67,7 +67,9 @@ export type PushEvent =
   | { event: 'lesson_change'; id: string } // id отмены/переноса — ученикам и родителям группы
   | { event: 'chat_message'; id: string } // id сообщения в чате родителя с преподавателем
   | { event: 'school_event'; id: string } // id новой выставки/конкурса — ученикам и родителям
-  | { event: 'payment_claim'; id: string }; // id заявки «Я оплатил» — администраторам
+  | { event: 'payment_claim'; id: string } // id заявки «Я оплатил» — администраторам
+  | { event: 'group_request'; id: string } // id запроса на замену преподавателя — администраторам
+  | { event: 'group_request_decided'; id: string }; // решение по запросу — автору
 
 export async function sendPushNotification(pushEvent: PushEvent) {
   try {
