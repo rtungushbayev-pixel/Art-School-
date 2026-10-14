@@ -117,7 +117,9 @@ async function sync(admin: SupabaseClient, url: string, sinceId: number) {
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return json(405, { error: 'method not allowed' });
 
-  const webhook = Deno.env.get('BITRIX_WEBHOOK_URL');
+  // Из значения секрета берём сам адрес: лишний текст вокруг (например,
+  // «1. » из письма) не должен ломать загрузку.
+  const webhook = (Deno.env.get('BITRIX_WEBHOOK_URL') ?? '').match(/https:\/\/\S+/)?.[0];
   if (!webhook) return json(200, { skipped: 'not configured' });
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
