@@ -29,6 +29,7 @@ export function Button({ title, onPress, loading, disabled, variant = 'primary' 
         <ActivityIndicator color={variant === 'secondary' ? colors.primary : colors.white} />
       ) : (
         <Text
+          numberOfLines={2}
           style={[
             styles.text,
             variant === 'secondary' && styles.textSecondary,
@@ -58,6 +59,6 @@ const styles = StyleSheet.create({
   danger: { backgroundColor: colors.danger, ...shadow.card },
   disabled: { opacity: 0.5, shadowOpacity: 0 },
   pressed: { opacity: 0.85 },
-  text: { color: colors.white, fontWeight: '600', fontSize: 16 },
+  text: { color: colors.white, fontWeight: '600', fontSize: 16, textAlign: 'center' },
   textSecondary: { color: colors.primary },
 });

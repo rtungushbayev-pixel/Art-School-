@@ -16,6 +16,8 @@ interface ScreenProps extends ViewProps {
   scroll?: boolean;
   refreshing?: boolean;
   onRefresh?: () => void;
+  // Меняется — экран прокручивается к началу (нажатие на значок вкладки).
+  scrollToTopSignal?: number;
   children: React.ReactNode;
 }
 
@@ -26,8 +28,12 @@ const FIELD_MARGIN = 24;
 const FocusContext = createContext<() => void>(() => {});
 export const useRevealFocusedField = () => useContext(FocusContext);
 
-export function Screen({ scroll, refreshing, onRefresh, style, children, ...props }: ScreenProps) {
+export function Screen({ scroll, refreshing, onRefresh, scrollToTopSignal, style, children, ...props }: ScreenProps) {
   const scrollRef = useRef<ScrollView>(null);
+
+  useEffect(() => {
+    if (scrollToTopSignal) scrollRef.current?.scrollTo({ y: 0, animated: true });
+  }, [scrollToTopSignal]);
   const scrollY = useRef(0);
   const keyboardTop = useRef<number | null>(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);

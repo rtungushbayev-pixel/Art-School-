@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Avatar } from './Avatar';
@@ -79,11 +79,14 @@ function formatPostTime(iso: string, lang: Lang): string {
   return date.getFullYear() === now.getFullYear() ? day : `${day} ${date.getFullYear()}`;
 }
 
-// Публикация в стиле соцсети: фото на всю ширину экрана, под ним реакции,
+// Публикация в стиле соцсети: карточка с фото, под ним реакции,
 // подпись автора и приглашение оставить комментарий.
 export function PostCard({ post, onPress, onToggleLike, onAuthorPress, showModerationBadge, viewer }: PostCardProps) {
   const s = useStrings(STRINGS);
   const { lang } = useLanguage();
+  // Карточка с полями по бокам экрана: фото чуть уже экрана, углы скруглены.
+  const { width: screenWidth } = useWindowDimensions();
+  const photoWidth = screenWidth - spacing.md * 2 - 2;
   const meta = [post.title, post.technique, formatPostTime(post.created_at, lang)].filter(Boolean).join(' • ');
 
   return (
@@ -114,7 +117,11 @@ export function PostCard({ post, onPress, onToggleLike, onAuthorPress, showModer
         <Text style={styles.aiReason}>{post.aiReason}</Text>
       ) : null}
 
-      <PhotoCarousel images={post.images} />
+      <PhotoCarousel
+        images={post.images}
+        width={photoWidth}
+        onDoubleTap={onToggleLike ? () => !post.likedByMe && onToggleLike() : undefined}
+      />
 
       <View style={styles.actions}>
         <Pressable onPress={onToggleLike} style={styles.action} hitSlop={6}>
@@ -147,8 +154,17 @@ export function PostCard({ post, onPress, onToggleLike, onAuthorPress, showModer
 }
 
 const styles = StyleSheet.create({
-  // Публикация на всю ширину экрана, поверх отступов Screen.
-  wrapper: { marginHorizontal: -spacing.md, marginBottom: spacing.xl },
+  // Спокойная карточка на фоне экрана: белая подложка, тонкая рамка, скругление.
+  wrapper: {
+    marginBottom: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    overflow: 'hidden',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

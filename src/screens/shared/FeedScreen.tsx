@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -57,6 +57,8 @@ export function FeedScreen() {
   // Друзья — у учеников и сотрудников.
   const hasFriends = canPost;
   const [friends, setFriends] = useState<Profile[]>([]);
+  // Нажатие на значок «Комьюнити» — лента к началу, к самой свежей публикации.
+  const [scrollTop, setScrollTop] = useState(0);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -81,6 +83,14 @@ export function FeedScreen() {
     }, [load])
   );
 
+  useEffect(() => {
+    const unsubscribe = (navigation as any).addListener('tabPress', () => {
+      setView('all');
+      setScrollTop((n) => n + 1);
+    });
+    return unsubscribe;
+  }, [navigation]);
+
   const onToggleLike = async (post: PostCardData) => {
     if (!profile) return;
     setPosts((prev) =>
@@ -94,7 +104,7 @@ export function FeedScreen() {
   };
 
   return (
-    <Screen scroll refreshing={loading} onRefresh={load}>
+    <Screen scroll refreshing={loading} onRefresh={load} scrollToTopSignal={scrollTop}>
       {canPost && profile ? (
         <>
           <View style={styles.topRow}>

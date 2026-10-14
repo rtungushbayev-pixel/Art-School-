@@ -40,7 +40,8 @@ import {
   type FriendState,
 } from '../../lib/friends';
 import { useStudentPortfolio } from '../../hooks/useStudentPortfolio';
-import { colors, spacing } from '../../theme/colors';
+import { colors, radius, spacing } from '../../theme/colors';
+import { Ionicons } from '@expo/vector-icons';
 import type { Profile, UserRole } from '../../types/database';
 import type { StaffStackParamList, StudentStackParamList } from '../../navigation/types';
 
@@ -404,12 +405,23 @@ export function UserProfileScreen() {
   return (
     <Screen scroll>
       <ProfileHeader profile={profile} groups={groups} />
-      {friendState ? (
+      {friendState === 'friends' || friendState === 'outgoing' ? (
+        // Уже друзья или заявка ждёт ответа — не кнопка, а понятная отметка.
+        <View style={[styles.friendBadge, friendState === 'friends' && styles.friendBadgeOk]}>
+          <Ionicons
+            name={friendState === 'friends' ? 'people' : 'time-outline'}
+            size={18}
+            color={friendState === 'friends' ? colors.success : colors.textMuted}
+          />
+          <Text style={[styles.friendBadgeText, friendState === 'friends' && styles.friendBadgeTextOk]}>
+            {s.friendButton[friendState]}
+          </Text>
+        </View>
+      ) : friendState ? (
         <View style={styles.friendAction}>
           <Button
             title={s.friendButton[friendState]}
-            variant={friendState === 'none' || friendState === 'incoming' ? 'primary' : 'secondary'}
-            disabled={friendState === 'friends' || friendState === 'outgoing'}
+            variant={friendState === 'blocked' ? 'secondary' : 'primary'}
             loading={friendBusy}
             onPress={onFriendPress}
           />
@@ -554,6 +566,19 @@ export function UserProfileScreen() {
 
 const styles = StyleSheet.create({
   friendAction: { marginBottom: spacing.sm },
+  friendBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.sm + 2,
+    borderRadius: radius.full,
+    backgroundColor: colors.surfaceAlt,
+    marginBottom: spacing.sm,
+  },
+  friendBadgeOk: { backgroundColor: '#E6F2EA' },
+  friendBadgeText: { fontWeight: '700', color: colors.textMuted },
+  friendBadgeTextOk: { color: colors.success },
   roleAction: { marginBottom: spacing.md, gap: spacing.sm },
   sectionHeader: {
     flexDirection: 'row',
