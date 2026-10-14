@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getLocales } from 'expo-localization';
 
 // Языки приложения. Тексты лежат рядом с экраном, который их показывает:
 // const STRINGS = { ru: {...}, kk: {...}, en: {...} } и useStrings(STRINGS).
@@ -28,9 +27,10 @@ export function pick<T>(dict: Translations<T>, lang: Lang = currentLang): T {
   return dict[lang] ?? dict.ru;
 }
 
-function deviceLang(): Lang {
-  const code = getLocales()[0]?.languageCode;
-  return code === 'kk' || code === 'en' || code === 'ru' ? code : 'ru';
+// По умолчанию — русский, независимо от языка телефона. Казахский и
+// английский пользователь выбирает сам, выбор запоминается.
+function defaultLang(): Lang {
+  return 'ru';
 }
 
 interface LanguageContextValue {
@@ -42,7 +42,7 @@ const LanguageContext = createContext<LanguageContextValue>({ lang: 'ru', setLan
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLangState] = useState<Lang>(() => {
-    currentLang = deviceLang();
+    currentLang = defaultLang();
     return currentLang;
   });
 
