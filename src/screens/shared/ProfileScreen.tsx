@@ -119,6 +119,7 @@ export function ProfileScreen() {
         groups={groups}
         onAvatarPress={onAvatarPress}
         avatarUploading={avatarUploading}
+        onAddGoal={() => navigation.navigate('EditProfile')}
       />
 
       <Button title={s.profileSettings} onPress={() => navigation.navigate('ProfileSettings')} />

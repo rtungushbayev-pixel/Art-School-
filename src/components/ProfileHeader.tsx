@@ -21,6 +21,8 @@ const STRINGS = {
     noName: 'Без имени',
     changePhoto: 'Изменить фото',
     goal: 'Цель',
+    addGoal: 'Куда планирую поступать',
+    addGoalHint: 'Нажмите, чтобы указать вуз или колледж',
   },
   kk: {
     roles: { student: 'Оқушы', staff: 'Мұғалім', parent: 'Ата-ана', admin: 'Әкімші', office: 'Әкімшілік' } as Record<UserRole, string>,
@@ -33,6 +35,8 @@ const STRINGS = {
     noName: 'Аты жоқ',
     changePhoto: 'Фотоны өзгерту',
     goal: 'Мақсат',
+    addGoal: 'Қайда түсуді жоспарлаймын',
+    addGoalHint: 'ЖОО немесе колледжді көрсету үшін басыңыз',
   },
   en: {
     roles: { student: 'Student', staff: 'Teacher', parent: 'Parent', admin: 'Administrator', office: 'Administration' } as Record<UserRole, string>,
@@ -45,6 +49,8 @@ const STRINGS = {
     noName: 'No name',
     changePhoto: 'Change photo',
     goal: 'Goal',
+    addGoal: 'Where I plan to study',
+    addGoalHint: 'Tap to add a university or college',
   },
 };
 
@@ -56,9 +62,11 @@ interface ProfileHeaderProps {
   // Свой профиль: нажатие на аватар меняет фото
   onAvatarPress?: () => void;
   avatarUploading?: boolean;
+  // Свой профиль ученика: пустая цель показывается подсказкой, нажатие — редактирование.
+  onAddGoal?: () => void;
 }
 
-export function ProfileHeader({ profile, groups, onAvatarPress, avatarUploading }: ProfileHeaderProps) {
+export function ProfileHeader({ profile, groups, onAvatarPress, avatarUploading, onAddGoal }: ProfileHeaderProps) {
   const s = useStrings(STRINGS);
   const studyLine = [
     profile.specialization,
@@ -121,12 +129,19 @@ export function ProfileHeader({ profile, groups, onAvatarPress, avatarUploading 
           </Text>
           <Text style={styles.institutionName}>{profile.target_institution}</Text>
         </View>
+      ) : profile.role === 'student' && onAddGoal ? (
+        <Pressable onPress={onAddGoal} style={[styles.institutionBadge, styles.institutionEmpty]}>
+          <Text style={styles.institutionStatus}>{s.addGoal}</Text>
+          <Text style={styles.addGoalHint}>{s.addGoalHint}</Text>
+        </Pressable>
       ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  institutionEmpty: { borderStyle: 'dashed', borderWidth: 1.5, borderColor: colors.primary, backgroundColor: 'transparent' },
+  addGoalHint: { color: colors.textMuted, fontSize: 13, marginTop: 2, textAlign: 'center' },
   hero: {
     // Фон на всю ширину экрана, поверх внутренних отступов Screen.
     marginHorizontal: -spacing.md,
