@@ -7,11 +7,87 @@ import { TextField } from '../../components/TextField';
 import { Button } from '../../components/Button';
 import { supabase } from '../../lib/supabase';
 import { fetchGroupMembers } from '../../lib/groups';
-import { PAYMENT_METHOD_LABELS, addBillingEntries, formatMoney } from '../../lib/payments';
+import { addBillingEntries, formatMoney, paymentMethodLabel } from '../../lib/payments';
 import { parseDateKey, toDateKey } from '../../lib/schedule';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { PaymentMethod } from '../../types/database';
 import type { StaffStackParamList } from '../../navigation/types';
+import { useStrings } from '../../i18n';
+
+const STRINGS = {
+  ru: {
+    titleCharge: 'Начисление',
+    titlePayment: 'Оплата',
+    groupTarget: (name: string, count: number) => `Группа «${name}» · учеников: ${count}`,
+    needAmount: 'Укажите сумму больше нуля',
+    needChargeReason: 'Укажите, за что начисление',
+    needPaymentReason: 'Укажите, за что оплата',
+    needDate: 'Укажите дату в формате ГГГГ-ММ-ДД',
+    noStudents: 'В группе нет учеников',
+    saveFailed: 'Не удалось сохранить',
+    chargeGroupTitle: 'Начислить всей группе?',
+    chargeGroupMessage: (amount: string, count: number) => `${amount} каждому из ${count} учеников`,
+    cancel: 'Отмена',
+    charge: 'Начислить',
+    amount: 'Сумма, ₸',
+    amountPlaceholder: 'Например: 25000',
+    forWhat: 'За что',
+    comment: 'Комментарий',
+    chargePlaceholder: 'Например: Октябрь, живопись',
+    paymentPlaceholder: 'Например: Оплата за октябрь',
+    date: 'Дата (ГГГГ-ММ-ДД)',
+    method: 'Способ оплаты',
+    savePayment: 'Сохранить оплату',
+  },
+  kk: {
+    titleCharge: 'Есептеу',
+    titlePayment: 'Төлем',
+    groupTarget: (name: string, count: number) => `«${name}» тобы · оқушылар: ${count}`,
+    needAmount: 'Нөлден үлкен соманы көрсетіңіз',
+    needChargeReason: 'Не үшін есептелетінін көрсетіңіз',
+    needPaymentReason: 'Не үшін төленетінін көрсетіңіз',
+    needDate: 'Күнді ЖЖЖЖ-АА-КК пішімінде көрсетіңіз',
+    noStudents: 'Топта оқушылар жоқ',
+    saveFailed: 'Сақтау мүмкін болмады',
+    chargeGroupTitle: 'Бүкіл топқа есептеу керек пе?',
+    chargeGroupMessage: (amount: string, count: number) => `${count} оқушының әрқайсысына ${amount}`,
+    cancel: 'Бас тарту',
+    charge: 'Есептеу',
+    amount: 'Сома, ₸',
+    amountPlaceholder: 'Мысалы: 25000',
+    forWhat: 'Не үшін',
+    comment: 'Пікір',
+    chargePlaceholder: 'Мысалы: Қазан, кескіндеме',
+    paymentPlaceholder: 'Мысалы: Қазан айы үшін төлем',
+    date: 'Күні (ЖЖЖЖ-АА-КК)',
+    method: 'Төлем тәсілі',
+    savePayment: 'Төлемді сақтау',
+  },
+  en: {
+    titleCharge: 'Charge',
+    titlePayment: 'Payment',
+    groupTarget: (name: string, count: number) => `Group “${name}” · students: ${count}`,
+    needAmount: 'Enter an amount greater than zero',
+    needChargeReason: 'Specify what the charge is for',
+    needPaymentReason: 'Specify what the payment is for',
+    needDate: 'Enter the date as YYYY-MM-DD',
+    noStudents: 'There are no students in the group',
+    saveFailed: 'Could not save',
+    chargeGroupTitle: 'Charge the whole group?',
+    chargeGroupMessage: (amount: string, count: number) => `${amount} to each of ${count} students`,
+    cancel: 'Cancel',
+    charge: 'Add charge',
+    amount: 'Amount, ₸',
+    amountPlaceholder: 'For example: 25000',
+    forWhat: 'What for',
+    comment: 'Comment',
+    chargePlaceholder: 'For example: October, painting',
+    paymentPlaceholder: 'For example: Payment for October',
+    date: 'Date (YYYY-MM-DD)',
+    method: 'Payment method',
+    savePayment: 'Save payment',
+  },
+};
 
 type Props = NativeStackScreenProps<StaffStackParamList, 'BillingEntryForm'>;
 
@@ -25,6 +101,7 @@ export function BillingEntryFormScreen({ route }: Props) {
   const studentId = 'studentId' in route.params ? route.params.studentId : null;
   const groupId = 'groupId' in route.params ? route.params.groupId : null;
   const navigation = useNavigation();
+  const s = useStrings(STRINGS);
 
   const [targetLabel, setTargetLabel] = useState('');
   const [recipientIds, setRecipientIds] = useState<string[]>(studentId ? [studentId] : []);
@@ -36,7 +113,7 @@ export function BillingEntryFormScreen({ route }: Props) {
 
   useFocusEffect(
     useCallback(() => {
-      navigation.setOptions({ title: kind === 'charge' ? 'Начисление' : 'Оплата' });
+      navigation.setOptions({ title: kind === 'charge' ? s.titleCharge : s.titlePayment });
       (async () => {
         if (studentId) {
           const { data } = await supabase.from('profiles').select('full_name').eq('id', studentId).single();
@@ -47,28 +124,28 @@ export function BillingEntryFormScreen({ route }: Props) {
             fetchGroupMembers(groupId),
           ]);
           setRecipientIds(members.map((m) => m.id));
-          setTargetLabel(`Группа «${(data as { name: string } | null)?.name ?? ''}» · учеников: ${members.length}`);
+          setTargetLabel(s.groupTarget((data as { name: string } | null)?.name ?? '', members.length));
         }
       })();
-    }, [navigation, kind, studentId, groupId])
+    }, [navigation, kind, studentId, groupId, s])
   );
 
   const onSave = async () => {
     const value = Number(amount.replace(/\s/g, '').replace(',', '.'));
     if (!Number.isFinite(value) || value <= 0) {
-      Alert.alert('Укажите сумму больше нуля');
+      Alert.alert(s.needAmount);
       return;
     }
     if (!description.trim()) {
-      Alert.alert(kind === 'charge' ? 'Укажите, за что начисление' : 'Укажите, за что оплата');
+      Alert.alert(kind === 'charge' ? s.needChargeReason : s.needPaymentReason);
       return;
     }
     if (!DATE_REGEX.test(entryDate) || toDateKey(parseDateKey(entryDate)) !== entryDate) {
-      Alert.alert('Укажите дату в формате ГГГГ-ММ-ДД');
+      Alert.alert(s.needDate);
       return;
     }
     if (recipientIds.length === 0) {
-      Alert.alert('В группе нет учеников');
+      Alert.alert(s.noStudents);
       return;
     }
 
@@ -84,18 +161,18 @@ export function BillingEntryFormScreen({ route }: Props) {
         });
         navigation.goBack();
       } catch (e) {
-        Alert.alert('Не удалось сохранить', (e as Error).message);
+        Alert.alert(s.saveFailed, (e as Error).message);
       }
       setSaving(false);
     };
 
     if (recipientIds.length > 1) {
       Alert.alert(
-        'Начислить всей группе?',
-        `${formatMoney(value)} каждому из ${recipientIds.length} учеников`,
+        s.chargeGroupTitle,
+        s.chargeGroupMessage(formatMoney(value), recipientIds.length),
         [
-          { text: 'Отмена', style: 'cancel' },
-          { text: 'Начислить', onPress: save },
+          { text: s.cancel, style: 'cancel' },
+          { text: s.charge, onPress: save },
         ]
       );
     } else {
@@ -108,23 +185,23 @@ export function BillingEntryFormScreen({ route }: Props) {
       <Text style={styles.target}>{targetLabel}</Text>
 
       <TextField
-        label="Сумма, ₸"
+        label={s.amount}
         value={amount}
         onChangeText={setAmount}
         keyboardType="decimal-pad"
-        placeholder="Например: 25000"
+        placeholder={s.amountPlaceholder}
       />
       <TextField
-        label={kind === 'charge' ? 'За что' : 'Комментарий'}
+        label={kind === 'charge' ? s.forWhat : s.comment}
         value={description}
         onChangeText={setDescription}
-        placeholder={kind === 'charge' ? 'Например: Октябрь, живопись' : 'Например: Оплата за октябрь'}
+        placeholder={kind === 'charge' ? s.chargePlaceholder : s.paymentPlaceholder}
       />
-      <TextField label="Дата (ГГГГ-ММ-ДД)" value={entryDate} onChangeText={setEntryDate} placeholder="2026-10-01" />
+      <TextField label={s.date} value={entryDate} onChangeText={setEntryDate} placeholder="2026-10-01" />
 
       {kind === 'payment' ? (
         <>
-          <Text style={styles.label}>Способ оплаты</Text>
+          <Text style={styles.label}>{s.method}</Text>
           <View style={styles.methodRow}>
             {METHODS.map((m) => (
               <Pressable
@@ -133,7 +210,7 @@ export function BillingEntryFormScreen({ route }: Props) {
                 style={[styles.method, method === m && styles.methodActive]}
               >
                 <Text style={[styles.methodText, method === m && styles.methodTextActive]}>
-                  {PAYMENT_METHOD_LABELS[m]}
+                  {paymentMethodLabel(m)}
                 </Text>
               </Pressable>
             ))}
@@ -141,7 +218,7 @@ export function BillingEntryFormScreen({ route }: Props) {
         </>
       ) : null}
 
-      <Button title={kind === 'charge' ? 'Начислить' : 'Сохранить оплату'} onPress={onSave} loading={saving} />
+      <Button title={kind === 'charge' ? s.charge : s.savePayment} onPress={onSave} loading={saving} />
     </Screen>
   );
 }

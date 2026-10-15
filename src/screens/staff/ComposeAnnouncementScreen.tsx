@@ -11,16 +11,70 @@ import { useAuth } from '../../hooks/useAuth';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { Announcement, AnnouncementAudience, Group } from '../../types/database';
 import type { StaffStackParamList } from '../../navigation/types';
+import { useStrings } from '../../i18n';
 
-const AUDIENCES: { value: AnnouncementAudience; label: string }[] = [
-  { value: 'all', label: 'Всем' },
-  { value: 'students', label: 'Ученикам' },
-  { value: 'staff', label: 'Сотрудникам' },
-  { value: 'group', label: 'Группе' },
-];
+const STRINGS = {
+  ru: {
+    audience: { all: 'Всем', students: 'Ученикам', staff: 'Сотрудникам', group: 'Группе' } as Record<AnnouncementAudience, string>,
+    fillAll: 'Заполните заголовок и текст объявления',
+    chooseGroup: 'Выберите группу',
+    saveFailed: 'Не удалось сохранить',
+    deleteTitle: 'Удалить объявление?',
+    cancel: 'Отмена',
+    delete: 'Удалить',
+    editTitle: 'Редактировать объявление',
+    newTitle: 'Новое объявление',
+    heading: 'Заголовок',
+    text: 'Текст',
+    to: 'Кому',
+    pin: 'Закрепить наверху',
+    save: 'Сохранить',
+    send: 'Отправить',
+    deleteButton: 'Удалить объявление',
+  },
+  kk: {
+    audience: { all: 'Барлығына', students: 'Оқушыларға', staff: 'Қызметкерлерге', group: 'Топқа' } as Record<AnnouncementAudience, string>,
+    fillAll: 'Хабарландырудың тақырыбы мен мәтінін толтырыңыз',
+    chooseGroup: 'Топты таңдаңыз',
+    saveFailed: 'Сақтау мүмкін болмады',
+    deleteTitle: 'Хабарландыруды жою керек пе?',
+    cancel: 'Бас тарту',
+    delete: 'Жою',
+    editTitle: 'Хабарландыруды өңдеу',
+    newTitle: 'Жаңа хабарландыру',
+    heading: 'Тақырып',
+    text: 'Мәтін',
+    to: 'Кімге',
+    pin: 'Жоғарыда бекіту',
+    save: 'Сақтау',
+    send: 'Жіберу',
+    deleteButton: 'Хабарландыруды жою',
+  },
+  en: {
+    audience: { all: 'Everyone', students: 'Students', staff: 'Staff', group: 'Group' } as Record<AnnouncementAudience, string>,
+    fillAll: 'Fill in the announcement title and text',
+    chooseGroup: 'Choose a group',
+    saveFailed: 'Could not save',
+    deleteTitle: 'Delete this announcement?',
+    cancel: 'Cancel',
+    delete: 'Delete',
+    editTitle: 'Edit announcement',
+    newTitle: 'New announcement',
+    heading: 'Title',
+    text: 'Text',
+    to: 'To',
+    pin: 'Pin to top',
+    save: 'Save',
+    send: 'Send',
+    deleteButton: 'Delete announcement',
+  },
+};
+
+const AUDIENCES: AnnouncementAudience[] = ['all', 'students', 'staff', 'group'];
 
 export function ComposeAnnouncementScreen() {
   const navigation = useNavigation();
+  const s = useStrings(STRINGS);
   const route = useRoute<RouteProp<StaffStackParamList, 'ComposeAnnouncement'>>();
   const announcementId = route.params?.announcementId;
   const isEditing = !!announcementId;
@@ -64,11 +118,11 @@ export function ComposeAnnouncementScreen() {
   const onSend = async () => {
     if (!profile) return;
     if (!title.trim() || !body.trim()) {
-      Alert.alert('Заполните заголовок и текст объявления');
+      Alert.alert(s.fillAll);
       return;
     }
     if (audience === 'group' && !groupId) {
-      Alert.alert('Выберите группу');
+      Alert.alert(s.chooseGroup);
       return;
     }
     setSaving(true);
@@ -88,7 +142,7 @@ export function ComposeAnnouncementScreen() {
           .single();
     if (error) {
       setSaving(false);
-      Alert.alert('Не удалось сохранить', error.message);
+      Alert.alert(s.saveFailed, error.message);
       return;
     }
 
@@ -102,10 +156,10 @@ export function ComposeAnnouncementScreen() {
   };
 
   const onDelete = () => {
-    Alert.alert('Удалить объявление?', title, [
-      { text: 'Отмена', style: 'cancel' },
+    Alert.alert(s.deleteTitle, title, [
+      { text: s.cancel, style: 'cancel' },
       {
-        text: 'Удалить',
+        text: s.delete,
         style: 'destructive',
         onPress: async () => {
           await supabase.from('announcements').delete().eq('id', announcementId);
@@ -117,21 +171,21 @@ export function ComposeAnnouncementScreen() {
 
   return (
     <Screen scroll>
-      <Text style={styles.title}>{isEditing ? 'Редактировать объявление' : 'Новое объявление'}</Text>
+      <Text style={styles.title}>{isEditing ? s.editTitle : s.newTitle}</Text>
 
-      <TextField label="Заголовок" value={title} onChangeText={setTitle} />
-      <TextField label="Текст" value={body} onChangeText={setBody} multiline numberOfLines={5} style={styles.textarea} />
+      <TextField label={s.heading} value={title} onChangeText={setTitle} />
+      <TextField label={s.text} value={body} onChangeText={setBody} multiline numberOfLines={5} style={styles.textarea} />
 
-      <Text style={styles.label}>Кому</Text>
+      <Text style={styles.label}>{s.to}</Text>
       <View style={styles.audienceRow}>
-        {AUDIENCES.map((opt) => (
+        {AUDIENCES.map((value) => (
           <Pressable
-            key={opt.value}
-            onPress={() => setAudience(opt.value)}
-            style={[styles.audienceOption, audience === opt.value && styles.audienceOptionActive]}
+            key={value}
+            onPress={() => setAudience(value)}
+            style={[styles.audienceOption, audience === value && styles.audienceOptionActive]}
           >
-            <Text style={[styles.audienceText, audience === opt.value && styles.audienceTextActive]}>
-              {opt.label}
+            <Text style={[styles.audienceText, audience === value && styles.audienceTextActive]}>
+              {s.audience[value]}
             </Text>
           </Pressable>
         ))}
@@ -152,16 +206,16 @@ export function ComposeAnnouncementScreen() {
       ) : null}
 
       <View style={styles.pinRow}>
-        <Text style={styles.label}>Закрепить наверху</Text>
+        <Text style={styles.label}>{s.pin}</Text>
         <Switch value={pinned} onValueChange={setPinned} trackColor={{ true: colors.primary }} />
       </View>
 
-      <Button title={isEditing ? 'Сохранить' : 'Отправить'} onPress={onSend} loading={saving} />
+      <Button title={isEditing ? s.save : s.send} onPress={onSend} loading={saving} />
 
       {isEditing ? (
         <>
           <View style={{ height: spacing.sm }} />
-          <Button title="Удалить объявление" variant="danger" onPress={onDelete} />
+          <Button title={s.deleteButton} variant="danger" onPress={onDelete} />
         </>
       ) : null}
     </Screen>

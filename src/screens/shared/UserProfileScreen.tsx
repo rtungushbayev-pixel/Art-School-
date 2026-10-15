@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import { isAdminRole, isStaffRole } from '../../lib/roles';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
@@ -22,9 +23,14 @@ import {
   type StudentPhotoWithUrl,
 } from '../../lib/parents';
 import { Card } from '../../components/Card';
+import { BranchHeadPicker } from '../../components/BranchHeadPicker';
+import { startChat } from '../../lib/chats';
+import { errorText } from '../../lib/errors';
 import { Avatar } from '../../components/Avatar';
 import { ProgressNoteCard } from '../../components/ProgressNoteCard';
 import { useAuth } from '../../hooks/useAuth';
+import { useStrings } from '../../i18n';
+import { FEATURES } from '../../lib/features';
 import {
   acceptFriendRequest,
   fetchFriendsData,
@@ -34,42 +40,213 @@ import {
   type FriendState,
 } from '../../lib/friends';
 import { useStudentPortfolio } from '../../hooks/useStudentPortfolio';
-import { colors, spacing } from '../../theme/colors';
+import { colors, radius, spacing } from '../../theme/colors';
+import { Ionicons } from '@expo/vector-icons';
 import type { Profile, UserRole } from '../../types/database';
 import type { StaffStackParamList, StudentStackParamList } from '../../navigation/types';
 
 type NavParamList = StudentStackParamList & StaffStackParamList;
 
-const ROLE_CHANGE: Record<UserRole, { button: string; question: (name: string) => string }> = {
-  staff: {
-    button: 'Сделать сотрудником',
-    question: (name) => `${name} получит права сотрудника: модерация, группы, расписание и сообщения.`,
+type RoleChange = Record<UserRole, { button: string; question: (name: string) => string }>;
+
+const STRINGS = {
+  ru: {
+    writeParent: (name: string) => `Написать родителю: ${name}`,
+    roleChange: {
+      staff: {
+        button: 'Сделать преподавателем',
+        question: (name: string) =>
+          `${name} станет преподавателем: модерация, сообщения, прогресс учеников и свои группы.`,
+      },
+      admin: {
+        button: 'Сделать администратором',
+        question: (name: string) =>
+          `${name} станет администратором: все права, включая роли, приглашения сотрудников, все группы, коды учеников и телефоны.`,
+      },
+      office: {
+        button: 'Сделать Администрацией',
+        question: (name: string) =>
+          `${name} войдёт в Администрацию школы: увидит заявки преподавателей на материалы и будет отмечать выдачу.`,
+      },
+      student: {
+        button: 'Сделать учеником',
+        question: (name: string) => `${name} станет учеником.`,
+      },
+      parent: {
+        button: 'Сделать родителем',
+        question: (name: string) =>
+          `${name} станет родителем: увидит прогресс и работы детей, которых вы к нему привяжете. Свои работы публиковать не сможет.`,
+      },
+    } as RoleChange,
+    friendButton: {
+      none: 'Пригласить в друзья',
+      outgoing: 'Приглашение отправлено',
+      incoming: 'Принять приглашение в друзья',
+      friends: 'Вы друзья',
+      blocked: 'Разблокировать',
+    } as Record<FriendState, string>,
+    changeRoleQ: 'Изменить роль?',
+    cancel: 'Отмена',
+    change: 'Изменить',
+    changeRoleFailed: 'Не удалось изменить роль',
+    unlinkChildQ: 'Отвязать ребёнка?',
+    unlinkChildText: (parent: string, child: string) => `${parent} больше не увидит прогресс и работы ${child}.`,
+    unlink: 'Отвязать',
+    unlinkFailed: 'Не удалось отвязать',
+    deleteNoteQ: 'Удалить отзыв?',
+    delete: 'Удалить',
+    deleteFailed: 'Не удалось удалить',
+    deletePhotoQ: 'Удалить фото из галереи?',
+    failed: 'Не получилось',
+    loading: 'Загрузка…',
+    children: (n: number) => `Дети (${n})`,
+    link: '+ Привязать',
+    noChildren: 'Дети ещё не привязаны',
+    payments: 'Оплаты ученика',
+    parents: (names: string) => `Родители: ${names}`,
+    progress: 'Прогресс',
+    addNote: '+ Отзыв',
+    noNotes: 'Отзывов пока нет',
+    classPhotos: 'Фото с занятий',
+    addPhoto: '+ Фото',
+    noPhotos: 'Фото пока нет. Их увидят ученик и родители.',
+    photoHint: 'Удерживайте фото, чтобы удалить его.',
   },
-  student: {
-    button: 'Сделать учеником',
-    question: (name) => `${name} станет учеником.`,
+  kk: {
+    writeParent: (name: string) => `Ата-анаға жазу: ${name}`,
+    roleChange: {
+      staff: {
+        button: 'Мұғалім ету',
+        question: (name: string) =>
+          `${name} мұғалім болады: модерация, хабарламалар, оқушылардың үлгерімі және өз топтары.`,
+      },
+      admin: {
+        button: 'Әкімші ету',
+        question: (name: string) =>
+          `${name} әкімші болады: барлық құқықтар, соның ішінде рөлдер, қызметкерлерді шақыру, барлық топтар, оқушы кодтары және телефондар.`,
+      },
+      office: {
+        button: 'Әкімшілікке қосу',
+        question: (name: string) =>
+          `${name} мектеп әкімшілігіне қосылады: мұғалімдердің материалдарға өтінімдерін көріп, берілгенін белгілейді.`,
+      },
+      student: {
+        button: 'Оқушы ету',
+        question: (name: string) => `${name} оқушы болады.`,
+      },
+      parent: {
+        button: 'Ата-ана ету',
+        question: (name: string) =>
+          `${name} ата-ана болады: сіз оған байланыстыратын балалардың прогресі мен жұмыстарын көреді. Өз жұмыстарын жариялай алмайды.`,
+      },
+    } as RoleChange,
+    friendButton: {
+      none: 'Достыққа шақыру',
+      outgoing: 'Шақыру жіберілді',
+      incoming: 'Достыққа шақыруды қабылдау',
+      friends: 'Сіздер доссыздар',
+      blocked: 'Бұғаттан шығару',
+    } as Record<FriendState, string>,
+    changeRoleQ: 'Рөлді өзгерту керек пе?',
+    cancel: 'Бас тарту',
+    change: 'Өзгерту',
+    changeRoleFailed: 'Рөлді өзгерту мүмкін болмады',
+    unlinkChildQ: 'Баланы ажырату керек пе?',
+    unlinkChildText: (parent: string, child: string) =>
+      `${parent} бұдан былай мына баланың прогресі мен жұмыстарын көрмейді: ${child}.`,
+    unlink: 'Ажырату',
+    unlinkFailed: 'Ажырату мүмкін болмады',
+    deleteNoteQ: 'Пікірді жою керек пе?',
+    delete: 'Жою',
+    deleteFailed: 'Жою мүмкін болмады',
+    deletePhotoQ: 'Фотоны галереядан жою керек пе?',
+    failed: 'Сәтсіз аяқталды',
+    loading: 'Жүктелуде…',
+    children: (n: number) => `Балалар (${n})`,
+    link: '+ Байланыстыру',
+    noChildren: 'Балалар әлі байланыстырылмаған',
+    payments: 'Оқушының төлемдері',
+    parents: (names: string) => `Ата-аналары: ${names}`,
+    progress: 'Прогресс',
+    addNote: '+ Пікір',
+    noNotes: 'Әзірге пікірлер жоқ',
+    classPhotos: 'Сабақтағы фотолар',
+    addPhoto: '+ Фото',
+    noPhotos: 'Әзірге фото жоқ. Оларды оқушы мен ата-аналары көреді.',
+    photoHint: 'Фотоны жою үшін оны басып тұрыңыз.',
   },
-  parent: {
-    button: 'Сделать родителем',
-    question: (name) =>
-      `${name} станет родителем: увидит прогресс и работы детей, которых вы к нему привяжете. Свои работы публиковать не сможет.`,
+  en: {
+    writeParent: (name: string) => `Message parent: ${name}`,
+    roleChange: {
+      staff: {
+        button: 'Make teacher',
+        question: (name: string) =>
+          `${name} will become a teacher: moderation, messages, student progress and their own groups.`,
+      },
+      admin: {
+        button: 'Make administrator',
+        question: (name: string) =>
+          `${name} will become an administrator: all rights, including roles, staff invitations, all groups, student codes and phone numbers.`,
+      },
+      office: {
+        button: 'Make administration staff',
+        question: (name: string) =>
+          `${name} will join the school administration: they will see teachers' supply requests and mark them as issued.`,
+      },
+      student: {
+        button: 'Make student',
+        question: (name: string) => `${name} will become a student.`,
+      },
+      parent: {
+        button: 'Make parent',
+        question: (name: string) =>
+          `${name} will become a parent: they will see the progress and works of the children you link to them. They will not be able to publish their own works.`,
+      },
+    } as RoleChange,
+    friendButton: {
+      none: 'Add friend',
+      outgoing: 'Invitation sent',
+      incoming: 'Accept friend request',
+      friends: 'You are friends',
+      blocked: 'Unblock',
+    } as Record<FriendState, string>,
+    changeRoleQ: 'Change role?',
+    cancel: 'Cancel',
+    change: 'Change',
+    changeRoleFailed: 'Could not change the role',
+    unlinkChildQ: 'Unlink child?',
+    unlinkChildText: (parent: string, child: string) =>
+      `${parent} will no longer see the progress and works of ${child}.`,
+    unlink: 'Unlink',
+    unlinkFailed: 'Could not unlink',
+    deleteNoteQ: 'Delete this review?',
+    delete: 'Delete',
+    deleteFailed: 'Could not delete',
+    deletePhotoQ: 'Delete this photo from the gallery?',
+    failed: 'Something went wrong',
+    loading: 'Loading…',
+    children: (n: number) => `Children (${n})`,
+    link: '+ Link',
+    noChildren: 'No children linked yet',
+    payments: 'Student payments',
+    parents: (names: string) => `Parents: ${names}`,
+    progress: 'Progress',
+    addNote: '+ Review',
+    noNotes: 'No reviews yet',
+    classPhotos: 'Class photos',
+    addPhoto: '+ Photo',
+    noPhotos: 'No photos yet. The student and parents will see them.',
+    photoHint: 'Press and hold a photo to delete it.',
   },
 };
 
-const FRIEND_BUTTON: Record<FriendState, string> = {
-  none: 'Пригласить в друзья',
-  outgoing: 'Приглашение отправлено',
-  incoming: 'Принять приглашение в друзья',
-  friends: 'Вы друзья',
-  blocked: 'Разблокировать',
-};
-
-const ROLE_ORDER: UserRole[] = ['student', 'parent', 'staff'];
+const ROLE_ORDER: UserRole[] = ['student', 'parent', 'staff', 'office', 'admin'];
 
 export function UserProfileScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<NavParamList>>();
   const route = useRoute<RouteProp<NavParamList, 'UserProfile'>>();
   const { profile: viewer } = useAuth();
+  const s = useStrings(STRINGS);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [changingRole, setChangingRole] = useState<UserRole | null>(null);
   const [children, setChildren] = useState<Profile[]>([]);
@@ -81,7 +258,7 @@ export function UserProfileScreen() {
   const [tab, setTab] = useState<ProfileTab>('profile');
 
   const userId = route.params.userId;
-  const viewerIsStaff = viewer?.role === 'staff';
+  const viewerIsStaff = isStaffRole(viewer?.role);
   const { posts, achievements, groups } = useStudentPortfolio(userId, viewer?.id);
 
   const load = useCallback(async () => {
@@ -89,7 +266,7 @@ export function UserProfileScreen() {
     const loaded = data as Profile;
     setProfile(loaded);
     // Друзья — между учениками и преподавателями.
-    const friendRoles = ['student', 'staff'];
+    const friendRoles = ['student', 'staff', 'admin'];
     if (viewer && loaded && viewer.id !== loaded.id && friendRoles.includes(viewer.role) && friendRoles.includes(loaded.role)) {
       try {
         setFriendState(friendStateOf(await fetchFriendsData(viewer.id), loaded.id));
@@ -128,18 +305,18 @@ export function UserProfileScreen() {
 
   const changeRole = (role: UserRole) => {
     if (!profile) return;
-    const question = ROLE_CHANGE[role].question(profile.full_name);
-    Alert.alert('Изменить роль?', question, [
-      { text: 'Отмена', style: 'cancel' },
+    const question = s.roleChange[role].question(profile.full_name);
+    Alert.alert(s.changeRoleQ, question, [
+      { text: s.cancel, style: 'cancel' },
       {
-        text: 'Изменить',
-        style: profile.role === 'staff' ? 'destructive' : 'default',
+        text: s.change,
+        style: isStaffRole(profile.role) ? 'destructive' : 'default',
         onPress: async () => {
           setChangingRole(role);
           const { error } = await supabase.rpc('set_user_role', { p_user_id: profile.id, p_role: role });
           setChangingRole(null);
           if (error) {
-            Alert.alert('Не удалось изменить роль', error.message);
+            Alert.alert(s.changeRoleFailed, error.message);
           } else {
             load();
           }
@@ -150,17 +327,17 @@ export function UserProfileScreen() {
 
   const onUnlinkChild = (child: Profile) => {
     if (!profile) return;
-    Alert.alert('Отвязать ребёнка?', `${profile.full_name} больше не увидит прогресс и работы ${child.full_name}.`, [
-      { text: 'Отмена', style: 'cancel' },
+    Alert.alert(s.unlinkChildQ, s.unlinkChildText(profile.full_name, child.full_name), [
+      { text: s.cancel, style: 'cancel' },
       {
-        text: 'Отвязать',
+        text: s.unlink,
         style: 'destructive',
         onPress: async () => {
           try {
             await unlinkChild(profile.id, child.id);
             load();
           } catch (e) {
-            Alert.alert('Не удалось отвязать', e instanceof Error ? e.message : undefined);
+            Alert.alert(s.unlinkFailed, e instanceof Error ? e.message : undefined);
           }
         },
       },
@@ -168,17 +345,17 @@ export function UserProfileScreen() {
   };
 
   const onDeleteNote = (note: ProgressNoteWithAuthor) => {
-    Alert.alert('Удалить отзыв?', note.title, [
-      { text: 'Отмена', style: 'cancel' },
+    Alert.alert(s.deleteNoteQ, note.title, [
+      { text: s.cancel, style: 'cancel' },
       {
-        text: 'Удалить',
+        text: s.delete,
         style: 'destructive',
         onPress: async () => {
           try {
             await deleteProgressNote(note.id);
             load();
           } catch (e) {
-            Alert.alert('Не удалось удалить', e instanceof Error ? e.message : undefined);
+            Alert.alert(s.deleteFailed, e instanceof Error ? e.message : undefined);
           }
         },
       },
@@ -186,17 +363,17 @@ export function UserProfileScreen() {
   };
 
   const onDeletePhoto = (photo: StudentPhotoWithUrl) => {
-    Alert.alert('Удалить фото из галереи?', photo.caption ?? undefined, [
-      { text: 'Отмена', style: 'cancel' },
+    Alert.alert(s.deletePhotoQ, photo.caption ?? undefined, [
+      { text: s.cancel, style: 'cancel' },
       {
-        text: 'Удалить',
+        text: s.delete,
         style: 'destructive',
         onPress: async () => {
           try {
             await deleteStudentPhoto(photo);
             load();
           } catch (e) {
-            Alert.alert('Не удалось удалить', e instanceof Error ? e.message : undefined);
+            Alert.alert(s.deleteFailed, e instanceof Error ? e.message : undefined);
           }
         },
       },
@@ -212,7 +389,7 @@ export function UserProfileScreen() {
       else if (friendState === 'blocked') await unblockUser(viewer.id, profile.id);
       await load();
     } catch (e) {
-      Alert.alert('Не получилось', e instanceof Error ? e.message : undefined);
+      Alert.alert(s.failed, e instanceof Error ? e.message : undefined);
     }
     setFriendBusy(false);
   };
@@ -220,7 +397,7 @@ export function UserProfileScreen() {
   if (!profile) {
     return (
       <Screen>
-        <Text style={styles.empty}>Загрузка…</Text>
+        <Text style={styles.empty}>{s.loading}</Text>
       </Screen>
     );
   }
@@ -228,23 +405,35 @@ export function UserProfileScreen() {
   return (
     <Screen scroll>
       <ProfileHeader profile={profile} groups={groups} />
-      {friendState ? (
+      {friendState === 'friends' || friendState === 'outgoing' ? (
+        // Уже друзья или заявка ждёт ответа — не кнопка, а понятная отметка.
+        <View style={[styles.friendBadge, friendState === 'friends' && styles.friendBadgeOk]}>
+          <Ionicons
+            name={friendState === 'friends' ? 'people' : 'time-outline'}
+            size={18}
+            color={friendState === 'friends' ? colors.success : colors.textMuted}
+          />
+          <Text style={[styles.friendBadgeText, friendState === 'friends' && styles.friendBadgeTextOk]}>
+            {s.friendButton[friendState]}
+          </Text>
+        </View>
+      ) : friendState ? (
         <View style={styles.friendAction}>
           <Button
-            title={FRIEND_BUTTON[friendState]}
-            variant={friendState === 'none' || friendState === 'incoming' ? 'primary' : 'secondary'}
-            disabled={friendState === 'friends' || friendState === 'outgoing'}
+            title={s.friendButton[friendState]}
+            variant={friendState === 'blocked' ? 'secondary' : 'primary'}
             loading={friendBusy}
             onPress={onFriendPress}
           />
         </View>
       ) : null}
-      {viewerIsStaff && viewer?.id !== profile.id ? (
+      {isAdminRole(viewer?.role) && isStaffRole(profile.role) ? <BranchHeadPicker userId={profile.id} /> : null}
+      {isAdminRole(viewer?.role) && viewer?.id !== profile.id ? (
         <View style={styles.roleAction}>
           {ROLE_ORDER.filter((role) => role !== profile.role).map((role) => (
             <Button
               key={role}
-              title={ROLE_CHANGE[role].button}
+              title={s.roleChange[role].button}
               variant="secondary"
               onPress={() => changeRole(role)}
               loading={changingRole === role}
@@ -257,18 +446,18 @@ export function UserProfileScreen() {
       {viewerIsStaff && profile.role === 'parent' ? (
         <>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitleInline}>Дети ({children.length})</Text>
+            <Text style={styles.sectionTitleInline}>{s.children(children.length)}</Text>
             <Pressable onPress={() => navigation.navigate('LinkChild', { parentId: profile.id })}>
-              <Text style={styles.addLink}>+ Привязать</Text>
+              <Text style={styles.addLink}>{s.link}</Text>
             </Pressable>
           </View>
-          {children.length === 0 ? <Text style={styles.emptyLeft}>Дети ещё не привязаны</Text> : null}
+          {children.length === 0 ? <Text style={styles.emptyLeft}>{s.noChildren}</Text> : null}
           {children.map((child) => (
             <Card key={child.id} style={styles.personRow}>
               <Avatar uri={child.avatar_url} name={child.full_name} size={36} />
               <Text style={styles.personName}>{child.full_name}</Text>
               <Pressable onPress={() => onUnlinkChild(child)} hitSlop={8}>
-                <Text style={styles.remove}>Отвязать</Text>
+                <Text style={styles.remove}>{s.unlink}</Text>
               </Pressable>
             </Card>
           ))}
@@ -277,42 +466,63 @@ export function UserProfileScreen() {
 
       {viewerIsStaff && profile.role === 'student' ? (
         <>
-          <Button
-            title="Оплаты ученика"
-            variant="secondary"
-            onPress={() => navigation.navigate('Payments', { studentId: profile.id })}
-          />
-          <View style={{ height: spacing.sm }} />
-          {parents.length > 0 ? (
-            <Text style={styles.parents}>Родители: {parents.map((p) => p.full_name).join(', ')}</Text>
+          {FEATURES.payments ? (
+            <>
+              <Button
+                title={s.payments}
+                variant="secondary"
+                onPress={() => navigation.navigate('Payments', { studentId: profile.id })}
+              />
+              <View style={{ height: spacing.sm }} />
+            </>
           ) : null}
+          {parents.length > 0 ? (
+            <Text style={styles.parents}>{s.parents(parents.map((p) => p.full_name).join(', '))}</Text>
+          ) : null}
+          {FEATURES.parentChats && parents.map((parent) => (
+            <View key={parent.id} style={{ marginBottom: spacing.sm }}>
+              <Button
+                title={s.writeParent(parent.full_name)}
+                variant="secondary"
+                onPress={async () => {
+                  if (!viewer) return;
+                  try {
+                    const chatId = await startChat(parent.id, viewer.id, profile.id);
+                    navigation.navigate('Chat', { chatId });
+                  } catch (e) {
+                    Alert.alert('', errorText(e));
+                  }
+                }}
+              />
+            </View>
+          ))}
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitleInline}>Прогресс</Text>
+            <Text style={styles.sectionTitleInline}>{s.progress}</Text>
             <Pressable
               onPress={() =>
                 navigation.navigate('AddProgressNote', { studentId: profile.id, studentName: profile.full_name })
               }
             >
-              <Text style={styles.addLink}>+ Отзыв</Text>
+              <Text style={styles.addLink}>{s.addNote}</Text>
             </Pressable>
           </View>
-          {notes.length === 0 ? <Text style={styles.emptyLeft}>Отзывов пока нет</Text> : null}
+          {notes.length === 0 ? <Text style={styles.emptyLeft}>{s.noNotes}</Text> : null}
           {notes.map((note) => (
             <ProgressNoteCard key={note.id} note={note} onDelete={() => onDeleteNote(note)} />
           ))}
 
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitleInline}>Фото с занятий</Text>
+            <Text style={styles.sectionTitleInline}>{s.classPhotos}</Text>
             <Pressable
               onPress={() =>
                 navigation.navigate('AddStudentPhoto', { studentId: profile.id, studentName: profile.full_name })
               }
             >
-              <Text style={styles.addLink}>+ Фото</Text>
+              <Text style={styles.addLink}>{s.addPhoto}</Text>
             </Pressable>
           </View>
           {photos.length === 0 ? (
-            <Text style={styles.emptyLeft}>Фото пока нет. Их увидят ученик и родители.</Text>
+            <Text style={styles.emptyLeft}>{s.noPhotos}</Text>
           ) : (
             <View style={[styles.grid, styles.photoGrid]}>
               {photos.map((photo) => (
@@ -329,7 +539,7 @@ export function UserProfileScreen() {
                   )}
                 </Pressable>
               ))}
-              <Text style={styles.photoHint}>Удерживайте фото, чтобы удалить его.</Text>
+              <Text style={styles.photoHint}>{s.photoHint}</Text>
             </View>
           )}
         </>
@@ -356,6 +566,19 @@ export function UserProfileScreen() {
 
 const styles = StyleSheet.create({
   friendAction: { marginBottom: spacing.sm },
+  friendBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.sm + 2,
+    borderRadius: radius.full,
+    backgroundColor: colors.surfaceAlt,
+    marginBottom: spacing.sm,
+  },
+  friendBadgeOk: { backgroundColor: '#E6F2EA' },
+  friendBadgeText: { fontWeight: '700', color: colors.textMuted },
+  friendBadgeTextOk: { color: colors.success },
   roleAction: { marginBottom: spacing.md, gap: spacing.sm },
   sectionHeader: {
     flexDirection: 'row',

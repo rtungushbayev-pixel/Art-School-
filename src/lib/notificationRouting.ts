@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
+import { isStaffRole } from './roles';
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import type { NavigationContainerRefWithCurrent } from '@react-navigation/native';
@@ -11,7 +12,12 @@ import type { ParentStackParamList, StaffStackParamList, StudentStackParamList }
 type NotificationTarget =
   | { screen: 'PostDetail'; postId: string }
   | { screen: 'ListingDetail'; listingId: string }
-  | { screen: 'Announcements' };
+  | { screen: 'Announcements' }
+  | { screen: 'SupportTicket'; ticketId: string }
+  | { screen: 'ChildDetail'; childId: string }
+  | { screen: 'Chat'; chatId: string }
+  | { screen: 'EventDetail'; eventId: string }
+  | { screen: 'GroupDetail'; groupId: string };
 
 function asId(value: unknown): string | null {
   return typeof value === 'string' && value.length > 0 ? value : null;
@@ -31,6 +37,26 @@ export function resolveNotificationTarget(data: Record<string, unknown> | undefi
     }
     case 'announcement':
       return { screen: 'Announcements' };
+    case 'support_ticket': {
+      const ticketId = asId(data.ticketId);
+      return ticketId ? { screen: 'SupportTicket', ticketId } : null;
+    }
+    case 'school_event': {
+      const eventId = asId(data.eventId);
+      return eventId ? { screen: 'EventDetail', eventId } : null;
+    }
+    case 'chat_message': {
+      const chatId = asId(data.chatId);
+      return chatId ? { screen: 'Chat', chatId } : null;
+    }
+    case 'group_request': {
+      const groupId = asId(data.groupId);
+      return groupId ? { screen: 'GroupDetail', groupId } : null;
+    }
+    case 'attendance': {
+      const childId = asId(data.studentId);
+      return childId ? { screen: 'ChildDetail', childId } : null;
+    }
     default:
       return null;
   }
@@ -54,6 +80,30 @@ function navigateToTarget(navigation: AppNavigationRef, role: UserRole, target: 
     case 'Announcements':
       // «Сообщения» есть в стеке каждой роли.
       navigation.navigate('Messages');
+      break;
+    case 'SupportTicket':
+      navigation.navigate('SupportTicket', { ticketId: target.ticketId });
+      break;
+    case 'Chat':
+      // Чат есть у родителей и сотрудников.
+      if (role === 'parent' || role === 'staff' || role === 'admin') {
+        navigation.navigate('Chat', { chatId: target.chatId });
+      }
+      break;
+    case 'EventDetail':
+      if (role !== 'office') navigation.navigate('EventDetail', { eventId: target.eventId });
+      break;
+    case 'GroupDetail':
+      // Запросы на замену преподавателя — только у сотрудников.
+      if (role === 'staff' || role === 'admin') {
+        navigation.navigate('GroupDetail', { groupId: target.groupId });
+      }
+      break;
+    case 'ChildDetail':
+      // Об отсутствии ребёнка пишут только родителям.
+      if (role === 'parent') {
+        navigation.navigate('ChildDetail', { childId: target.childId });
+      }
       break;
   }
 }
@@ -81,7 +131,7 @@ export function useNotificationNavigation(navigation: AppNavigationRef, role: Us
     // Сразу после входа стек ученика/сотрудника/родителя может ещё не смонтироваться —
     // тогда ждём следующего onStateChange.
     const stack =
-      currentRole === 'staff' ? 'StaffTabs' : currentRole === 'parent' ? 'ParentTabs' : 'StudentTabs';
+      isStaffRole(currentRole) ? 'StaffTabs' : currentRole === 'parent' ? 'ParentTabs' : 'StudentTabs';
     if (!navigation.getRootState()?.routeNames.includes(stack)) return;
     pending.current = null;
     navigateToTarget(navigation, currentRole, target);

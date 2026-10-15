@@ -1,20 +1,27 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
-import type { BillingKind } from '../types/database';
+import type { BillingKind, SupportCategory } from '../types/database';
 
 export type AuthStackParamList = {
   Login: undefined;
   SignUp: undefined;
+  ForgotPassword: undefined;
 };
 
 export type StudentTabParamList = {
   ScheduleTab: undefined;
   FeedTab: undefined;
+  ScanTab: undefined;
   ProfileTab: undefined;
 };
 
 export type StudentStackParamList = {
   StudentTabs: NavigatorScreenParams<StudentTabParamList> | undefined;
+  ProfileSettings: undefined;
+  CheckIn: undefined;
+  Events: undefined;
+  EventDetail: { eventId: string };
   Messages: undefined;
+  AnnouncementDetail: { announcementId: string };
   Market: undefined;
   Friends: { focusSearch?: boolean; showBlocked?: boolean } | undefined;
   PostDetail: { postId: string };
@@ -28,6 +35,9 @@ export type StudentStackParamList = {
   ListingDetail: { listingId: string };
   CreateListing: undefined;
   Payments: { studentId?: string } | undefined;
+  Support: undefined;
+  NewSupportTicket: { category: SupportCategory };
+  SupportTicket: { ticketId: string };
 };
 
 export type StaffTabParamList = {
@@ -40,7 +50,9 @@ export type StaffTabParamList = {
 
 export type StaffStackParamList = {
   StaffTabs: NavigatorScreenParams<StaffTabParamList> | undefined;
+  ProfileSettings: undefined;
   Messages: undefined;
+  AnnouncementDetail: { announcementId: string };
   Market: undefined;
   Friends: { focusSearch?: boolean; showBlocked?: boolean } | undefined;
   ComposeAnnouncement: { announcementId?: string } | undefined;
@@ -69,23 +81,58 @@ export type StaffStackParamList = {
   AddProgressNote: { studentId: string; studentName: string };
   AddStudentPhoto: { studentId: string; studentName: string };
   PhotoView: { uri: string; caption?: string | null };
+  Support: undefined;
+  NewSupportTicket: { category: SupportCategory };
+  SupportTicket: { ticketId: string };
+  Attendance: { groupId: string; groupName: string };
+  AttendanceSummary: undefined;
+  BranchQr: undefined;
+  Chats: undefined;
+  Chat: { chatId: string };
+  Events: undefined;
+  EventDetail: { eventId: string };
+  EditEvent: { eventId?: string };
+  KaspiSettings: undefined;
+  MaterialRequests: undefined;
+  NewMaterialRequest: undefined;
+  MaterialRequest: { requestId: string };
+  MaterialSummary: undefined;
+};
+
+// Администрация: заявки на материалы и профиль. Стек — часть стека сотрудника.
+export type OfficeTabParamList = {
+  MaterialsTab: undefined;
+  ProfileTab: undefined;
 };
 
 export type ParentTabParamList = {
   ScheduleTab: undefined;
   FeedTab: undefined;
+  ScanTab: undefined;
   ProfileTab: undefined;
 };
 
 export type ParentStackParamList = {
   ParentTabs: NavigatorScreenParams<ParentTabParamList> | undefined;
+  ProfileSettings: undefined;
+  CheckIn: undefined;
+  Payments: { studentId?: string } | undefined;
+  Chats: undefined;
+  Chat: { chatId: string };
+  Events: undefined;
+  EventDetail: { eventId: string };
   Portfolio: { userId: string };
   Messages: undefined;
+  AnnouncementDetail: { announcementId: string };
   Children: undefined;
+  AddChild: undefined;
   ChildDetail: { childId: string };
   PhotoView: { uri: string; caption?: string | null };
   PostDetail: { postId: string };
   EditProfile: undefined;
   NotificationSettings: undefined;
   UserProfile: { userId: string };
+  Support: undefined;
+  NewSupportTicket: { category: SupportCategory };
+  SupportTicket: { ticketId: string };
 };

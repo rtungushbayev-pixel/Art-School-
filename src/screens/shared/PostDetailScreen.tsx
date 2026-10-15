@@ -1,5 +1,8 @@
 import React, { useCallback, useState } from 'react';
-import { Alert, FlatList, StyleSheet, Text, View } from 'react-native';
+import { isStaffRole } from '../../lib/roles';
+import { errorText } from '../../lib/errors';
+import { Alert, FlatList, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { PhotoCarousel } from '../../components/PhotoCarousel';
 import { Image } from 'expo-image';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
@@ -9,10 +12,11 @@ import { Avatar } from '../../components/Avatar';
 import { TextField } from '../../components/TextField';
 import { Button } from '../../components/Button';
 import { supabase } from '../../lib/supabase';
-import { toggleLike } from '../../lib/posts';
+import { toggleLike, deletePostWithFiles } from '../../lib/posts';
 import { artworkMeta } from '../../lib/portfolio';
 import { sendPushNotification } from '../../lib/notifications';
 import { useAuth } from '../../hooks/useAuth';
+import { useStrings } from '../../i18n';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { StaffStackParamList, StudentStackParamList } from '../../navigation/types';
 import type { Post, PostImage, Profile } from '../../types/database';
@@ -26,10 +30,81 @@ interface Comment {
   author: Pick<Profile, 'id' | 'full_name' | 'avatar_url'> | null;
 }
 
+const STRINGS = {
+  ru: {
+    commentFailed: 'Не удалось отправить комментарий',
+    report: 'Пожаловаться',
+    reportTitle: 'Что не так с публикацией?',
+    reasonInappropriate: 'Неприемлемое содержание',
+    reasonOffensive: 'Оскорбление или травля',
+    reasonNotOwn: 'Чужая работа',
+    reasonSpam: 'Реклама или спам',
+    reportSent: 'Жалоба отправлена',
+    reportSentText: 'Спасибо. Сотрудники школы посмотрят публикацию.',
+    reportFailed: 'Не удалось отправить жалобу',
+    deleteConfirm: 'Удалить публикацию?',
+    cancel: 'Отмена',
+    delete: 'Удалить',
+    notFound: 'Публикация удалена или недоступна',
+    loading: 'Загрузка…',
+    edit: 'Изменить',
+    comments: 'Комментарии',
+    noComments: 'Комментариев пока нет',
+    commentPlaceholder: 'Написать комментарий…',
+    send: 'Отправить',
+  },
+  kk: {
+    commentFailed: 'Пікірді жіберу мүмкін болмады',
+    report: 'Шағымдану',
+    reportTitle: 'Жарияланымда не дұрыс емес?',
+    reasonInappropriate: 'Орынсыз мазмұн',
+    reasonOffensive: 'Қорлау немесе қудалау',
+    reasonNotOwn: 'Басқа біреудің жұмысы',
+    reasonSpam: 'Жарнама немесе спам',
+    reportSent: 'Шағым жіберілді',
+    reportSentText: 'Рахмет. Мектеп қызметкерлері жарияланымды қарайды.',
+    reportFailed: 'Шағымды жіберу мүмкін болмады',
+    deleteConfirm: 'Жарияланымды жою керек пе?',
+    cancel: 'Бас тарту',
+    delete: 'Жою',
+    notFound: 'Жарияланым жойылған немесе қолжетімсіз',
+    loading: 'Жүктелуде…',
+    edit: 'Өзгерту',
+    comments: 'Пікірлер',
+    noComments: 'Әзірге пікірлер жоқ',
+    commentPlaceholder: 'Пікір жазу…',
+    send: 'Жіберу',
+  },
+  en: {
+    commentFailed: 'Could not send the comment',
+    report: 'Report',
+    reportTitle: "What's wrong with this post?",
+    reasonInappropriate: 'Inappropriate content',
+    reasonOffensive: 'Insults or bullying',
+    reasonNotOwn: "Someone else's work",
+    reasonSpam: 'Ads or spam',
+    reportSent: 'Report sent',
+    reportSentText: 'Thank you. School staff will review the post.',
+    reportFailed: 'Could not send the report',
+    deleteConfirm: 'Delete this post?',
+    cancel: 'Cancel',
+    delete: 'Delete',
+    notFound: 'This post has been deleted or is unavailable',
+    loading: 'Loading…',
+    edit: 'Edit',
+    comments: 'Comments',
+    noComments: 'No comments yet',
+    commentPlaceholder: 'Write a comment…',
+    send: 'Send',
+  },
+};
+
 export function PostDetailScreen() {
+  const { width: windowWidth } = useWindowDimensions();
   const route = useRoute<RouteProp<NavParamList, 'PostDetail'>>();
   const { postId } = route.params;
   const { profile } = useAuth();
+  const s = useStrings(STRINGS);
   const navigation = useNavigation<NativeStackNavigationProp<NavParamList>>();
 
   const [post, setPost] = useState<Post | null>(null);
@@ -99,7 +174,7 @@ export function PostDetailScreen() {
       .single();
     setPosting(false);
     if (error) {
-      Alert.alert('Не удалось отправить комментарий', error.message);
+      Alert.alert(s.commentFailed, errorText(error));
       return;
     }
     setCommentText('');
@@ -108,18 +183,44 @@ export function PostDetailScreen() {
     sendPushNotification({ event: 'post_comment', id: comment.id });
   };
 
-  const canDelete = profile && (profile.role === 'staff' || profile.id === post?.author_id);
+  const canDelete = profile && (isStaffRole(profile.role) || profile.id === post?.author_id);
   const isAuthor = !!profile && profile.id === post?.author_id;
 
+  // Жалоба: видна сотрудникам; после трёх жалоб публикация скрывается до проверки.
+  const onReport = () => {
+    const send = async (reason: string) => {
+      if (!profile) return;
+      const { error } = await supabase.from('post_reports').insert({ post_id: postId, reporter_id: profile.id, reason });
+      if (error && error.code !== '23505') Alert.alert(s.reportFailed, errorText(error));
+      else Alert.alert(s.reportSent, s.reportSentText);
+    };
+    Alert.alert(s.reportTitle, undefined, [
+      { text: s.reasonInappropriate, onPress: () => send('inappropriate') },
+      { text: s.reasonOffensive, onPress: () => send('offensive') },
+      { text: s.reasonNotOwn, onPress: () => send('not_own') },
+      { text: s.reasonSpam, onPress: () => send('spam') },
+      { text: s.cancel, style: 'cancel' },
+    ]);
+  };
+
   const onDelete = () => {
-    Alert.alert('Удалить публикацию?', undefined, [
-      { text: 'Отмена', style: 'cancel' },
+    Alert.alert(s.deleteConfirm, undefined, [
+      { text: s.cancel, style: 'cancel' },
       {
-        text: 'Удалить',
+        text: s.delete,
         style: 'destructive',
         onPress: async () => {
-          await supabase.from('posts').delete().eq('id', postId);
-          navigation.goBack();
+          try {
+            // Автор удаляет и файлы; сотрудник — только публикацию (файлы чужие).
+            if (isAuthor) {
+              await deletePostWithFiles(postId, images.map((i) => i.image_url));
+            } else {
+              await supabase.from('posts').delete().eq('id', postId);
+            }
+            navigation.goBack();
+          } catch (e) {
+            Alert.alert(s.deleteConfirm, errorText(e));
+          }
         },
       },
     ]);
@@ -128,7 +229,7 @@ export function PostDetailScreen() {
   if (!post) {
     return (
       <Screen>
-        <Text style={styles.empty}>{notFound ? 'Публикация удалена или недоступна' : 'Загрузка…'}</Text>
+        <Text style={styles.empty}>{notFound ? s.notFound : s.loading}</Text>
       </Screen>
     );
   }
@@ -144,9 +245,9 @@ export function PostDetailScreen() {
               <Avatar uri={author?.avatar_url} name={author?.full_name} />
               <Text style={styles.authorName}>{author?.full_name}</Text>
             </View>
-            {images[0] ? (
-              <Image source={{ uri: images[0].image_url }} style={styles.image} contentFit="cover" />
-            ) : null}
+            <View style={styles.photos}>
+              <PhotoCarousel images={images} width={windowWidth - spacing.md * 2} />
+            </View>
             {post.title ? <Text style={styles.title}>{post.title}</Text> : null}
             {artworkMeta(post) ? <Text style={styles.meta}>{artworkMeta(post)}</Text> : null}
             {post.caption ? <Text style={styles.caption}>{post.caption}</Text> : null}
@@ -157,17 +258,23 @@ export function PostDetailScreen() {
               <View style={styles.ownerActions}>
                 {isAuthor ? (
                   <Text onPress={() => navigation.navigate('EditArtwork', { postId })} style={styles.edit}>
-                    {post.featured ? '★ ' : ''}Изменить
+                    {post.featured ? '★ ' : ''}
+                    {s.edit}
                   </Text>
                 ) : null}
                 {canDelete ? (
                   <Text onPress={onDelete} style={styles.delete}>
-                    Удалить
+                    {s.delete}
+                  </Text>
+                ) : null}
+                {!isAuthor && post.status === 'approved' ? (
+                  <Text onPress={onReport} style={styles.delete}>
+                    {s.report}
                   </Text>
                 ) : null}
               </View>
             </View>
-            <Text style={styles.commentsTitle}>Комментарии</Text>
+            <Text style={styles.commentsTitle}>{s.comments}</Text>
           </View>
         }
         renderItem={({ item }) => (
@@ -179,15 +286,15 @@ export function PostDetailScreen() {
             </View>
           </View>
         )}
-        ListEmptyComponent={<Text style={styles.empty}>Комментариев пока нет</Text>}
+        ListEmptyComponent={<Text style={styles.empty}>{s.noComments}</Text>}
         ListFooterComponent={
           <View style={styles.commentForm}>
             <TextField
-              placeholder="Написать комментарий…"
+              placeholder={s.commentPlaceholder}
               value={commentText}
               onChangeText={setCommentText}
             />
-            <Button title="Отправить" onPress={onAddComment} loading={posting} />
+            <Button title={s.send} onPress={onAddComment} loading={posting} />
           </View>
         }
       />
@@ -199,7 +306,7 @@ const styles = StyleSheet.create({
   empty: { color: colors.textMuted, textAlign: 'center', marginVertical: spacing.md },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
   authorName: { fontWeight: '700', color: colors.text },
-  image: { width: '100%', aspectRatio: 1, borderRadius: radius.md, backgroundColor: colors.border },
+  photos: { borderRadius: radius.md, overflow: 'hidden' },
   title: { marginTop: spacing.sm, fontSize: 17, fontWeight: '700', color: colors.text },
   meta: { marginTop: 2, fontSize: 13, color: colors.textMuted },
   caption: { marginTop: spacing.sm, color: colors.text },

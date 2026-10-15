@@ -4,6 +4,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { Card } from './Card';
 import { colors, spacing } from '../theme/colors';
 import type { ProgressNoteWithAuthor } from '../lib/parents';
+import { useStrings } from '../i18n';
+
+const STRINGS = {
+  ru: { locale: 'ru-RU', delete: 'Удалить' },
+  kk: { locale: 'kk-KZ', delete: 'Жою' },
+  en: { locale: 'en-GB', delete: 'Delete' },
+};
 
 export function RatingStars({ rating, size = 14 }: { rating: number; size?: number }) {
   return (
@@ -22,7 +29,8 @@ export function ProgressNoteCard({
   note: ProgressNoteWithAuthor;
   onDelete?: () => void;
 }) {
-  const date = new Date(note.created_at).toLocaleDateString('ru-RU', {
+  const s = useStrings(STRINGS);
+  const date = new Date(note.created_at).toLocaleDateString(s.locale, {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -41,7 +49,7 @@ export function ProgressNoteCard({
         </Text>
         {onDelete ? (
           <Pressable onPress={onDelete} hitSlop={8}>
-            <Text style={styles.delete}>Удалить</Text>
+            <Text style={styles.delete}>{s.delete}</Text>
           </Pressable>
         ) : null}
       </View>

@@ -4,6 +4,28 @@ import { useNavigation } from '@react-navigation/native';
 import type { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, paint, spacing } from '../theme/colors';
+import { useStrings } from '../i18n';
+
+const STRINGS = {
+  ru: {
+    friends: 'Друзья',
+    market: 'Продажа работ',
+    messages: 'Сообщения',
+    help: 'Помощь',
+  },
+  kk: {
+    friends: 'Достар',
+    market: 'Жұмыстарды сату',
+    messages: 'Хабарламалар',
+    help: 'Көмек',
+  },
+  en: {
+    friends: 'Friends',
+    market: 'Artwork sale',
+    messages: 'Messages',
+    help: 'Help',
+  },
+};
 
 export interface TabConfig {
   color: string;
@@ -19,15 +41,16 @@ interface HeaderActionsProps {
 }
 
 function HeaderActions({ showFriends, showMarket }: HeaderActionsProps) {
-  // Экраны Friends, Market и Messages есть в стеке каждой роли, у которой показана иконка.
+  // Экраны Friends, Market, Messages и Support есть в стеке каждой роли, у которой показана иконка.
   const navigation = useNavigation<any>();
+  const s = useStrings(STRINGS);
   return (
     <View style={styles.actions}>
       {showFriends ? (
         <Pressable
           hitSlop={8}
           onPress={() => navigation.navigate('Friends')}
-          accessibilityLabel="Друзья"
+          accessibilityLabel={s.friends}
           style={styles.action}
         >
           <Ionicons name="people-outline" size={22} color={colors.primary} />
@@ -37,7 +60,7 @@ function HeaderActions({ showFriends, showMarket }: HeaderActionsProps) {
         <Pressable
           hitSlop={8}
           onPress={() => navigation.navigate('Market')}
-          accessibilityLabel="Продажа работ"
+          accessibilityLabel={s.market}
           style={styles.action}
         >
           <Ionicons name="pricetag-outline" size={22} color={colors.primary} />
@@ -46,10 +69,18 @@ function HeaderActions({ showFriends, showMarket }: HeaderActionsProps) {
       <Pressable
         hitSlop={8}
         onPress={() => navigation.navigate('Messages')}
-        accessibilityLabel="Сообщения"
+        accessibilityLabel={s.messages}
         style={styles.action}
       >
         <Ionicons name="chatbubble-ellipses-outline" size={22} color={colors.primary} />
+      </Pressable>
+      <Pressable
+        hitSlop={8}
+        onPress={() => navigation.navigate('Support')}
+        accessibilityLabel={s.help}
+        style={styles.action}
+      >
+        <Ionicons name="help-buoy-outline" size={22} color={colors.primary} />
       </Pressable>
     </View>
   );

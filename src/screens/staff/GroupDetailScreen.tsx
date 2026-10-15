@@ -1,25 +1,85 @@
 import React, { useCallback, useState } from 'react';
+import { FEATURES } from '../../lib/features';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { Card } from '../../components/Card';
 import { Avatar } from '../../components/Avatar';
+import { Button } from '../../components/Button';
+import { RosterSection } from '../../components/RosterSection';
+import { GroupBranchPicker } from '../../components/GroupBranchPicker';
+import { GroupTeacherPicker } from '../../components/GroupTeacherPicker';
+import { GroupTeacherRequests } from '../../components/GroupTeacherRequests';
+import { useAuth } from '../../hooks/useAuth';
+import { isAdminRole } from '../../lib/roles';
 import { supabase } from '../../lib/supabase';
 import { fetchGroupMembers, removeStudentFromGroup } from '../../lib/groups';
+import { dayShort } from '../../lib/schedule';
 import { colors, spacing } from '../../theme/colors';
 import type { Group, Lesson, Profile } from '../../types/database';
 import type { StaffStackParamList } from '../../navigation/types';
+import { useStrings } from '../../i18n';
+
+const STRINGS = {
+  ru: {
+    attendance: 'Отметить посещаемость',
+    removeTitle: 'Убрать из группы?',
+    cancel: 'Отмена',
+    remove: 'Убрать',
+    loading: 'Загрузка…',
+    students: (count: number) => `Ученики (${count})`,
+    add: '+ Добавить',
+    noStudents: 'В группе пока нет учеников',
+    chargeGroup: '₸ Начислить оплату всей группе',
+    schedule: 'Расписание',
+    noLessons: 'Занятий пока нет',
+    room: (room: string) => ` · каб. ${room}`,
+  },
+  kk: {
+    attendance: 'Қатысуды белгілеу',
+    removeTitle: 'Топтан шығару керек пе?',
+    cancel: 'Бас тарту',
+    remove: 'Шығару',
+    loading: 'Жүктелуде…',
+    students: (count: number) => `Оқушылар (${count})`,
+    add: '+ Қосу',
+    noStudents: 'Топта әзірге оқушылар жоқ',
+    chargeGroup: '₸ Бүкіл топқа төлем есептеу',
+    schedule: 'Кесте',
+    noLessons: 'Әзірге сабақтар жоқ',
+    room: (room: string) => ` · ${room} каб.`,
+  },
+  en: {
+    attendance: 'Take attendance',
+    removeTitle: 'Remove from the group?',
+    cancel: 'Cancel',
+    remove: 'Remove',
+    loading: 'Loading…',
+    students: (count: number) => `Students (${count})`,
+    add: '+ Add',
+    noStudents: 'No students in the group yet',
+    chargeGroup: '₸ Charge the whole group',
+    schedule: 'Schedule',
+    noLessons: 'No classes yet',
+    room: (room: string) => ` · room ${room}`,
+  },
+};
 
 type Props = NativeStackScreenProps<StaffStackParamList, 'GroupDetail'>;
-
-const DAY_NAMES = ['', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
 export function GroupDetailScreen({ route }: Props) {
   const { groupId } = route.params;
   const navigation = useNavigation<NativeStackNavigationProp<StaffStackParamList>>();
+  const s = useStrings(STRINGS);
 
   const [group, setGroup] = useState<Group | null>(null);
+  const { profile } = useAuth();
+  // Состав, занятия и коды меняет администратор или преподаватель этой группы
+  // (на сервере — can_manage_group).
+  // Состав группы меняет только администратор (group_members_write_admin).
+  const isAdmin = isAdminRole(profile?.role);
+  const canManage = isAdmin || (!!group && group.teacher_id === profile?.id);
   const [members, setMembers] = useState<Profile[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
 
@@ -48,10 +108,10 @@ export function GroupDetailScreen({ route }: Props) {
   );
 
   const onRemoveMember = (student: Profile) => {
-    Alert.alert('Убрать из группы?', student.full_name, [
-      { text: 'Отмена', style: 'cancel' },
+    Alert.alert(s.removeTitle, student.full_name, [
+      { text: s.cancel, style: 'cancel' },
       {
-        text: 'Убрать',
+        text: s.remove,
         style: 'destructive',
         onPress: async () => {
           await removeStudentFromGroup(groupId, student.id);
@@ -64,7 +124,7 @@ export function GroupDetailScreen({ route }: Props) {
   if (!group) {
     return (
       <Screen>
-        <Text style={styles.empty}>Загрузка…</Text>
+        <Text style={styles.empty}>{s.loading}</Text>
       </Screen>
     );
   }
@@ -73,14 +133,42 @@ export function GroupDetailScreen({ route }: Props) {
     <Screen scroll>
       <Text style={styles.title}>{group.name}</Text>
       {group.description ? <Text style={styles.description}>{group.description}</Text> : null}
+      {isAdmin ? (
+        <GroupTeacherPicker
+          groupId={groupId}
+          teacherId={group.teacher_id}
+          onChange={(id) => setGroup((g) => (g ? { ...g, teacher_id: id } : g))}
+        />
+      ) : null}
+      {isAdmin ? <GroupBranchPicker groupId={groupId} branchId={group.branch_id} /> : null}
+      {profile && (isAdmin || profile.role === 'staff') ? (
+        <GroupTeacherRequests
+          groupId={groupId}
+          teacherId={group.teacher_id}
+          myId={profile.id}
+          mode={isAdmin ? 'admin' : group.teacher_id === profile.id ? 'owner' : 'teacher'}
+          onChanged={load}
+        />
+      ) : null}
+      {canManage && members.length > 0 ? (
+        <>
+          <View style={{ height: spacing.sm }} />
+          <Button
+            title={s.attendance}
+            onPress={() => navigation.navigate('Attendance', { groupId, groupName: group.name })}
+          />
+        </>
+      ) : null}
 
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Ученики ({members.length})</Text>
-        <Pressable onPress={() => navigation.navigate('AddStudentToGroup', { groupId })}>
-          <Text style={styles.addLink}>+ Добавить</Text>
-        </Pressable>
+        <Text style={styles.sectionTitle}>{s.students(members.length)}</Text>
+        {isAdmin ? (
+          <Pressable onPress={() => navigation.navigate('AddStudentToGroup', { groupId })}>
+            <Text style={styles.addLink}>{s.add}</Text>
+          </Pressable>
+        ) : null}
       </View>
-      {members.length === 0 ? <Text style={styles.empty}>В группе пока нет учеников</Text> : null}
+      {members.length === 0 ? <Text style={styles.empty}>{s.noStudents}</Text> : null}
       {members.map((m) => (
         <Card key={m.id} style={styles.memberRow}>
           <Pressable
@@ -90,33 +178,37 @@ export function GroupDetailScreen({ route }: Props) {
             <Avatar uri={m.avatar_url} name={m.full_name} size={36} />
             <Text style={styles.memberName}>{m.full_name}</Text>
           </Pressable>
-          <Pressable onPress={() => onRemoveMember(m)}>
-            <Text style={styles.remove}>Убрать</Text>
-          </Pressable>
+          {isAdmin ? (
+            <Pressable onPress={() => onRemoveMember(m)}>
+              <Text style={styles.remove}>{s.remove}</Text>
+            </Pressable>
+          ) : null}
         </Card>
       ))}
-      {members.length > 0 ? (
+      {FEATURES.payments && members.length > 0 ? (
         <Pressable onPress={() => navigation.navigate('BillingEntryForm', { groupId, kind: 'charge' })}>
-          <Text style={styles.addLink}>₸ Начислить оплату всей группе</Text>
+          <Text style={styles.addLink}>{s.chargeGroup}</Text>
         </Pressable>
       ) : null}
 
+      {canManage ? <RosterSection groupId={groupId} /> : null}
+
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Расписание</Text>
+        <Text style={styles.sectionTitle}>{s.schedule}</Text>
         <Pressable onPress={() => navigation.navigate('CreateLesson', { groupId })}>
-          <Text style={styles.addLink}>+ Добавить</Text>
+          <Text style={styles.addLink}>{s.add}</Text>
         </Pressable>
       </View>
-      {lessons.length === 0 ? <Text style={styles.empty}>Занятий пока нет</Text> : null}
+      {lessons.length === 0 ? <Text style={styles.empty}>{s.noLessons}</Text> : null}
       {lessons.map((l) => (
         <Pressable key={l.id} onPress={() => navigation.navigate('CreateLesson', { groupId, lessonId: l.id })}>
           <Card style={styles.lessonRow}>
-            <Text style={styles.lessonDay}>{DAY_NAMES[l.day_of_week]}</Text>
+            <Text style={styles.lessonDay}>{dayShort(l.day_of_week)}</Text>
             <View style={styles.lessonInfo}>
               <Text style={styles.lessonTitle}>{l.title}</Text>
               <Text style={styles.lessonMeta}>
                 {l.start_time.slice(0, 5)}–{l.end_time.slice(0, 5)}
-                {l.room ? ` · каб. ${l.room}` : ''}
+                {l.room ? s.room(l.room) : ''}
               </Text>
             </View>
             <Text style={styles.editIcon}>✏️</Text>

@@ -56,8 +56,13 @@
    `0006_notification_settings.sql`, `0007_push_security.sql`,
    `0008_staff_role_assignment.sql`, `0009_private_data.sql`,
    `0010_student_portfolio.sql`, `0011_payments_schedule.sql`,
-   `0012_parents_progress.sql`, `0014_signup_account_type.sql`,
-   `0015_friends.sql`, `0016_friend_suggestions.sql`.
+   `0012_parents_progress.sql`, `0013_support.sql`, `0014_signup_account_type.sql`,
+   `0015_friends.sql`, `0016_friend_suggestions.sql`,
+   `0017_parent_link_requests.sql`, `0018_support_categories.sql`,
+   `0019_school_roster_codes.sql`, `0020_security_hardening.sql`,
+   `0021_rate_limits_blocks_storage.sql`, `0022_post_photo_limit.sql`,
+   `0023_admin_role.sql`, `0024_ai_moderation_reports.sql`,
+   `0025_security_reaudit_fixes.sql`.
 3. Скопируйте `.env.example` в `.env` и укажите `EXPO_PUBLIC_SUPABASE_URL`
    и `EXPO_PUBLIC_SUPABASE_ANON_KEY` из настроек вашего проекта Supabase.
 4. Установите зависимости и запустите:
@@ -90,6 +95,16 @@ supabase/
 ```
 
 ## Роли и данные
+
+Роли: `student` (ученик), `parent` (родитель), `staff` (преподаватель),
+`admin` (администратор). Регистрация только по коду из школы
+(`school_roster`) или по приглашению сотрудника (`staff_invites`, создаёт
+администратор). Первого администратора назначают в SQL Editor:
+
+```sql
+update public.profiles set role = 'admin' where id = '<uuid пользователя>';
+```
+
 
 Роль (`student` / `parent` / `staff`) хранится в `profiles.role`. При
 регистрации человек выбирает «Ученик» или «Родитель» и группу: ученик сразу

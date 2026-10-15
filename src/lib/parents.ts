@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { pick } from '../i18n';
 import type { Attendance, Profile, ProgressNote, StudentPhoto } from '../types/database';
 
 export interface ProgressNoteWithAuthor extends ProgressNote {
@@ -116,7 +117,8 @@ export async function fetchStudentGroupNames(studentId: string): Promise<string[
 
 const PHOTOS_BUCKET = 'student-photos';
 // Бакет закрытый, поэтому фото показываются по временным ссылкам.
-const SIGNED_URL_TTL_SECONDS = 60 * 60;
+// Ссылки на закрытые фото детей живут 10 минут.
+const SIGNED_URL_TTL_SECONDS = 10 * 60;
 
 export interface StudentPhotoWithUrl extends StudentPhoto {
   url: string | null;
@@ -176,3 +178,4 @@ export async function deleteStudentPhoto(photo: StudentPhoto) {
   if (error) throw error;
   await supabase.storage.from(PHOTOS_BUCKET).remove([photo.storage_path]);
 }
+

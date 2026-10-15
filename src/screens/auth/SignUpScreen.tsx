@@ -4,27 +4,159 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { TextField } from '../../components/TextField';
 import { Button } from '../../components/Button';
+import { LanguageSwitcher } from '../../components/LanguageSwitcher';
 import { useAuth, type SignUpAccountType } from '../../hooks/useAuth';
 import { fetchSignupGroups, type SignupGroup } from '../../lib/schedule';
+import { groupSections } from '../../lib/groupSections';
+import { checkSignupCode, isValidPhone, normalizePhone } from '../../lib/signupCodes';
+import { KZ_PHONE_PREFIX, onKzPhoneInput } from '../../lib/phone';
+import { useLanguage, useStrings } from '../../i18n';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { AuthStackParamList } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'SignUp'>;
 
-const ACCOUNT_TYPES: { value: SignUpAccountType; label: string }[] = [
-  { value: 'student', label: 'Ученик' },
-  { value: 'parent', label: 'Родитель' },
-];
+const ACCOUNT_TYPES: SignUpAccountType[] = ['student', 'parent'];
+const MIN_PASSWORD = 8;
+
+const STRINGS = {
+  ru: {
+    student: 'Ученик',
+    parent: 'Родитель',
+    staffTitle: 'Регистрация сотрудника',
+    imStaff: 'Я сотрудник школы',
+    backToStudent: 'Я ученик или родитель',
+    fillAll: 'Заполните все поля',
+    passwordShort: `Пароль должен быть не короче ${MIN_PASSWORD} символов`,
+    badPhone: 'Укажите номер телефона полностью, например +7 701 234 56 78',
+    chooseGroup: 'Выберите свою группу',
+    badStudentCode: 'Код не подходит. Проверьте код и группу: они должны совпадать с данными, которые выдала школа. Каждый код можно использовать только один раз.',
+    badParentCode: 'Код ребёнка не найден, или к ребёнку уже привязано слишком много аккаунтов. Уточните код в школе.',
+    badStaffCode: 'Приглашение не найдено или уже использовано. Попросите администрацию выдать новое.',
+    checkFailed: 'Не удалось проверить код. Проверьте интернет и попробуйте ещё раз.',
+    signUpFailed: 'Не удалось зарегистрироваться',
+    confirmEmail: 'Подтвердите почту',
+    confirmEmailText: (email: string) =>
+      `Мы отправили письмо на ${email}. Откройте ссылку из письма на этом телефоне. Если письма нет, проверьте папку «Спам».`,
+    title: 'Регистрация',
+    signUpAs: 'Зарегистрироваться как',
+    yourFullName: 'Ваше полное имя',
+    namePlaceholder: 'Иванов Иван',
+    password: 'Пароль',
+    passwordHint: `Не короче ${MIN_PASSWORD} символов`,
+    phone: 'Номер телефона',
+    yourGroup: 'Ваша группа',
+    yourBranch: 'Ваш филиал',
+    otherBranch: 'Другие',
+    noGroups: 'Группы пока не созданы. Обратитесь в администрацию школы.',
+    studentCode: 'Код ученика из школы',
+    childCode: 'Код для родителей из школы',
+    staffCode: 'Код приглашения',
+    codePlaceholder: 'Например, A1B2C-3D4E5',
+    studentHint: 'Код и группу выдаёт школа. Имя возьмётся из списка школы, а расписание вашей группы появится автоматически.',
+    parentHint: 'Код для родителей выдаёт школа (он отличается от кода ученика). После регистрации вы сразу увидите расписание, успехи и работы ребёнка. Если в школе учатся несколько ваших детей, регистрируйтесь по коду одного из них, а остальных добавьте потом в профиле: «Мои дети» → «Добавить ребёнка», по их родительским кодам.',
+    staffHint: 'Код приглашения выдаёт администрация школы.',
+    signUp: 'Зарегистрироваться',
+    haveAccount: 'Уже есть аккаунт?',
+    signIn: 'Войти',
+  },
+  kk: {
+    student: 'Оқушы',
+    parent: 'Ата-ана',
+    staffTitle: 'Қызметкерді тіркеу',
+    imStaff: 'Мен мектеп қызметкерімін',
+    backToStudent: 'Мен оқушымын немесе ата-анамын',
+    fillAll: 'Барлық өрістерді толтырыңыз',
+    passwordShort: `Құпиясөз кемінде ${MIN_PASSWORD} таңбадан тұруы керек`,
+    badPhone: 'Телефон нөмірін толық көрсетіңіз, мысалы +7 701 234 56 78',
+    chooseGroup: 'Өз тобыңызды таңдаңыз',
+    badStudentCode: 'Код сәйкес келмейді. Код пен топты тексеріңіз: олар мектеп берген деректерге сәйкес болуы керек. Әр кодты тек бір рет қолдануға болады.',
+    badParentCode: 'Баланың коды табылмады немесе балаға тым көп аккаунт тіркелген. Кодты мектептен нақтылаңыз.',
+    badStaffCode: 'Шақыру табылмады немесе бұрын қолданылған. Әкімшіліктен жаңасын сұраңыз.',
+    checkFailed: 'Кодты тексеру мүмкін болмады. Интернетті тексеріп, қайталап көріңіз.',
+    signUpFailed: 'Тіркелу мүмкін болмады',
+    confirmEmail: 'Поштаңызды растаңыз',
+    confirmEmailText: (email: string) =>
+      `Біз ${email} мекенжайына хат жібердік. Хаттағы сілтемені осы телефонда ашыңыз. Хат келмесе, «Спам» қалтасын тексеріңіз.`,
+    title: 'Тіркелу',
+    signUpAs: 'Кім ретінде тіркелесіз',
+    yourFullName: 'Толық аты-жөніңіз',
+    namePlaceholder: 'Асанов Асан',
+    password: 'Құпиясөз',
+    passwordHint: `Кемінде ${MIN_PASSWORD} таңба`,
+    phone: 'Телефон нөмірі',
+    yourGroup: 'Сіздің тобыңыз',
+    yourBranch: 'Сіздің филиалыңыз',
+    otherBranch: 'Басқалары',
+    noGroups: 'Топтар әлі құрылмаған. Мектеп әкімшілігіне хабарласыңыз.',
+    studentCode: 'Мектеп берген оқушы коды',
+    childCode: 'Мектеп берген ата-аналар коды',
+    staffCode: 'Шақыру коды',
+    codePlaceholder: 'Мысалы, A1B2C-3D4E5',
+    studentHint: 'Код пен топты мектеп береді. Аты-жөніңіз мектеп тізімінен алынады, ал тобыңыздың кестесі автоматты түрде пайда болады.',
+    parentHint: 'Ата-аналарға арналған кодты мектеп береді (ол оқушы кодынан өзгеше). Тіркелгеннен кейін баланың кестесін, жетістіктері мен жұмыстарын бірден көресіз. Мектепте бірнеше балаңыз оқыса, біреуінің кодымен тіркеліңіз, қалғандарын кейін профильде қосыңыз: «Менің балаларым» → «Бала қосу», олардың ата-ана кодтары бойынша.',
+    staffHint: 'Шақыру кодын мектеп әкімшілігі береді.',
+    signUp: 'Тіркелу',
+    haveAccount: 'Аккаунтыңыз бар ма?',
+    signIn: 'Кіру',
+  },
+  en: {
+    student: 'Student',
+    parent: 'Parent',
+    staffTitle: 'Staff sign-up',
+    imStaff: "I'm school staff",
+    backToStudent: "I'm a student or parent",
+    fillAll: 'Please fill in all fields',
+    passwordShort: `Password must be at least ${MIN_PASSWORD} characters`,
+    badPhone: 'Enter your full phone number, for example +7 701 234 56 78',
+    chooseGroup: 'Choose your group',
+    badStudentCode: 'The code does not match. Check the code and group: they must match what the school gave you. Each code can be used only once.',
+    badParentCode: "The child's code was not found, or too many accounts are already linked to this child. Please check the code with the school.",
+    badStaffCode: 'Invitation not found or already used. Ask the administration for a new one.',
+    checkFailed: 'Could not check the code. Check your internet connection and try again.',
+    signUpFailed: 'Could not sign up',
+    confirmEmail: 'Confirm your email',
+    confirmEmailText: (email: string) =>
+      `We sent an email to ${email}. Open the link from the email on this phone. If you don't see it, check your Spam folder.`,
+    title: 'Sign up',
+    signUpAs: 'Sign up as',
+    yourFullName: 'Your full name',
+    namePlaceholder: 'John Smith',
+    password: 'Password',
+    passwordHint: `At least ${MIN_PASSWORD} characters`,
+    phone: 'Phone number',
+    yourGroup: 'Your group',
+    yourBranch: 'Your branch',
+    otherBranch: 'Other',
+    noGroups: 'No groups have been created yet. Please contact the school administration.',
+    studentCode: 'Student code from the school',
+    childCode: 'Parent code from the school',
+    staffCode: 'Invitation code',
+    codePlaceholder: 'For example, A1B2C-3D4E5',
+    studentHint: "The school gives you the code and group. Your name will be taken from the school list, and your group's schedule will appear automatically.",
+    parentHint: "The school gives you the parent code (it is different from the student's code). After signing up you will immediately see your child's schedule, progress and artworks. If several of your children study at the school, sign up with one child's code and add the others later in your profile: \"My children\" → \"Add child\", using their parent codes.",
+    staffHint: 'The invitation code is given by the school administration.',
+    signUp: 'Sign up',
+    haveAccount: 'Already have an account?',
+    signIn: 'Sign in',
+  },
+};
 
 export function SignUpScreen({ navigation }: Props) {
   const { signUp } = useAuth();
+  const s = useStrings(STRINGS);
+  const { lang } = useLanguage();
   const [accountType, setAccountType] = useState<SignUpAccountType>('student');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState(KZ_PHONE_PREFIX);
+  const [code, setCode] = useState('');
   const [groups, setGroups] = useState<SignupGroup[]>([]);
   const [groupsLoading, setGroupsLoading] = useState(true);
   const [groupId, setGroupId] = useState<string | null>(null);
+  // Групп больше сотни: сначала филиал, потом группы только этого филиала.
+  const [branchKey, setBranchKey] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -34,63 +166,153 @@ export function SignUpScreen({ navigation }: Props) {
       .finally(() => setGroupsLoading(false));
   }, []);
 
-  const isParent = accountType === 'parent';
+  const isStudent = accountType === 'student';
+  const isStaff = accountType === 'staff';
 
   const onSubmit = async () => {
-    if (!fullName || !email || !password) {
-      Alert.alert('Заполните все поля');
+    // У ученика имя берётся из списка школы, поэтому поля имени нет.
+    const phoneEmpty = phone.replace(/\D/g, '').length <= 1;
+    if ((!isStudent && !fullName.trim()) || !email.trim() || !password || phoneEmpty || !code.trim()) {
+      Alert.alert(s.fillAll);
       return;
     }
-    if (password.length < 6) {
-      Alert.alert('Пароль должен быть не короче 6 символов');
+    if (isStudent && !groupId) {
+      Alert.alert(s.chooseGroup);
       return;
     }
-    if (groups.length > 0 && !groupId) {
-      Alert.alert(isParent ? 'Выберите группу ребёнка' : 'Выберите свою группу');
+    if (!isValidPhone(phone)) {
+      Alert.alert(s.badPhone);
+      return;
+    }
+    if (password.length < MIN_PASSWORD) {
+      Alert.alert(s.passwordShort);
       return;
     }
     setLoading(true);
-    const error = await signUp({
+    try {
+      const ok = await checkSignupCode(accountType, code, isStudent ? groupId : null);
+      if (!ok) {
+        setLoading(false);
+        Alert.alert(s.signUpFailed, isStudent ? s.badStudentCode : isStaff ? s.badStaffCode : s.badParentCode);
+        return;
+      }
+    } catch {
+      setLoading(false);
+      Alert.alert(s.signUpFailed, s.checkFailed);
+      return;
+    }
+    const { error, needsConfirmation } = await signUp({
       email: email.trim(),
       password,
       fullName: fullName.trim(),
       accountType,
-      groupId,
+      groupId: isStudent ? groupId : null,
+      code: code.trim(),
+      phone: normalizePhone(phone),
     });
     setLoading(false);
     if (error) {
-      Alert.alert('Не удалось зарегистрироваться', error);
-    } else {
-      Alert.alert(
-        'Готово',
-        'Проверьте почту для подтверждения аккаунта (если это требуется настройками проекта), затем войдите.'
-      );
+      Alert.alert(s.signUpFailed, error);
+    } else if (needsConfirmation) {
+      Alert.alert(s.confirmEmail, s.confirmEmailText(email.trim()));
       navigation.navigate('Login');
     }
+    // Иначе пользователь уже вошёл, и приложение само откроет главный экран.
   };
 
   return (
     <Screen scroll>
-      <Text style={styles.title}>Регистрация</Text>
+      <LanguageSwitcher compact />
+      <Text style={styles.title}>{isStaff ? s.staffTitle : s.title}</Text>
 
-      <Text style={styles.label}>Зарегистрироваться как</Text>
-      <View style={styles.segment}>
-        {ACCOUNT_TYPES.map(({ value, label }) => (
-          <Pressable
-            key={value}
-            onPress={() => setAccountType(value)}
-            style={[styles.segmentItem, accountType === value && styles.segmentItemActive]}
-          >
-            <Text style={[styles.segmentText, accountType === value && styles.segmentTextActive]}>{label}</Text>
-          </Pressable>
-        ))}
-      </View>
+      {isStaff ? null : (
+        <>
+          <Text style={styles.label}>{s.signUpAs}</Text>
+          <View style={styles.segment}>
+            {ACCOUNT_TYPES.map((value) => (
+              <Pressable
+                key={value}
+                onPress={() => setAccountType(value)}
+                style={[styles.segmentItem, accountType === value && styles.segmentItemActive]}
+              >
+                <Text style={[styles.segmentText, accountType === value && styles.segmentTextActive]}>
+                  {value === 'student' ? s.student : s.parent}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </>
+      )}
+
+      {isStudent ? (
+        <>
+          <Text style={styles.label}>{s.yourGroup}</Text>
+          {groupsLoading ? (
+            <ActivityIndicator color={colors.primary} style={styles.groupsLoading} />
+          ) : groups.length === 0 ? (
+            <Text style={styles.hint}>{s.noGroups}</Text>
+          ) : (
+            <>
+              <Text style={styles.subLabel}>{s.yourBranch}</Text>
+              <View style={styles.groups}>
+                {branchesOf(groups, s.otherBranch).map((b) => (
+                  <Pressable
+                    key={b.key}
+                    onPress={() => {
+                      setBranchKey(b.key);
+                      setGroupId(null);
+                    }}
+                    style={[styles.groupChip, branchKey === b.key && styles.groupChipActive]}
+                  >
+                    <Text style={[styles.groupText, branchKey === b.key && styles.groupTextActive]}>{b.name}</Text>
+                  </Pressable>
+                ))}
+              </View>
+              {branchKey ? (
+                <>
+                  <Text style={styles.subLabel}>{s.chooseGroup}</Text>
+                  {groupSections(groups.filter((g) => (g.branch_id ?? 'none') === branchKey), lang).map((section) => (
+                    <View key={section.key}>
+                      <Text style={styles.courseTitle}>{section.title}</Text>
+                      <View style={styles.groups}>
+                        {section.groups.map((group) => (
+                          <Pressable
+                            key={group.id}
+                            onPress={() => setGroupId(group.id)}
+                            style={[styles.groupChip, groupId === group.id && styles.groupChipActive]}
+                          >
+                            <Text style={[styles.groupText, groupId === group.id && styles.groupTextActive]}>
+                              {shortGroupName(group)}
+                            </Text>
+                          </Pressable>
+                        ))}
+                      </View>
+                    </View>
+                  ))}
+                </>
+              ) : null}
+            </>
+          )}
+        </>
+      ) : (
+        <TextField label={s.yourFullName} value={fullName} onChangeText={setFullName} placeholder={s.namePlaceholder} />
+      )}
 
       <TextField
-        label={isParent ? 'Ваше полное имя' : 'Полное имя'}
-        value={fullName}
-        onChangeText={setFullName}
-        placeholder="Иванов Иван"
+        label={isStudent ? s.studentCode : isStaff ? s.staffCode : s.childCode}
+        value={code}
+        onChangeText={setCode}
+        autoCapitalize="characters"
+        autoCorrect={false}
+        placeholder={s.codePlaceholder}
+      />
+      <TextField
+        label={s.phone}
+        value={phone}
+        onChangeText={(text) => setPhone(onKzPhoneInput(text))}
+        keyboardType="phone-pad"
+        placeholder="+7 (701) 234-56-78"
+        textContentType="telephoneNumber"
       />
       <TextField
         label="Email"
@@ -100,48 +322,51 @@ export function SignUpScreen({ navigation }: Props) {
         keyboardType="email-address"
         placeholder="you@example.com"
       />
-      <TextField label="Пароль" value={password} onChangeText={setPassword} secureTextEntry placeholder="••••••••" />
+      <TextField
+        label={s.password}
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+        placeholder={s.passwordHint}
+      />
 
-      <Text style={styles.label}>{isParent ? 'Группа, в которой учится ребёнок' : 'Ваша группа'}</Text>
-      {groupsLoading ? (
-        <ActivityIndicator color={colors.primary} style={styles.groupsLoading} />
-      ) : groups.length === 0 ? (
-        <Text style={styles.hint}>Группы пока не созданы. Группу назначит администрация школы.</Text>
-      ) : (
-        <View style={styles.groups}>
-          {groups.map((group) => (
-            <Pressable
-              key={group.id}
-              onPress={() => setGroupId(group.id)}
-              style={[styles.groupChip, groupId === group.id && styles.groupChipActive]}
-            >
-              <Text style={[styles.groupText, groupId === group.id && styles.groupTextActive]}>{group.name}</Text>
-            </Pressable>
-          ))}
-        </View>
-      )}
+      <Text style={styles.hint}>{isStudent ? s.studentHint : isStaff ? s.staffHint : s.parentHint}</Text>
 
-      <Text style={styles.hint}>
-        {isParent
-          ? 'Вы увидите расписание и сообщения группы. Успехи и работы ребёнка станут доступны, когда администрация привяжет его к вашему профилю.'
-          : 'Расписание вашей группы появится автоматически.'}{' '}
-        Преподавателей и сотрудников добавляет администрация школы.
+      <Button title={s.signUp} onPress={onSubmit} loading={loading} />
+
+      <Text style={styles.switchType} onPress={() => setAccountType(isStaff ? 'student' : 'staff')}>
+        {isStaff ? s.backToStudent : s.imStaff}
       </Text>
 
-      <Button title="Зарегистрироваться" onPress={onSubmit} loading={loading} />
-
       <View style={styles.footer}>
-        <Text style={styles.footerText}>Уже есть аккаунт?</Text>
+        <Text style={styles.footerText}>{s.haveAccount}</Text>
         <Text style={styles.link} onPress={() => navigation.navigate('Login')}>
           {' '}
-          Войти
+          {s.signIn}
         </Text>
       </View>
     </Screen>
   );
 }
 
+// Филиалы в том порядке, в каком их отдаёт сервер (по sort_order).
+function branchesOf(groups: SignupGroup[], other: string): { key: string; name: string }[] {
+  const seen = new Map<string, string>();
+  for (const g of groups) {
+    const key = g.branch_id ?? 'none';
+    if (!seen.has(key)) seen.set(key, g.branch_name ?? other);
+  }
+  return [...seen.entries()].map(([key, name]) => ({ key, name }));
+}
+
+// «1-1 ИЗО · Ауэзова» → «1-1 ИЗО»: филиал уже выбран выше.
+function shortGroupName(group: SignupGroup): string {
+  return group.branch_name ? group.name.replace(` · ${group.branch_name}`, '') : group.name;
+}
+
 const styles = StyleSheet.create({
+  courseTitle: { fontWeight: '700', color: colors.primary, marginBottom: spacing.xs },
+  subLabel: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.xs },
   title: { fontSize: 22, fontWeight: '700', color: colors.primary, marginTop: spacing.lg, marginBottom: spacing.lg },
   label: { fontSize: 14, fontWeight: '600', color: colors.text, marginBottom: spacing.sm },
   segment: {
@@ -169,6 +394,7 @@ const styles = StyleSheet.create({
   groupText: { color: colors.text, fontWeight: '600' },
   groupTextActive: { color: colors.white },
   hint: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.lg },
+  switchType: { color: colors.primary, fontWeight: '600', textAlign: 'center', marginTop: spacing.lg },
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: spacing.lg, marginBottom: spacing.xl },
   footerText: { color: colors.textMuted },
   link: { color: colors.primary, fontWeight: '700' },
