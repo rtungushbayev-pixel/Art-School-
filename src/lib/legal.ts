@@ -19,7 +19,11 @@ export interface LegalDocument {
 const OPERATOR = 'ТОО «Школа искусств и дизайна им. А. Кастеева»';
 const BIN = 'БИН 060140006924';
 const APP = 'мобильное приложение KasteyevSchool';
-const CONTACT = 'через раздел «Помощь» в Приложении';
+const ADDRESS = 'г. Алматы, ул. Ауэзова, 38А';
+const PHONES = '8 (727) 375 89 22, 8 (778) 200 82 42';
+const EMAIL = 'info@kasteyev.kz';
+const CONTACT = `через раздел «Помощь» в Приложении или по электронной почте ${EMAIL}`;
+const REQUISITES = `${OPERATOR}, ${BIN}, адрес: ${ADDRESS}, тел.: ${PHONES}, e-mail: ${EMAIL}`;
 
 export const LEGAL: Record<LegalDoc, LegalDocument> = {
   terms: {
@@ -85,7 +89,7 @@ export const LEGAL: Record<LegalDoc, LegalDocument> = {
         paragraphs: [
           '8.1. К Соглашению применяется законодательство Республики Казахстан. Споры решаются путём переговоров, а при недостижении согласия — в суде по месту нахождения Школы.',
           `8.2. Вопросы и претензии по Соглашению направляются ${CONTACT}.`,
-          `8.3. Реквизиты: ${OPERATOR}, ${BIN}.`,
+          `8.3. Реквизиты: ${REQUISITES}.`,
         ],
       },
     ],
@@ -171,7 +175,7 @@ export const LEGAL: Record<LegalDoc, LegalDocument> = {
         title: '9. Изменения Политики и контакты',
         paragraphs: [
           '9.1. Школа может изменять Политику. Новая редакция действует с момента публикации в Приложении.',
-          `9.2. Оператор персональных данных: ${OPERATOR}, ${BIN}. Связаться со Школой можно ${CONTACT}.`,
+          `9.2. Оператор персональных данных: ${REQUISITES}. Связаться со Школой можно ${CONTACT}.`,
         ],
       },
     ],

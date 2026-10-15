@@ -4,7 +4,6 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { TextField } from '../../components/TextField';
 import { Button } from '../../components/Button';
-import { LegalLinks } from '../../components/LegalLinks';
 import { PaintDots } from '../../components/PaintDots';
 import { SvgXml } from 'react-native-svg';
 import { LOGO_RU_XML } from '../../components/logoRuXml';
@@ -146,7 +145,6 @@ export function LoginScreen({ navigation }: Props) {
           {s.signUp}
         </Text>
       </View>
-      <LegalLinks />
     </Screen>
   );
 }
