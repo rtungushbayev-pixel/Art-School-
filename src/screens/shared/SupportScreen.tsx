@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { isStaffRole } from '../../lib/roles';
+import { isAdminRole } from '../../lib/roles';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -68,12 +68,12 @@ const STRINGS = {
 };
 
 
-// Ученик видит свои обращения, сотрудник — обращения всех пользователей.
+// Все видят темы и свои обращения; администратор — обращения всех пользователей.
 export function SupportScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<NavParamList>>();
   const { profile } = useAuth();
   const s = useStrings(STRINGS);
-  const isStaff = isStaffRole(profile?.role);
+  const isStaff = isAdminRole(profile?.role);
   const [tickets, setTickets] = useState<SupportTicketWithAuthor[]>([]);
   const [filter, setFilter] = useState<Filter>('active');
   const [loading, setLoading] = useState(true);

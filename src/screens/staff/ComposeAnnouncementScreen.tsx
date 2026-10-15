@@ -8,6 +8,7 @@ import { Button } from '../../components/Button';
 import { supabase } from '../../lib/supabase';
 import { sendPushNotification } from '../../lib/notifications';
 import { useAuth } from '../../hooks/useAuth';
+import { isAdminRole } from '../../lib/roles';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { Announcement, AnnouncementAudience, Group } from '../../types/database';
 import type { StaffStackParamList } from '../../navigation/types';
@@ -81,7 +82,10 @@ export function ComposeAnnouncementScreen() {
   const { profile } = useAuth();
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
-  const [audience, setAudience] = useState<AnnouncementAudience>('all');
+  // «Всем» отправляет только администратор.
+  const isAdmin = isAdminRole(profile?.role);
+  const audiences = isAdmin ? AUDIENCES : AUDIENCES.filter((a) => a !== 'all');
+  const [audience, setAudience] = useState<AnnouncementAudience>(isAdmin ? 'all' : 'group');
   const [groups, setGroups] = useState<Group[]>([]);
   const [groupId, setGroupId] = useState<string | null>(null);
   const [pinned, setPinned] = useState(false);
@@ -178,7 +182,7 @@ export function ComposeAnnouncementScreen() {
 
       <Text style={styles.label}>{s.to}</Text>
       <View style={styles.audienceRow}>
-        {AUDIENCES.map((value) => (
+        {audiences.map((value) => (
           <Pressable
             key={value}
             onPress={() => setAudience(value)}
