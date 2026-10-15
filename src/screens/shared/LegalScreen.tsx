@@ -2,13 +2,15 @@ import React from 'react';
 import { StyleSheet, Text } from 'react-native';
 import { useRoute, type RouteProp } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
-import { LEGAL, type LegalDoc } from '../../lib/legal';
+import { LEGAL_BY_LANG, type LegalDoc } from '../../lib/legal';
+import { useLanguage } from '../../i18n';
 import { colors, spacing } from '../../theme/colors';
 
-// Пользовательское соглашение или Политика конфиденциальности (текст — lib/legal).
+// Пользовательское соглашение или Политика конфиденциальности на языке приложения (текст — lib/legal*).
 export function LegalScreen() {
   const route = useRoute<RouteProp<{ Legal: { doc: LegalDoc } }, 'Legal'>>();
-  const doc = LEGAL[route.params.doc];
+  const { lang } = useLanguage();
+  const doc = LEGAL_BY_LANG[lang][route.params.doc];
   return (
     <Screen scroll>
       <Text style={styles.title}>{doc.title}</Text>

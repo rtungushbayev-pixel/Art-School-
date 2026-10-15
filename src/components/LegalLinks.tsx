@@ -1,13 +1,16 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { LEGAL } from '../lib/legal';
+import { LEGAL_BY_LANG } from '../lib/legal';
+import { useLanguage } from '../i18n';
 import { colors, spacing } from '../theme/colors';
 
 // Ссылки на соглашение и политику: мелким неярким шрифтом внизу экрана.
 // Экран Legal есть в стеке каждой роли и на экранах входа.
 export function LegalLinks({ prefix }: { prefix?: string }) {
   const navigation = useNavigation<any>();
+  const { lang } = useLanguage();
+  const LEGAL = LEGAL_BY_LANG[lang];
   return (
     <View style={styles.wrap}>
       {prefix ? <Text style={styles.text}>{prefix}</Text> : null}

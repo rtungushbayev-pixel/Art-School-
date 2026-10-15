@@ -5,7 +5,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { TextField } from '../../components/TextField';
 import { Button } from '../../components/Button';
-import { LEGAL, LEGAL_VERSION } from '../../lib/legal';
+import { LEGAL_BY_LANG, LEGAL_VERSION } from '../../lib/legal';
 import { LanguageSwitcher } from '../../components/LanguageSwitcher';
 import { useAuth, type SignUpAccountType } from '../../hooks/useAuth';
 import { fetchSignupGroups, type SignupGroup } from '../../lib/schedule';
@@ -104,8 +104,8 @@ const STRINGS = {
     staffHint: 'Шақыру кодын мектеп әкімшілігі береді.',
     signUp: 'Тіркелу',
     haveAccount: 'Аккаунтыңыз бар ма?',
-    acceptStart: 'Мен ',
-    acceptMiddle: ' қабылдаймын және жеке деректерімді өңдеуге, оның ішінде шекара арқылы беруге келісім беремін, шарттары: ',
+    acceptStart: 'Мен қабылдаймын: ',
+    acceptMiddle: ', және жеке деректерімді өңдеуге, оның ішінде трансшекаралық беруге келісім беремін, шарттары — ',
     acceptEnd: '. 18 жасқа толмаған бала үшін келісімді ата-анасы береді.',
     mustAccept: 'Тіркелу үшін Пайдаланушы келісімі мен Құпиялылық саясатына келісіміңізді белгілеңіз',
     signIn: 'Кіру',
@@ -362,11 +362,11 @@ export function SignUpScreen({ navigation }: Props) {
         <Text style={styles.consentText}>
           {s.acceptStart}
           <Text style={styles.consentLink} onPress={() => navigation.navigate('Legal', { doc: 'terms' })}>
-            {LEGAL.terms.title}
+            {LEGAL_BY_LANG[lang].terms.title}
           </Text>
           {s.acceptMiddle}
           <Text style={styles.consentLink} onPress={() => navigation.navigate('Legal', { doc: 'privacy' })}>
-            {LEGAL.privacy.title}
+            {LEGAL_BY_LANG[lang].privacy.title}
           </Text>
           {s.acceptEnd}
         </Text>

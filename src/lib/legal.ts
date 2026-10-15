@@ -7,6 +7,10 @@
 // Проверка по праву РК — навык .claude/skills/kz-legal-review. Перед
 // публикацией приложения тексты должен утвердить практикующий юрист РК.
 
+import type { Lang } from '../i18n';
+import { LEGAL_KK } from './legal.kk';
+import { LEGAL_EN } from './legal.en';
+
 export type LegalDoc = 'terms' | 'privacy';
 
 export interface LegalSection {
@@ -201,4 +205,12 @@ export const LEGAL: Record<LegalDoc, LegalDocument> = {
       },
     ],
   },
+};
+
+// Тексты на языке приложения: русский (выше), казахский и английский.
+// Переводы сверяются с русским текстом по номерам пунктов.
+export const LEGAL_BY_LANG: Record<Lang, Record<LegalDoc, LegalDocument>> = {
+  ru: LEGAL,
+  kk: LEGAL_KK,
+  en: LEGAL_EN,
 };
