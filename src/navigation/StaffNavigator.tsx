@@ -9,6 +9,7 @@ import { MarketplaceScreen } from '../screens/shared/MarketplaceScreen';
 import { FriendsScreen } from '../screens/shared/FriendsScreen';
 import { PostDetailScreen } from '../screens/shared/PostDetailScreen';
 import { CreatePostScreen } from '../screens/shared/CreatePostScreen';
+import { NewCommunityPostScreen } from '../screens/shared/NewCommunityPostScreen';
 import { EditProfileScreen } from '../screens/shared/EditProfileScreen';
 import { NotificationSettingsScreen } from '../screens/shared/NotificationSettingsScreen';
 import { UserProfileScreen } from '../screens/shared/UserProfileScreen';
@@ -58,6 +59,7 @@ const STRINGS = {
     newAnnouncement: 'Новое объявление',
     post: 'Публикация',
     newWork: 'Новая работа',
+    newPost: 'Новая публикация',
     editProfile: 'Редактирование профиля',
     notifications: 'Уведомления',
     profile: 'Профиль',
@@ -103,6 +105,7 @@ const STRINGS = {
     newAnnouncement: 'Жаңа хабарландыру',
     post: 'Жарияланым',
     newWork: 'Жаңа жұмыс',
+    newPost: 'Жаңа жарияланым',
     editProfile: 'Профильді өңдеу',
     notifications: 'Хабарландырулар',
     profile: 'Профиль',
@@ -148,6 +151,7 @@ const STRINGS = {
     newAnnouncement: 'New announcement',
     post: 'Post',
     newWork: 'New artwork',
+    newPost: 'New post',
     editProfile: 'Edit profile',
     notifications: 'Notifications',
     profile: 'Profile',
@@ -212,6 +216,7 @@ export function StaffNavigator() {
       />
       <Stack.Screen name="PostDetail" component={PostDetailScreen} options={{ title: s.post }} />
       <Stack.Screen name="CreatePost" component={CreatePostScreen} options={{ title: s.newWork }} />
+      <Stack.Screen name="NewCommunityPost" component={NewCommunityPostScreen} options={{ title: s.newPost }} />
       <Stack.Screen name="ProfileSettings" component={ProfileSettingsScreen} options={{ title: s.profileSettings }} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: s.editProfile }} />
       <Stack.Screen

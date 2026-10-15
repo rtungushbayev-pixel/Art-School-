@@ -26,6 +26,7 @@ export type StudentStackParamList = {
   Friends: { focusSearch?: boolean; showBlocked?: boolean } | undefined;
   PostDetail: { postId: string };
   CreatePost: undefined;
+  NewCommunityPost: undefined;
   EditProfile: undefined;
   NotificationSettings: undefined;
   UserProfile: { userId: string };
@@ -58,6 +59,7 @@ export type StaffStackParamList = {
   ComposeAnnouncement: { announcementId?: string } | undefined;
   PostDetail: { postId: string };
   CreatePost: undefined;
+  NewCommunityPost: undefined;
   EditProfile: undefined;
   NotificationSettings: undefined;
   UserProfile: { userId: string };

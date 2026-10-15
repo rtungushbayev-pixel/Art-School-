@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -43,6 +43,7 @@ const STRINGS = {
     openPost: 'Открыть публикацию',
     openAuthor: 'Профиль автора',
     writeComment: 'Написать комментарий',
+    showMore: 'Показать полностью',
   },
   kk: {
     student: 'Оқушы',
@@ -51,6 +52,7 @@ const STRINGS = {
     openPost: 'Жарияланымды ашу',
     openAuthor: 'Автордың профилі',
     writeComment: 'Пікір жазу',
+    showMore: 'Толық көрсету',
   },
   en: {
     student: 'Student',
@@ -59,6 +61,7 @@ const STRINGS = {
     openPost: 'Open post',
     openAuthor: 'Author profile',
     writeComment: 'Write a comment',
+    showMore: 'Show more',
   },
 };
 
@@ -87,6 +90,9 @@ export function PostCard({ post, onPress, onToggleLike, onAuthorPress, showModer
   // Карточка с полями по бокам экрана: фото чуть уже экрана, углы скруглены.
   const { width: screenWidth } = useWindowDimensions();
   const photoWidth = screenWidth - spacing.md * 2 - 2;
+  // Длинная подпись свёрнута до двух строк, как в соцсетях.
+  const [expanded, setExpanded] = useState(false);
+  const longCaption = !!post.caption && (post.caption.length > 90 || post.caption.includes('\n'));
   const meta = [post.title, post.technique, formatPostTime(post.created_at, lang)].filter(Boolean).join(' • ');
 
   return (
@@ -139,9 +145,14 @@ export function PostCard({ post, onPress, onToggleLike, onAuthorPress, showModer
       </View>
 
       {post.caption ? (
-        <Text style={styles.caption}>
+        <Text style={styles.caption} numberOfLines={longCaption && !expanded ? 2 : undefined}>
           <Text style={styles.captionAuthor}>{post.author?.full_name ?? s.student} </Text>
           {post.caption}
+        </Text>
+      ) : null}
+      {longCaption && !expanded ? (
+        <Text style={styles.showMore} onPress={() => setExpanded(true)}>
+          {s.showMore}
         </Text>
       ) : null}
 
@@ -187,6 +198,7 @@ const styles = StyleSheet.create({
   actionCount: { fontSize: 16, color: colors.text },
   caption: { paddingHorizontal: spacing.md, paddingTop: spacing.sm, color: colors.text, fontSize: 15 },
   captionAuthor: { fontWeight: '700' },
+  showMore: { paddingHorizontal: spacing.md, paddingTop: 4, color: colors.textMuted, fontSize: 15 },
   commentRow: {
     flexDirection: 'row',
     alignItems: 'center',
