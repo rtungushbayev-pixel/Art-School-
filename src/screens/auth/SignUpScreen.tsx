@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { TextField } from '../../components/TextField';
 import { Button } from '../../components/Button';
-import { LegalLinks } from '../../components/LegalLinks';
+import { LEGAL, LEGAL_VERSION } from '../../lib/legal';
 import { LanguageSwitcher } from '../../components/LanguageSwitcher';
 import { useAuth, type SignUpAccountType } from '../../hooks/useAuth';
 import { fetchSignupGroups, type SignupGroup } from '../../lib/schedule';
@@ -59,7 +60,10 @@ const STRINGS = {
     staffHint: 'Код приглашения выдаёт администрация школы.',
     signUp: 'Зарегистрироваться',
     haveAccount: 'Уже есть аккаунт?',
-    acceptLegal: 'Регистрируясь, вы принимаете',
+    acceptStart: 'Я принимаю ',
+    acceptMiddle: ' и даю согласие на обработку моих персональных данных, в том числе на их трансграничную передачу, на условиях ',
+    acceptEnd: '. За ребёнка до 18 лет согласие даёт родитель.',
+    mustAccept: 'Чтобы зарегистрироваться, отметьте согласие с Пользовательским соглашением и Политикой конфиденциальности',
     signIn: 'Войти',
   },
   kk: {
@@ -100,7 +104,10 @@ const STRINGS = {
     staffHint: 'Шақыру кодын мектеп әкімшілігі береді.',
     signUp: 'Тіркелу',
     haveAccount: 'Аккаунтыңыз бар ма?',
-    acceptLegal: 'Тіркелу арқылы сіз келесі құжаттарды қабылдайсыз',
+    acceptStart: 'Мен ',
+    acceptMiddle: ' қабылдаймын және жеке деректерімді өңдеуге, оның ішінде шекара арқылы беруге келісім беремін, шарттары: ',
+    acceptEnd: '. 18 жасқа толмаған бала үшін келісімді ата-анасы береді.',
+    mustAccept: 'Тіркелу үшін Пайдаланушы келісімі мен Құпиялылық саясатына келісіміңізді белгілеңіз',
     signIn: 'Кіру',
   },
   en: {
@@ -141,7 +148,10 @@ const STRINGS = {
     staffHint: 'The invitation code is given by the school administration.',
     signUp: 'Sign up',
     haveAccount: 'Already have an account?',
-    acceptLegal: 'By signing up, you accept the',
+    acceptStart: 'I accept the ',
+    acceptMiddle: ' and consent to the processing of my personal data, including cross-border transfer, under the ',
+    acceptEnd: '. For a child under 18, a parent gives this consent.',
+    mustAccept: 'To sign up, please accept the User Agreement and the Privacy Policy',
     signIn: 'Sign in',
   },
 };
@@ -162,6 +172,7 @@ export function SignUpScreen({ navigation }: Props) {
   // Групп больше сотни: сначала филиал, потом группы только этого филиала.
   const [branchKey, setBranchKey] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [accepted, setAccepted] = useState(false);
 
   useEffect(() => {
     fetchSignupGroups()
@@ -192,6 +203,10 @@ export function SignUpScreen({ navigation }: Props) {
       Alert.alert(s.passwordShort);
       return;
     }
+    if (!accepted) {
+      Alert.alert(s.mustAccept);
+      return;
+    }
     setLoading(true);
     try {
       const ok = await checkSignupCode(accountType, code, isStudent ? groupId : null);
@@ -213,6 +228,7 @@ export function SignUpScreen({ navigation }: Props) {
       groupId: isStudent ? groupId : null,
       code: code.trim(),
       phone: normalizePhone(phone),
+      legalVersion: LEGAL_VERSION,
     });
     setLoading(false);
     if (error) {
@@ -336,6 +352,26 @@ export function SignUpScreen({ navigation }: Props) {
 
       <Text style={styles.hint}>{isStudent ? s.studentHint : isStaff ? s.staffHint : s.parentHint}</Text>
 
+      {/* Явное согласие с соглашением и политикой — требование закона РК о персональных данных. */}
+      <Pressable style={styles.consent} onPress={() => setAccepted((v) => !v)}>
+        <Ionicons
+          name={accepted ? 'checkbox' : 'square-outline'}
+          size={24}
+          color={accepted ? colors.primary : colors.textMuted}
+        />
+        <Text style={styles.consentText}>
+          {s.acceptStart}
+          <Text style={styles.consentLink} onPress={() => navigation.navigate('Legal', { doc: 'terms' })}>
+            {LEGAL.terms.title}
+          </Text>
+          {s.acceptMiddle}
+          <Text style={styles.consentLink} onPress={() => navigation.navigate('Legal', { doc: 'privacy' })}>
+            {LEGAL.privacy.title}
+          </Text>
+          {s.acceptEnd}
+        </Text>
+      </Pressable>
+
       <Button title={s.signUp} onPress={onSubmit} loading={loading} />
 
       <Text style={styles.switchType} onPress={() => setAccountType(isStaff ? 'student' : 'staff')}>
@@ -349,7 +385,6 @@ export function SignUpScreen({ navigation }: Props) {
           {s.signIn}
         </Text>
       </View>
-      <LegalLinks prefix={s.acceptLegal} />
     </Screen>
   );
 }
@@ -370,6 +405,9 @@ function shortGroupName(group: SignupGroup): string {
 }
 
 const styles = StyleSheet.create({
+  consent: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm, marginBottom: spacing.md },
+  consentText: { flex: 1, color: colors.textMuted, fontSize: 13, lineHeight: 19 },
+  consentLink: { color: colors.text, textDecorationLine: 'underline' },
   courseTitle: { fontWeight: '700', color: colors.primary, marginBottom: spacing.xs },
   subLabel: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.xs },
   title: { fontSize: 22, fontWeight: '700', color: colors.primary, marginTop: spacing.lg, marginBottom: spacing.lg },

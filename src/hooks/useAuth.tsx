@@ -21,6 +21,8 @@ interface AuthContextValue {
     // Код из школы: ученика (для ученика и родителя) или приглашение сотрудника.
     code: string;
     phone: string;
+    // Редакция соглашения и политики, с которой согласился пользователь.
+    legalVersion: string;
   }) => Promise<SignUpResult>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -112,13 +114,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         return error?.message ?? null;
       },
-      signUp: async ({ email, password, fullName, accountType, groupId, code, phone }) => {
+      signUp: async ({ email, password, fullName, accountType, groupId, code, phone, legalVersion }) => {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: AUTH_REDIRECT_URL,
-            data: { full_name: fullName, account_type: accountType, group_id: groupId, code, phone },
+            // Согласие с соглашением и политикой (редакция и время) остаётся в данных аккаунта.
+            data: {
+              full_name: fullName,
+              account_type: accountType,
+              group_id: groupId,
+              code,
+              phone,
+              legal_version: legalVersion,
+              legal_accepted_at: new Date().toISOString(),
+            },
           },
         });
         return { error: error?.message ?? null, needsConfirmation: !error && !data.session };
