@@ -82,9 +82,9 @@ export function ComposeAnnouncementScreen() {
   const { profile } = useAuth();
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
-  // «Всем» отправляет только администратор.
+  // Всем, ученикам и сотрудникам пишет только администратор, преподаватель — своим группам.
   const isAdmin = isAdminRole(profile?.role);
-  const audiences = isAdmin ? AUDIENCES : AUDIENCES.filter((a) => a !== 'all');
+  const audiences: AnnouncementAudience[] = isAdmin ? AUDIENCES : ['group'];
   const [audience, setAudience] = useState<AnnouncementAudience>(isAdmin ? 'all' : 'group');
   const [groups, setGroups] = useState<Group[]>([]);
   const [groupId, setGroupId] = useState<string | null>(null);
@@ -92,12 +92,11 @@ export function ComposeAnnouncementScreen() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    supabase
-      .from('groups')
-      .select('*')
-      .order('name')
-      .then(({ data }) => setGroups((data as Group[]) ?? []));
-  }, []);
+    if (!profile) return;
+    let query = supabase.from('groups').select('*').order('name');
+    if (!isAdmin) query = query.eq('teacher_id', profile.id);
+    query.then(({ data }) => setGroups((data as Group[]) ?? []));
+  }, [profile, isAdmin]);
 
   useFocusEffect(
     useCallback(() => {
