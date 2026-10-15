@@ -144,6 +144,7 @@ export interface SignupGroup {
   name: string;
   branch_id: string | null;
   branch_name: string | null;
+  course: number | null;
 }
 
 // Доступно и до входа: список групп для экрана регистрации.

@@ -12,7 +12,8 @@ import { colors, radius, spacing } from '../../theme/colors';
 import { fetchBranches } from '../../lib/materials';
 import type { Branch, Group } from '../../types/database';
 import type { StaffStackParamList } from '../../navigation/types';
-import { useStrings } from '../../i18n';
+import { useLanguage, useStrings } from '../../i18n';
+import { groupSections } from '../../lib/groupSections';
 
 const STRINGS = {
   ru: {
@@ -47,6 +48,7 @@ const STRINGS = {
 export function GroupsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<StaffStackParamList>>();
   const s = useStrings(STRINGS);
+  const { lang } = useLanguage();
   const { profile } = useAuth();
   // Группы создаёт только администратор (на сервере — политика groups_write_admin).
   const canCreate = isAdminRole(profile?.role);
@@ -112,22 +114,29 @@ export function GroupsScreen() {
       </View>
 
       {visible.length === 0 && !loading ? <Text style={styles.empty}>{s.empty}</Text> : null}
-      {visible.map((g) => {
-        const req = requests.get(g.id);
-        return (
-          <Pressable key={g.id} onPress={() => navigation.navigate('GroupDetail', { groupId: g.id })}>
-            <Card>
-              <Text style={styles.groupName}>{g.name}</Text>
-              {g.description ? (
-                <Text style={styles.groupDesc} numberOfLines={2}>
-                  {g.description}
-                </Text>
-              ) : null}
-              {req ? <Text style={styles.request}>● {req === 'replacement' ? s.needsReplacement : s.replaceRequest}</Text> : null}
-            </Card>
-          </Pressable>
-        );
-      })}
+      {groupSections(visible, lang).map((section) => (
+        <View key={section.key}>
+          <Text style={styles.sectionTitle}>{section.title}</Text>
+          {section.groups.map((g) => {
+            const req = requests.get(g.id);
+            return (
+              <Pressable key={g.id} onPress={() => navigation.navigate('GroupDetail', { groupId: g.id })}>
+                <Card>
+                  <Text style={styles.groupName}>{g.name}</Text>
+                  {g.description ? (
+                    <Text style={styles.groupDesc} numberOfLines={2}>
+                      {g.description}
+                    </Text>
+                  ) : null}
+                  {req ? (
+                    <Text style={styles.request}>● {req === 'replacement' ? s.needsReplacement : s.replaceRequest}</Text>
+                  ) : null}
+                </Card>
+              </Pressable>
+            );
+          })}
+        </View>
+      ))}
     </Screen>
   );
 }
@@ -135,6 +144,7 @@ export function GroupsScreen() {
 const styles = StyleSheet.create({
   header: { fontSize: 22, fontWeight: '700', color: colors.text, marginBottom: spacing.md },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.xl },
+  sectionTitle: { fontSize: 15, fontWeight: '800', color: colors.primary, marginTop: spacing.md, marginBottom: spacing.sm },
   groupName: { fontSize: 16, fontWeight: '700', color: colors.text },
   groupDesc: { color: colors.textMuted, marginTop: spacing.xs },
   request: { color: colors.danger, marginTop: spacing.xs, fontWeight: '600', fontSize: 13 },

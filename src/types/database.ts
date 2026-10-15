@@ -45,6 +45,8 @@ export interface Group {
   description: string | null;
   teacher_id: string | null;
   branch_id: string | null;
+  // Курс (0–6) для подгрупп внутри филиала; у детских групп — null.
+  course?: number | null;
   created_at: string;
 }
 

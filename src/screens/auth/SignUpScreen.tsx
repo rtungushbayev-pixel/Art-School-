@@ -7,9 +7,10 @@ import { Button } from '../../components/Button';
 import { LanguageSwitcher } from '../../components/LanguageSwitcher';
 import { useAuth, type SignUpAccountType } from '../../hooks/useAuth';
 import { fetchSignupGroups, type SignupGroup } from '../../lib/schedule';
+import { groupSections } from '../../lib/groupSections';
 import { checkSignupCode, isValidPhone, normalizePhone } from '../../lib/signupCodes';
 import { KZ_PHONE_PREFIX, onKzPhoneInput } from '../../lib/phone';
-import { useStrings } from '../../i18n';
+import { useLanguage, useStrings } from '../../i18n';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { AuthStackParamList } from '../../navigation/types';
 
@@ -144,6 +145,7 @@ const STRINGS = {
 export function SignUpScreen({ navigation }: Props) {
   const { signUp } = useAuth();
   const s = useStrings(STRINGS);
+  const { lang } = useLanguage();
   const [accountType, setAccountType] = useState<SignUpAccountType>('student');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -269,22 +271,24 @@ export function SignUpScreen({ navigation }: Props) {
               {branchKey ? (
                 <>
                   <Text style={styles.subLabel}>{s.chooseGroup}</Text>
-                  <View style={styles.groups}>
-                    {groups
-                      .filter((g) => (g.branch_id ?? 'none') === branchKey)
-                      .sort((a, b) => a.name.localeCompare(b.name, 'ru', { numeric: true, sensitivity: 'base' }))
-                      .map((group) => (
-                        <Pressable
-                          key={group.id}
-                          onPress={() => setGroupId(group.id)}
-                          style={[styles.groupChip, groupId === group.id && styles.groupChipActive]}
-                        >
-                          <Text style={[styles.groupText, groupId === group.id && styles.groupTextActive]}>
-                            {shortGroupName(group)}
-                          </Text>
-                        </Pressable>
-                      ))}
-                  </View>
+                  {groupSections(groups.filter((g) => (g.branch_id ?? 'none') === branchKey), lang).map((section) => (
+                    <View key={section.key}>
+                      <Text style={styles.courseTitle}>{section.title}</Text>
+                      <View style={styles.groups}>
+                        {section.groups.map((group) => (
+                          <Pressable
+                            key={group.id}
+                            onPress={() => setGroupId(group.id)}
+                            style={[styles.groupChip, groupId === group.id && styles.groupChipActive]}
+                          >
+                            <Text style={[styles.groupText, groupId === group.id && styles.groupTextActive]}>
+                              {shortGroupName(group)}
+                            </Text>
+                          </Pressable>
+                        ))}
+                      </View>
+                    </View>
+                  ))}
                 </>
               ) : null}
             </>
@@ -361,6 +365,7 @@ function shortGroupName(group: SignupGroup): string {
 }
 
 const styles = StyleSheet.create({
+  courseTitle: { fontWeight: '700', color: colors.primary, marginBottom: spacing.xs },
   subLabel: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.xs },
   title: { fontSize: 22, fontWeight: '700', color: colors.primary, marginTop: spacing.lg, marginBottom: spacing.lg },
   label: { fontSize: 14, fontWeight: '600', color: colors.text, marginBottom: spacing.sm },
