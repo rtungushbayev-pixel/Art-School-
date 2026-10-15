@@ -167,6 +167,11 @@ export function FeedScreen() {
   // «Только друзья» — те же одобренные публикации, но от друзей.
   const friendIds = new Set(friends.map((f) => f.id));
   const visible = view === 'friends' ? posts.filter((p) => p.author && friendIds.has(p.author.id)) : posts;
+  // «Сторис только от друзей» в настройках: свои и друзей.
+  const visibleStoryGroups =
+    profile?.stories_friends_only
+      ? storyGroups.filter((g) => g.author.id === profile.id || friendIds.has(g.author.id))
+      : storyGroups;
   const tabs: [FeedView, string][] = [
     ['all', s.allPosts],
     ...(hasFriends ? ([['friends', s.friendsPosts]] as [FeedView, string][]) : []),
@@ -194,7 +199,7 @@ export function FeedScreen() {
         {profile ? (
           <StoriesRow
             viewer={profile}
-            groups={storyGroups}
+            groups={visibleStoryGroups}
             canPost={canPost}
             uploading={storyUploading}
             onAdd={addStory}
@@ -260,7 +265,7 @@ export function FeedScreen() {
 
       {profile ? (
         <StoryViewer
-          groups={storyGroups}
+          groups={visibleStoryGroups}
           startIndex={openStory}
           viewerId={profile.id}
           onClose={() => {

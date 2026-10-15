@@ -12,6 +12,8 @@ export type SupportStatus = 'open' | 'answered' | 'closed';
 export type MaterialUnit = 'pcs' | 'pack' | 'set' | 'l' | 'kg' | 'm' | 'sheet';
 export type MaterialRequestStatus = 'pending' | 'issued' | 'rejected';
 
+export type PostsVisibility = 'all' | 'friends' | 'nobody';
+
 export interface Profile {
   id: string;
   role: UserRole;
@@ -28,6 +30,8 @@ export interface Profile {
   notify_support: boolean;
   notify_attendance: boolean; // родителю: ребёнок отсутствует на занятии
   notify_reminders: boolean; // напоминание за 2 часа до занятия (ученику и родителю)
+  posts_visibility?: PostsVisibility; // кто видит публикации и сторис ученика
+  stories_friends_only?: boolean; // в кружках сторис — только друзья
   created_at: string;
   updated_at: string;
 }
