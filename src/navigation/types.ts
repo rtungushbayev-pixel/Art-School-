@@ -1,7 +1,10 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
 import type { BillingKind, SupportCategory } from '../types/database';
 
+import type { LegalDoc } from '../lib/legal';
+
 export type AuthStackParamList = {
+  Legal: { doc: LegalDoc };
   Login: undefined;
   SignUp: undefined;
   ForgotPassword: undefined;
@@ -17,6 +20,7 @@ export type StudentTabParamList = {
 export type StudentStackParamList = {
   StudentTabs: NavigatorScreenParams<StudentTabParamList> | undefined;
   ProfileSettings: undefined;
+  Legal: { doc: LegalDoc };
   CheckIn: undefined;
   Events: undefined;
   EventDetail: { eventId: string };
@@ -52,6 +56,7 @@ export type StaffTabParamList = {
 export type StaffStackParamList = {
   StaffTabs: NavigatorScreenParams<StaffTabParamList> | undefined;
   ProfileSettings: undefined;
+  Legal: { doc: LegalDoc };
   Messages: undefined;
   AnnouncementDetail: { announcementId: string };
   Market: undefined;
@@ -117,6 +122,7 @@ export type ParentTabParamList = {
 export type ParentStackParamList = {
   ParentTabs: NavigatorScreenParams<ParentTabParamList> | undefined;
   ProfileSettings: undefined;
+  Legal: { doc: LegalDoc };
   CheckIn: undefined;
   Payments: { studentId?: string } | undefined;
   Chats: undefined;

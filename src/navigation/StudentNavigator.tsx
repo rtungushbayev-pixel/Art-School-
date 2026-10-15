@@ -25,6 +25,7 @@ import { CheckInScreen } from '../screens/shared/CheckInScreen';
 import { EventsScreen } from '../screens/shared/EventsScreen';
 import { EventDetailScreen } from '../screens/shared/EventDetailScreen';
 import { ProfileSettingsScreen } from '../screens/shared/ProfileSettingsScreen';
+import { LegalScreen } from '../screens/shared/LegalScreen';
 import { colors } from '../theme/colors';
 import { useStrings } from '../i18n';
 
@@ -121,6 +122,7 @@ export function StudentNavigator() {
       <Stack.Screen name="CreatePost" component={CreatePostScreen} options={{ title: s.newWork }} />
       <Stack.Screen name="NewCommunityPost" component={NewCommunityPostScreen} options={{ title: s.newPost }} />
       <Stack.Screen name="ProfileSettings" component={ProfileSettingsScreen} options={{ title: s.profileSettings }} />
+      <Stack.Screen name="Legal" component={LegalScreen} options={{ title: '' }} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: s.editProfile }} />
       <Stack.Screen
         name="NotificationSettings"

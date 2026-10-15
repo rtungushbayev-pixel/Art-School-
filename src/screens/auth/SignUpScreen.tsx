@@ -4,6 +4,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { TextField } from '../../components/TextField';
 import { Button } from '../../components/Button';
+import { LegalLinks } from '../../components/LegalLinks';
 import { LanguageSwitcher } from '../../components/LanguageSwitcher';
 import { useAuth, type SignUpAccountType } from '../../hooks/useAuth';
 import { fetchSignupGroups, type SignupGroup } from '../../lib/schedule';
@@ -58,6 +59,7 @@ const STRINGS = {
     staffHint: 'Код приглашения выдаёт администрация школы.',
     signUp: 'Зарегистрироваться',
     haveAccount: 'Уже есть аккаунт?',
+    acceptLegal: 'Регистрируясь, вы принимаете',
     signIn: 'Войти',
   },
   kk: {
@@ -98,6 +100,7 @@ const STRINGS = {
     staffHint: 'Шақыру кодын мектеп әкімшілігі береді.',
     signUp: 'Тіркелу',
     haveAccount: 'Аккаунтыңыз бар ма?',
+    acceptLegal: 'Тіркелу арқылы сіз келесі құжаттарды қабылдайсыз',
     signIn: 'Кіру',
   },
   en: {
@@ -138,6 +141,7 @@ const STRINGS = {
     staffHint: 'The invitation code is given by the school administration.',
     signUp: 'Sign up',
     haveAccount: 'Already have an account?',
+    acceptLegal: 'By signing up, you accept the',
     signIn: 'Sign in',
   },
 };
@@ -345,6 +349,7 @@ export function SignUpScreen({ navigation }: Props) {
           {s.signIn}
         </Text>
       </View>
+      <LegalLinks prefix={s.acceptLegal} />
     </Screen>
   );
 }

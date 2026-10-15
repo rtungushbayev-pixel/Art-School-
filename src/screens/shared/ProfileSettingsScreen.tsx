@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '../../components/Screen';
 import { Card } from '../../components/Card';
 import { LanguageSwitcher } from '../../components/LanguageSwitcher';
+import { LegalLinks } from '../../components/LegalLinks';
 import { useStrings } from '../../i18n';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
@@ -151,6 +152,7 @@ export function ProfileSettingsScreen() {
       ) : null}
       <Text style={styles.sectionLabel}>{s.language}</Text>
       <LanguageSwitcher />
+      <LegalLinks />
     </Screen>
   );
 }
