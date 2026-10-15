@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { errorText } from '../../lib/errors';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
@@ -25,7 +25,6 @@ const STRINGS = {
     subject: 'Тема (необязательно)',
     subjectPlaceholder: 'Коротко, о чём обращение',
     send: 'Отправить',
-    change: 'Изменить',
   },
   kk: {
     describeWhat: 'Не болғанын сипаттаңыз',
@@ -37,7 +36,6 @@ const STRINGS = {
     subject: 'Тақырып (міндетті емес)',
     subjectPlaceholder: 'Өтініш не туралы, қысқаша',
     send: 'Жіберу',
-    change: 'Өзгерту',
   },
   en: {
     describeWhat: 'Please describe what happened',
@@ -49,7 +47,6 @@ const STRINGS = {
     subject: 'Subject (optional)',
     subjectPlaceholder: 'Briefly, what the request is about',
     send: 'Send',
-    change: 'Change',
   },
 };
 
@@ -57,12 +54,11 @@ export function NewSupportTicketScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<NavParamList>>();
   const route = useRoute<RouteProp<NavParamList, 'NewSupportTicket'>>();
   const s = useStrings(STRINGS);
-  const [category, setCategory] = useState<SupportCategory>(route.params.category);
+  // Тема выбрана на прошлом экране; чтобы сменить её, человек нажимает «Назад».
+  const category: SupportCategory = route.params.category;
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [saving, setSaving] = useState(false);
-  // Тема уже выбрана на прошлом экране — список тем раскрывается только по «Изменить».
-  const [picking, setPicking] = useState(false);
 
   const onSend = async () => {
     if (!body.trim()) {
@@ -85,40 +81,12 @@ export function NewSupportTicketScreen() {
   return (
     <Screen scroll>
       <Text style={styles.label}>{s.reason}</Text>
-      {picking ? (
-        <View style={styles.categories}>
-          {supportCategories().map((opt) => {
-            const active = category === opt.value;
-            return (
-              <Pressable
-                key={opt.value}
-                onPress={() => {
-                  setCategory(opt.value);
-                  setPicking(false);
-                }}
-                style={[styles.category, active && styles.categoryActive]}
-              >
-                <Text style={[styles.categoryTitle, active && styles.categoryTextActive]}>
-                  {supportCategoryLabel(opt.value)}
-                </Text>
-                <Text style={[styles.categoryHint, active && styles.categoryTextActive]}>{opt.hint}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      ) : (
-        <View style={[styles.category, styles.categoryActive, styles.selected]}>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.categoryTitle, styles.categoryTextActive]}>{supportCategoryLabel(category)}</Text>
-            <Text style={[styles.categoryHint, styles.categoryTextActive]}>
-              {supportCategories().find((o) => o.value === category)?.hint}
-            </Text>
-          </View>
-          <Text style={styles.change} onPress={() => setPicking(true)}>
-            {s.change}
-          </Text>
-        </View>
-      )}
+      <View style={[styles.category, styles.categoryActive]}>
+        <Text style={[styles.categoryTitle, styles.categoryTextActive]}>{supportCategoryLabel(category)}</Text>
+        <Text style={[styles.categoryHint, styles.categoryTextActive]}>
+          {supportCategories().find((o) => o.value === category)?.hint}
+        </Text>
+      </View>
 
       <TextField
         label={s.details}
@@ -146,19 +114,17 @@ export function NewSupportTicketScreen() {
 
 const styles = StyleSheet.create({
   label: { marginBottom: spacing.xs, color: colors.textMuted, fontSize: 13, fontWeight: '600' },
-  categories: { gap: spacing.sm, marginBottom: spacing.md },
   category: {
     padding: spacing.md,
     borderRadius: radius.md,
     borderWidth: 1.5,
     borderColor: colors.border,
     backgroundColor: colors.surface,
+    marginBottom: spacing.md,
   },
   categoryActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   categoryTitle: { fontWeight: '700', color: colors.text },
   categoryHint: { color: colors.textMuted, fontSize: 13, marginTop: 2 },
   categoryTextActive: { color: colors.white },
-  selected: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.md },
-  change: { color: colors.white, fontWeight: '700', textDecorationLine: 'underline' },
   textarea: { minHeight: 120, textAlignVertical: 'top' },
 });
