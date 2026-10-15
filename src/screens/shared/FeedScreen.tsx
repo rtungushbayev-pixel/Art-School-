@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
@@ -10,6 +10,11 @@ import type { Profile } from '../../types/database';
 import { PostCard, PostCardData } from '../../components/PostCard';
 import { fetchFeedPosts, fetchUserPosts, toggleLike } from '../../lib/posts';
 import { useAuth } from '../../hooks/useAuth';
+import { StoriesRow } from '../../components/StoriesRow';
+import { StoryViewer } from '../../components/StoryViewer';
+import { fetchStoryGroups, publishStory, type StoryGroup } from '../../lib/stories';
+import { askImageSource, pickImage } from '../../lib/pickImage';
+import { errorText } from '../../lib/errors';
 import { useStrings } from '../../i18n';
 import { colors, spacing } from '../../theme/colors';
 import type { StaffStackParamList, StudentStackParamList } from '../../navigation/types';
@@ -27,6 +32,11 @@ const STRINGS = {
     myPosts: 'Мои',
     newPost: 'Новая публикация',
     emptyFriends: 'У друзей пока нет публикаций',
+    storyTitle: 'Новая сторис',
+    storyLive: 'Сторис опубликована на 24 часа.',
+    storyRejected: 'Сторис не прошла проверку',
+    storyPending: 'Сторис отправлена на проверку. Все увидят её, когда проверка пройдёт.',
+    storyFailed: 'Не удалось выложить сторис',
     emptyMine: 'Вы ещё ничего не публиковали',
     emptyAll: 'Пока нет публикаций. Будьте первым!',
   },
@@ -39,6 +49,11 @@ const STRINGS = {
     myPosts: 'Менікі',
     newPost: 'Жаңа жарияланым',
     emptyFriends: 'Достарыңызда әзірге жарияланым жоқ',
+    storyTitle: 'Жаңа оқиға',
+    storyLive: 'Оқиға 24 сағатқа жарияланды.',
+    storyRejected: 'Оқиға тексеруден өтпеді',
+    storyPending: 'Оқиға тексеруге жіберілді. Тексеруден өткен соң оны бәрі көреді.',
+    storyFailed: 'Оқиғаны жариялау мүмкін болмады',
     emptyMine: 'Сіз әлі ештеңе жарияламадыңыз',
     emptyAll: 'Әзірге жарияланымдар жоқ. Бірінші болыңыз!',
   },
@@ -51,6 +66,11 @@ const STRINGS = {
     myPosts: 'Mine',
     newPost: 'New post',
     emptyFriends: 'Your friends have not posted yet',
+    storyTitle: 'New story',
+    storyLive: 'Your story is live for 24 hours.',
+    storyRejected: 'Your story did not pass review',
+    storyPending: 'Your story is under review. Everyone will see it once it passes.',
+    storyFailed: 'Could not post the story',
     emptyMine: 'You have not posted anything yet',
     emptyAll: 'No posts yet. Be the first!',
   },
@@ -70,6 +90,16 @@ export function FeedScreen() {
   const [friends, setFriends] = useState<Profile[]>([]);
   // Нажатие на значок «Комьюнити» — лента к началу, к самой свежей публикации.
   const [scrollTop, setScrollTop] = useState(0);
+  const [storyGroups, setStoryGroups] = useState<StoryGroup[]>([]);
+  const [openStory, setOpenStory] = useState<number | null>(null);
+  const [storyUploading, setStoryUploading] = useState(false);
+
+  const loadStories = useCallback(() => {
+    if (!profile) return;
+    fetchStoryGroups(profile.id)
+      .then(setStoryGroups)
+      .catch(() => {});
+  }, [profile]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -91,8 +121,28 @@ export function FeedScreen() {
   useFocusEffect(
     useCallback(() => {
       load();
-    }, [load])
+      loadStories();
+    }, [load, loadStories])
   );
+
+  const addStory = async () => {
+    if (!profile || storyUploading) return;
+    const source = await askImageSource(s.storyTitle);
+    if (!source) return;
+    const asset = await pickImage(source, false);
+    if (!asset) return;
+    setStoryUploading(true);
+    try {
+      const decision = await publishStory(profile.id, asset);
+      if (decision === 'approve') Alert.alert(s.storyLive);
+      else if (decision === 'reject' || decision === 'review') Alert.alert(s.storyRejected);
+      else Alert.alert(s.storyPending);
+    } catch (e) {
+      Alert.alert(s.storyFailed, errorText(e));
+    }
+    setStoryUploading(false);
+    loadStories();
+  };
 
   useEffect(() => {
     const unsubscribe = (navigation as any).addListener('tabPress', () => {
@@ -125,12 +175,31 @@ export function FeedScreen() {
 
   return (
     <View style={styles.root}>
-      <Screen scroll refreshing={loading} onRefresh={load} scrollToTopSignal={scrollTop}>
+      <Screen
+        scroll
+        refreshing={loading}
+        onRefresh={() => {
+          load();
+          loadStories();
+        }}
+        scrollToTopSignal={scrollTop}
+      >
         {canPost && profile ? (
           <Pressable style={styles.search} onPress={() => navigation.navigate('Friends', { focusSearch: true })}>
             <Ionicons name="search" size={18} color={colors.textMuted} />
             <Text style={styles.searchText}>{s.searchPeople}</Text>
           </Pressable>
+        ) : null}
+
+        {profile ? (
+          <StoriesRow
+            viewer={profile}
+            groups={storyGroups}
+            canPost={canPost}
+            uploading={storyUploading}
+            onAdd={addStory}
+            onOpen={setOpenStory}
+          />
         ) : null}
 
         <View style={styles.feedHeader}>
@@ -188,6 +257,19 @@ export function FeedScreen() {
         {/* Место под кнопкой «+», чтобы она не закрывала последнюю публикацию. */}
         {canPost ? <View style={{ height: 72 }} /> : null}
       </Screen>
+
+      {profile ? (
+        <StoryViewer
+          groups={storyGroups}
+          startIndex={openStory}
+          viewerId={profile.id}
+          onClose={() => {
+            setOpenStory(null);
+            loadStories();
+          }}
+          onDeleted={loadStories}
+        />
+      ) : null}
 
       {canPost ? (
         <Pressable
