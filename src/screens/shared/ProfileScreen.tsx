@@ -17,6 +17,7 @@ import { isAdminRole, isStaffRole } from '../../lib/roles';
 import { fetchHeadedBranch } from '../../lib/materials';
 import { useStudentPortfolio } from '../../hooks/useStudentPortfolio';
 import { colors, spacing } from '../../theme/colors';
+import { LessonsCalendar } from '../../components/LessonsCalendar';
 import type { StaffStackParamList, StudentStackParamList } from '../../navigation/types';
 
 type NavParamList = StudentStackParamList & StaffStackParamList;
@@ -123,6 +124,13 @@ export function ProfileScreen() {
       />
 
       <Button title={s.profileSettings} onPress={() => navigation.navigate('ProfileSettings')} />
+
+      {profile.role === 'student' ? (
+        <>
+          <View style={{ height: spacing.md }} />
+          <LessonsCalendar studentId={profile.id} />
+        </>
+      ) : null}
 
       <ProfileTabs value={tab} onChange={setTab} />
 
