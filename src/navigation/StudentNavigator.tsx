@@ -5,6 +5,7 @@ import { StudentTabs } from './StudentTabs';
 import { PostDetailScreen } from '../screens/shared/PostDetailScreen';
 import { AnnouncementDetailScreen } from '../screens/shared/AnnouncementDetailScreen';
 import { CreatePostScreen } from '../screens/shared/CreatePostScreen';
+import { NewCommunityPostScreen } from '../screens/shared/NewCommunityPostScreen';
 import { EditProfileScreen } from '../screens/shared/EditProfileScreen';
 import { NotificationSettingsScreen } from '../screens/shared/NotificationSettingsScreen';
 import { UserProfileScreen } from '../screens/shared/UserProfileScreen';
@@ -24,6 +25,7 @@ import { CheckInScreen } from '../screens/shared/CheckInScreen';
 import { EventsScreen } from '../screens/shared/EventsScreen';
 import { EventDetailScreen } from '../screens/shared/EventDetailScreen';
 import { ProfileSettingsScreen } from '../screens/shared/ProfileSettingsScreen';
+import { LegalScreen } from '../screens/shared/LegalScreen';
 import { colors } from '../theme/colors';
 import { useStrings } from '../i18n';
 
@@ -34,6 +36,7 @@ const STRINGS = {
     friends: 'Друзья',
     post: 'Публикация',
     newWork: 'Новая работа',
+    newPost: 'Новая публикация',
     editProfile: 'Редактирование профиля',
     notifications: 'Уведомления',
     profile: 'Профиль',
@@ -56,6 +59,7 @@ const STRINGS = {
     friends: 'Достар',
     post: 'Жарияланым',
     newWork: 'Жаңа жұмыс',
+    newPost: 'Жаңа жарияланым',
     editProfile: 'Профильді өңдеу',
     notifications: 'Хабарландырулар',
     profile: 'Профиль',
@@ -78,6 +82,7 @@ const STRINGS = {
     friends: 'Friends',
     post: 'Post',
     newWork: 'New artwork',
+    newPost: 'New post',
     editProfile: 'Edit profile',
     notifications: 'Notifications',
     profile: 'Profile',
@@ -115,7 +120,9 @@ export function StudentNavigator() {
       <Stack.Screen name="Friends" component={FriendsScreen} options={{ title: s.friends }} />
       <Stack.Screen name="PostDetail" component={PostDetailScreen} options={{ title: s.post }} />
       <Stack.Screen name="CreatePost" component={CreatePostScreen} options={{ title: s.newWork }} />
+      <Stack.Screen name="NewCommunityPost" component={NewCommunityPostScreen} options={{ title: s.newPost }} />
       <Stack.Screen name="ProfileSettings" component={ProfileSettingsScreen} options={{ title: s.profileSettings }} />
+      <Stack.Screen name="Legal" component={LegalScreen} options={{ title: '' }} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: s.editProfile }} />
       <Stack.Screen
         name="NotificationSettings"

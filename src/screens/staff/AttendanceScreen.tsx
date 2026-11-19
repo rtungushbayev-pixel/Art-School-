@@ -19,7 +19,9 @@ import { colors, radius, spacing } from '../../theme/colors';
 import type { AttendanceStatus, Profile } from '../../types/database';
 import type { StaffStackParamList } from '../../navigation/types';
 
-const STATUS_ORDER: AttendanceStatus[] = ['present', 'late', 'absent', 'excused'];
+// Три кнопки: «Есть», «Нет», «Другое» (уважительная причина). «Опоздал»
+// ставится сам при входе по QR после «Нет» и показывается как «Есть».
+const STATUS_ORDER: AttendanceStatus[] = ['present', 'absent', 'excused'];
 
 const STATUS_COLORS: Record<AttendanceStatus, string> = {
   present: colors.success,
@@ -30,7 +32,7 @@ const STATUS_COLORS: Record<AttendanceStatus, string> = {
 
 const STRINGS = {
   ru: {
-    statuses: { present: 'Был', late: 'Опоздал', absent: 'Нет', excused: 'Уваж.' } as Record<AttendanceStatus, string>,
+    statuses: { present: 'Есть', late: 'Опоздал', absent: 'Нет', excused: 'Другое' } as Record<AttendanceStatus, string>,
     hint: 'Отметьте каждого ученика. Если отметить «Нет», родители сразу получат уведомление.',
     face: (time: string) => `Прошёл по лицу в ${time}`,
     today: 'Сегодня',
@@ -40,7 +42,7 @@ const STRINGS = {
     failed: 'Не удалось сохранить отметку',
   },
   kk: {
-    statuses: { present: 'Келді', late: 'Кешікті', absent: 'Жоқ', excused: 'Себепті' } as Record<AttendanceStatus, string>,
+    statuses: { present: 'Бар', late: 'Кешікті', absent: 'Жоқ', excused: 'Басқа' } as Record<AttendanceStatus, string>,
     hint: 'Әр оқушыны белгілеңіз. «Жоқ» деп белгілесеңіз, ата-анаға бірден хабарлама барады.',
     face: (time: string) => `Бет арқылы ${time} кірді`,
     today: 'Бүгін',
@@ -50,7 +52,7 @@ const STRINGS = {
     failed: 'Белгіні сақтау мүмкін болмады',
   },
   en: {
-    statuses: { present: 'Here', late: 'Late', absent: 'Absent', excused: 'Excused' } as Record<AttendanceStatus, string>,
+    statuses: { present: 'Here', late: 'Late', absent: 'Absent', excused: 'Other' } as Record<AttendanceStatus, string>,
     hint: 'Mark every student. If you mark someone absent, their parents get a notification right away.',
     face: (time: string) => `Face check-in at ${time}`,
     today: 'Today',
@@ -190,7 +192,8 @@ export function AttendanceScreen() {
           </View>
           <View style={styles.statusRow}>
             {STATUS_ORDER.map((status) => {
-              const active = statuses[student.id] === status;
+              const current = statuses[student.id];
+              const active = current === status || (status === 'present' && current === 'late');
               return (
                 <Pressable
                   key={status}

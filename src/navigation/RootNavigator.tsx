@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { isStaffRole } from '../lib/roles';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Linking, StyleSheet, View } from 'react-native';
 import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { useAuth } from '../hooks/useAuth';
 import { AuthNavigator } from './AuthNavigator';
@@ -11,7 +11,7 @@ import { OfficeNavigator } from './OfficeNavigator';
 import { NewPasswordScreen } from '../screens/auth/NewPasswordScreen';
 import { KioskScreen } from '../screens/kiosk/KioskScreen';
 import { KioskPairScreen } from '../screens/kiosk/KioskPairScreen';
-import { getKioskToken } from '../lib/checkin';
+import { getKioskToken, kioskCodeFromUrl } from '../lib/checkin';
 import { KioskModeContext } from '../lib/kioskMode';
 import { colors } from '../theme/colors';
 import { useNotificationNavigation } from '../lib/notificationRouting';
@@ -25,22 +25,35 @@ export function RootNavigator() {
   const flushNotificationNavigation = useNotificationNavigation(navigationRef, signedInRole);
   // Планшет у входа в филиал: вместо приложения — экран QR (см. lib/checkin).
   const [kioskToken, setKioskToken] = useState<string | null | undefined>(undefined);
-  const [kioskPairing, setKioskPairing] = useState(false);
+  // null — экран подключения закрыт, '' — открыт без кода, иначе код из ссылки.
+  const [kioskPairing, setKioskPairing] = useState<string | null>(null);
 
   useEffect(() => {
     getKioskToken().then(setKioskToken);
+  }, []);
+
+  // Ссылка из письма «Подключить планшет»: открываем экран подключения с кодом.
+  useEffect(() => {
+    const open = (url: string | null) => {
+      const code = kioskCodeFromUrl(url);
+      if (code) setKioskPairing(code);
+    };
+    Linking.getInitialURL().then(open).catch(() => {});
+    const subscription = Linking.addEventListener('url', ({ url }) => open(url));
+    return () => subscription.remove();
   }, []);
 
   if (kioskToken) {
     return <KioskScreen deviceToken={kioskToken} onExit={() => setKioskToken(null)} />;
   }
 
-  if (kioskPairing) {
+  if (kioskPairing !== null) {
     return (
       <KioskPairScreen
-        onBack={() => setKioskPairing(false)}
+        initialCode={kioskPairing}
+        onBack={() => setKioskPairing(null)}
         onPaired={() => {
-          setKioskPairing(false);
+          setKioskPairing(null);
           getKioskToken().then(setKioskToken);
         }}
       />
@@ -56,7 +69,7 @@ export function RootNavigator() {
   }
 
   return (
-    <KioskModeContext.Provider value={() => setKioskPairing(true)}>
+    <KioskModeContext.Provider value={() => setKioskPairing('')}>
     <NavigationContainer
       ref={navigationRef}
       onReady={flushNotificationNavigation}

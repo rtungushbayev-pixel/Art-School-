@@ -11,36 +11,44 @@ import { colors, spacing } from '../../theme/colors';
 const STRINGS = {
   ru: {
     title: 'Режим планшета',
-    text: 'Этот планшет будет показывать QR филиала у входа. Попросите администратора открыть «QR-коды филиалов» → «Подключить планшет» и введите код подключения.',
+    text: 'Этот планшет будет показывать QR филиала у входа, а войти в приложение на нём будет нельзя. Код подключения пришёл в письме от администратора школы.',
     code: 'Код подключения',
     connect: 'Подключить',
     bad: 'Код неверный или устарел. Попросите у администратора новый.',
     failed: 'Не удалось подключить',
-    back: 'Назад ко входу',
+    back: 'Не подключать',
   },
   kk: {
     title: 'Планшет режимі',
-    text: 'Бұл планшет кіреберісте филиал QR-ын көрсетеді. Әкімшіден «Филиалдардың QR-кодтары» → «Планшетті қосу» ашуды сұраңыз да, қосылу кодын енгізіңіз.',
+    text: 'Бұл планшет кіреберісте филиал QR-ын көрсетеді, онда қолданбаға кіру мүмкін болмайды. Қосылу коды мектеп әкімшісінің хатында келді.',
     code: 'Қосылу коды',
     connect: 'Қосу',
     bad: 'Код қате немесе ескірген. Әкімшіден жаңасын сұраңыз.',
     failed: 'Қосу мүмкін болмады',
-    back: 'Кіруге оралу',
+    back: 'Қоспау',
   },
   en: {
     title: 'Tablet mode',
-    text: 'This tablet will show the branch QR at the entrance. Ask the administrator to open “Branch QR codes” → “Connect a tablet” and enter the pairing code.',
+    text: 'This tablet will show the branch QR at the entrance, and nobody will be able to sign in on it. The pairing code came in an email from the school administrator.',
     code: 'Pairing code',
     connect: 'Connect',
     bad: 'The code is wrong or expired. Ask the administrator for a new one.',
     failed: 'Could not connect',
-    back: 'Back to sign-in',
+    back: 'Cancel',
   },
 };
 
-export function KioskPairScreen({ onPaired, onBack }: { onPaired: () => void; onBack: () => void }) {
+export function KioskPairScreen({
+  initialCode = '',
+  onPaired,
+  onBack,
+}: {
+  initialCode?: string;
+  onPaired: () => void;
+  onBack: () => void;
+}) {
   const s = useStrings(STRINGS);
-  const [code, setCode] = useState('');
+  const [code, setCode] = useState(initialCode);
   const [busy, setBusy] = useState(false);
 
   const connect = async () => {
@@ -66,7 +74,7 @@ export function KioskPairScreen({ onPaired, onBack }: { onPaired: () => void; on
         onChangeText={setCode}
         autoCapitalize="characters"
         autoCorrect={false}
-        maxLength={8}
+        maxLength={12}
         placeholder="AB12CD34"
       />
       <Button title={s.connect} onPress={connect} loading={busy} />

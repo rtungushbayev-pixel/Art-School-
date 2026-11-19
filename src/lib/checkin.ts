@@ -91,10 +91,21 @@ export async function fetchKiosks(): Promise<BranchKiosk[]> {
   return (data as BranchKiosk[]) ?? [];
 }
 
-export async function createKioskPairing(branchId: string): Promise<string> {
-  const { data, error } = await supabase.rpc('create_kiosk_pairing', { p_branch_id: branchId });
+// Ссылка для письма руководителю филиала: открывает приложение на планшете
+// сразу на экране подключения (функция kiosk-link, миграция 0049).
+export async function createKioskLink(branchId: string): Promise<{ code: string; url: string }> {
+  const { data, error } = await supabase.rpc('create_kiosk_link', { p_branch_id: branchId });
   if (error) throw error;
-  return String(data);
+  const code = String(data);
+  const base = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
+  return { code, url: `${base}/functions/v1/kiosk-link?k=${code}` };
+}
+
+// Код из ссылки kasteyevschool://kiosk?k=КОД, иначе null.
+export function kioskCodeFromUrl(url: string | null): string | null {
+  if (!url || !url.startsWith('kasteyevschool://kiosk')) return null;
+  const match = /[?&]k=([A-Za-z0-9]+)/.exec(url);
+  return match ? match[1].toUpperCase() : null;
 }
 
 export async function deleteKiosk(id: string): Promise<void> {

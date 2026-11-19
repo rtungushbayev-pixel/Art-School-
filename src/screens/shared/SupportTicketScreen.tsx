@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { isStaffRole } from '../../lib/roles';
+import { isAdminRole, isStaffRole } from '../../lib/roles';
 import { errorText } from '../../lib/errors';
 import {
   Alert,
@@ -140,7 +140,8 @@ export function SupportTicketScreen() {
     );
   }
 
-  const isStaff = isStaffRole(profile.role);
+  // Отвечает на обращения и меняет их статус администратор.
+  const isStaff = isAdminRole(profile.role);
   const isAuthor = ticket.author_id === profile.id;
   const closed = ticket.status === 'closed';
 

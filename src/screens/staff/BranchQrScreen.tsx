@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { Alert, Share, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
 import { Card } from '../../components/Card';
@@ -7,7 +7,7 @@ import { Button } from '../../components/Button';
 import { errorText } from '../../lib/errors';
 import { fetchBranches } from '../../lib/materials';
 import {
-  createKioskPairing,
+  createKioskLink,
   deleteKiosk,
   fetchKiosks,
   regenerateCheckinCode,
@@ -20,17 +20,23 @@ import type { Branch } from '../../types/database';
 const STRINGS = {
   ru: {
     intro:
-      'У входа в филиал стоит планшет с QR, который меняется каждые 30 секунд: фото кода быстро устаревает. Чтобы подключить планшет, установите на него приложение, на экране входа нажмите «Режим планшета» и введите код подключения отсюда.',
-    connect: 'Подключить планшет',
-    pairingCode: 'Код подключения',
-    pairingValid: 'Действует 15 минут. Введите его на планшете.',
+      'У входа в филиал стоит планшет с QR, который меняется каждые 30 секунд: фото кода быстро устаревает. Чтобы подключить планшет, отправьте ссылку руководителю филиала, например на почту. Он откроет письмо на планшете с установленным приложением и нажмёт ссылку.',
+    connect: 'Отправить ссылку для планшета',
+    linkSubject: (branch: string) => `Подключение планшета QR, филиал ${branch}`,
+    linkText: (branch: string, url: string, code: string) =>
+      `Подключение планшета с QR для отметки учеников, филиал ${branch}.\n\n` +
+      `1. Установите на планшет приложение KasteyevSchool.\n` +
+      `2. Откройте это письмо на планшете и нажмите ссылку:\n${url}\n` +
+      `3. В приложении нажмите «Подключить». На планшете появится QR филиала.\n\n` +
+      `Если ссылка не открыла приложение: на экране входа удерживайте логотип 3 секунды и введите код ${code}.\n` +
+      `Ссылка действует 7 дней и подключает один планшет.`,
     tablets: (n: number) => (n === 0 ? 'Планшетов нет' : `Планшетов: ${n}`),
     online: 'на связи',
     lastSeen: (t: string) => `был на связи ${t}`,
-    waiting: 'ждёт подключения',
+    waiting: (until: string) => `ссылка отправлена, ждёт подключения до ${until}`,
     disconnect: 'Отключить',
     disconnectQ: 'Отключить планшет?',
-    disconnectText: 'Он перестанет показывать QR. Для повторного подключения понадобится новый код.',
+    disconnectText: 'Он перестанет показывать QR, а неиспользованная ссылка перестанет работать. Для повторного подключения понадобится новая ссылка.',
     reset: 'Сбросить коды филиала',
     resetQ: 'Сбросить коды филиала?',
     resetText: 'Все текущие QR этого филиала сразу перестанут работать. Планшеты продолжат работать с новыми кодами.',
@@ -39,17 +45,23 @@ const STRINGS = {
   },
   kk: {
     intro:
-      'Филиал кіреберісінде әр 30 секунд сайын өзгеретін QR бар планшет тұрады: кодтың суреті тез ескіреді. Планшетті қосу үшін оған қолданбаны орнатыңыз, кіру бетінде «Планшет режимі» түймесін басып, осы жердегі қосылу кодын енгізіңіз.',
-    connect: 'Планшетті қосу',
-    pairingCode: 'Қосылу коды',
-    pairingValid: '15 минут жарамды. Оны планшетте енгізіңіз.',
+      'Филиал кіреберісінде әр 30 секунд сайын өзгеретін QR бар планшет тұрады: кодтың суреті тез ескіреді. Планшетті қосу үшін филиал басшысына сілтеме жіберіңіз, мысалы поштаға. Ол хатты қолданба орнатылған планшетте ашып, сілтемені басады.',
+    connect: 'Планшетке сілтеме жіберу',
+    linkSubject: (branch: string) => `QR планшетін қосу, ${branch} филиалы`,
+    linkText: (branch: string, url: string, code: string) =>
+      `Оқушыларды белгілейтін QR планшетін қосу, ${branch} филиалы.\n\n` +
+      `1. Планшетке KasteyevSchool қолданбасын орнатыңыз.\n` +
+      `2. Осы хатты планшетте ашып, сілтемені басыңыз:\n${url}\n` +
+      `3. Қолданбада «Қосу» түймесін басыңыз. Планшетте филиал QR-ы шығады.\n\n` +
+      `Сілтеме қолданбаны ашпаса: кіру бетінде логотипті 3 секунд басып тұрып, ${code} кодын енгізіңіз.\n` +
+      `Сілтеме 7 күн жарамды және бір планшетті қосады.`,
     tablets: (n: number) => (n === 0 ? 'Планшет жоқ' : `Планшеттер: ${n}`),
     online: 'байланыста',
     lastSeen: (t: string) => `соңғы байланыс ${t}`,
-    waiting: 'қосылуды күтуде',
+    waiting: (until: string) => `сілтеме жіберілді, ${until} дейін қосылуды күтуде`,
     disconnect: 'Ажырату',
     disconnectQ: 'Планшетті ажырату керек пе?',
-    disconnectText: 'Ол QR көрсетуді тоқтатады. Қайта қосу үшін жаңа код қажет.',
+    disconnectText: 'Ол QR көрсетуді тоқтатады, ал қолданылмаған сілтеме жұмыс істемей қалады. Қайта қосу үшін жаңа сілтеме қажет.',
     reset: 'Филиал кодтарын жаңарту',
     resetQ: 'Филиал кодтарын жаңарту керек пе?',
     resetText: 'Осы филиалдың барлық ағымдағы QR-лары бірден жұмыс істемей қалады. Планшеттер жаңа кодтармен жұмыс істей береді.',
@@ -58,17 +70,23 @@ const STRINGS = {
   },
   en: {
     intro:
-      'A tablet at the branch entrance shows a QR that changes every 30 seconds, so a photo of the code quickly expires. To connect a tablet, install the app on it, tap “Tablet mode” on the sign-in screen and enter the pairing code from here.',
-    connect: 'Connect a tablet',
-    pairingCode: 'Pairing code',
-    pairingValid: 'Valid for 15 minutes. Enter it on the tablet.',
+      'A tablet at the branch entrance shows a QR that changes every 30 seconds, so a photo of the code quickly expires. To connect a tablet, send a link to the branch head, for example by email. They open the email on a tablet with the app installed and tap the link.',
+    connect: 'Send a link for the tablet',
+    linkSubject: (branch: string) => `Connecting the QR tablet, ${branch} branch`,
+    linkText: (branch: string, url: string, code: string) =>
+      `Connecting the tablet that shows the check-in QR, ${branch} branch.\n\n` +
+      `1. Install the KasteyevSchool app on the tablet.\n` +
+      `2. Open this email on the tablet and tap the link:\n${url}\n` +
+      `3. In the app, tap “Connect”. The branch QR will appear on the tablet.\n\n` +
+      `If the link did not open the app: on the sign-in screen, hold the logo for 3 seconds and enter the code ${code}.\n` +
+      `The link works for 7 days and connects one tablet.`,
     tablets: (n: number) => (n === 0 ? 'No tablets' : `Tablets: ${n}`),
     online: 'online',
     lastSeen: (t: string) => `last seen ${t}`,
-    waiting: 'waiting to connect',
+    waiting: (until: string) => `link sent, waiting to connect until ${until}`,
     disconnect: 'Disconnect',
     disconnectQ: 'Disconnect this tablet?',
-    disconnectText: 'It will stop showing the QR. Reconnecting will need a new code.',
+    disconnectText: 'It will stop showing the QR, and an unused link stops working. Reconnecting will need a new link.',
     reset: 'Reset branch codes',
     resetQ: 'Reset branch codes?',
     resetText: 'All current QR codes of this branch stop working at once. Tablets keep working with new codes.',
@@ -88,7 +106,6 @@ export function BranchQrScreen() {
   const s = useStrings(STRINGS);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [kiosks, setKiosks] = useState<BranchKiosk[]>([]);
-  const [pairing, setPairing] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -111,9 +128,12 @@ export function BranchQrScreen() {
 
   const connect = async (branch: Branch) => {
     try {
-      const code = await createKioskPairing(branch.id);
-      setPairing((prev) => ({ ...prev, [branch.id]: code }));
+      const { code, url } = await createKioskLink(branch.id);
       load();
+      await Share.share(
+        { title: s.linkSubject(branch.name), message: s.linkText(branch.name, url, code) },
+        { subject: s.linkSubject(branch.name), dialogTitle: s.connect }
+      );
     } catch (e) {
       Alert.alert(s.failed, errorText(e));
     }
@@ -161,7 +181,6 @@ export function BranchQrScreen() {
       <Text style={styles.intro}>{s.intro}</Text>
       {branches.map((b) => {
         const list = kiosks.filter((k) => k.branch_id === b.id && (k.paired_at || (k.pairing_expires_at && Date.parse(k.pairing_expires_at) > now)));
-        const code = pairing[b.id];
         return (
           <Card key={b.id}>
             <Text style={styles.name}>{b.name}</Text>
@@ -171,7 +190,7 @@ export function BranchQrScreen() {
               return (
                 <View key={k.id} style={styles.kioskRow}>
                   <Text style={[styles.kioskStatus, online ? styles.online : null]}>
-                    {k.paired_at ? (online ? `● ${s.online}` : s.lastSeen(timeAgo(k.last_seen_at))) : s.waiting}
+                    {k.paired_at ? (online ? `● ${s.online}` : s.lastSeen(timeAgo(k.last_seen_at))) : s.waiting(timeAgo(k.pairing_expires_at))}
                   </Text>
                   <Text style={styles.disconnect} onPress={() => disconnect(k)}>
                     {s.disconnect}
@@ -179,15 +198,6 @@ export function BranchQrScreen() {
                 </View>
               );
             })}
-            {code ? (
-              <View style={styles.pairing}>
-                <Text style={styles.meta}>{s.pairingCode}</Text>
-                <Text style={styles.pairingCode} selectable>
-                  {code}
-                </Text>
-                <Text style={styles.meta}>{s.pairingValid}</Text>
-              </View>
-            ) : null}
             <View style={{ height: spacing.sm }} />
             <Button title={s.connect} onPress={() => connect(b)} />
             <Text style={styles.reset} onPress={() => reset(b)}>
@@ -208,7 +218,5 @@ const styles = StyleSheet.create({
   kioskStatus: { color: colors.textMuted },
   online: { color: colors.success, fontWeight: '600' },
   disconnect: { color: colors.danger, fontWeight: '600' },
-  pairing: { alignItems: 'center', marginTop: spacing.md, padding: spacing.md, backgroundColor: colors.surfaceAlt, borderRadius: 12 },
-  pairingCode: { fontSize: 34, fontWeight: '800', letterSpacing: 6, color: colors.primary, marginVertical: spacing.xs },
   reset: { color: colors.textMuted, textAlign: 'center', fontSize: 12, marginTop: spacing.md },
 });

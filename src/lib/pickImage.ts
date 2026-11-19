@@ -39,8 +39,9 @@ export function askImageSource(title: string): Promise<ImageSource | null> {
   });
 }
 
-// Снимок с камеры или фото из галереи телефона, обрезанное до квадрата.
-export async function pickImage(source: ImageSource): Promise<ImagePicker.ImagePickerAsset | null> {
+// Снимок с камеры или фото из галереи телефона, обрезанное до квадрата
+// (для сторис — без обрезки, crop = false).
+export async function pickImage(source: ImageSource, crop = true): Promise<ImagePicker.ImagePickerAsset | null> {
   const permission =
     source === 'camera'
       ? await ImagePicker.requestCameraPermissionsAsync()
@@ -53,8 +54,8 @@ export async function pickImage(source: ImageSource): Promise<ImagePicker.ImageP
   const options: ImagePicker.ImagePickerOptions = {
     mediaTypes: ['images'],
     quality: 0.8,
-    allowsEditing: true,
-    aspect: [1, 1],
+    allowsEditing: crop,
+    aspect: crop ? [1, 1] : undefined,
   };
   const result =
     source === 'camera'

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { TextField } from '../../components/TextField';
@@ -18,7 +18,6 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
 const STRINGS = {
   ru: {
-    kiosk: 'Режим планшета (QR филиала)',
     fillAll: 'Заполните все поля',
     loginFailed: 'Не удалось войти',
     school: 'Школа искусств и дизайна',
@@ -30,7 +29,6 @@ const STRINGS = {
     forgot: 'Забыли пароль?',
   },
   kk: {
-    kiosk: 'Планшет режимі (филиал QR-ы)',
     fillAll: 'Барлық өрістерді толтырыңыз',
     loginFailed: 'Кіру мүмкін болмады',
     school: 'Өнер және дизайн мектебі',
@@ -42,7 +40,6 @@ const STRINGS = {
     forgot: 'Құпиясөзді ұмыттыңыз ба?',
   },
   en: {
-    kiosk: 'Tablet mode (branch QR)',
     fillAll: 'Please fill in all fields',
     loginFailed: 'Could not sign in',
     school: 'School of Art and Design',
@@ -57,8 +54,8 @@ const STRINGS = {
 
 export function LoginScreen({ navigation }: Props) {
   const { signIn } = useAuth();
-  const startKiosk = useStartKioskPairing();
   const s = useStrings(STRINGS);
+  const startKiosk = useStartKioskPairing();
   const { lang } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -98,7 +95,9 @@ export function LoginScreen({ navigation }: Props) {
   return (
     <Screen scroll>
       <LanguageSwitcher compact />
-      <View style={styles.header}>
+      {/* Долгое нажатие на логотип (3 с) — подключение планшета филиала вручную,
+          если ссылка из письма не открыла приложение. Обычным людям не попадётся. */}
+      <Pressable style={styles.header} onLongPress={startKiosk} delayLongPress={3000}>
         {/* Логотип с надписью по-русски; для других языков — название текстом. */}
         {lang === 'ru' ? (
           <SvgXml xml={LOGO_RU_XML} width={220} height={220} accessibilityLabel={`${s.school} ${s.schoolName}`} />
@@ -109,7 +108,7 @@ export function LoginScreen({ navigation }: Props) {
             <Text style={styles.subtitle}>{s.schoolName}</Text>
           </>
         )}
-      </View>
+      </Pressable>
 
       <TextField
         label="Email"
@@ -146,15 +145,11 @@ export function LoginScreen({ navigation }: Props) {
           {s.signUp}
         </Text>
       </View>
-      <Text style={styles.kiosk} onPress={startKiosk}>
-        {s.kiosk}
-      </Text>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  kiosk: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.xl, fontSize: 13 },
   header: { marginTop: spacing.lg, marginBottom: spacing.xl, alignItems: 'center' },
   title: { fontSize: 24, fontWeight: '800', color: colors.primary, textAlign: 'center', marginTop: spacing.md },
   subtitle: { fontSize: 15, color: colors.textMuted, marginTop: spacing.xs },

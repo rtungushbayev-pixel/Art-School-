@@ -14,6 +14,7 @@ import { SupportScreen } from '../screens/shared/SupportScreen';
 import { NewSupportTicketScreen } from '../screens/shared/NewSupportTicketScreen';
 import { SupportTicketScreen } from '../screens/shared/SupportTicketScreen';
 import { ProfileSettingsScreen } from '../screens/shared/ProfileSettingsScreen';
+import { LegalScreen } from '../screens/shared/LegalScreen';
 import { colors, paint } from '../theme/colors';
 import { useStrings } from '../i18n';
 
@@ -93,6 +94,7 @@ export function OfficeNavigator() {
       <Stack.Screen name="OfficeTabs" component={OfficeTabs} options={{ headerShown: false }} />
       <Stack.Screen name="MaterialRequest" component={MaterialRequestScreen} options={{ title: s.request }} />
       <Stack.Screen name="ProfileSettings" component={ProfileSettingsScreen} options={{ title: s.profileSettings }} />
+      <Stack.Screen name="Legal" component={LegalScreen} options={{ title: '' }} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: s.editProfile }} />
       <Stack.Screen
         name="NotificationSettings"

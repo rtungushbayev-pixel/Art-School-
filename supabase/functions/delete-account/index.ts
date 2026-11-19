@@ -13,7 +13,7 @@
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.117.2';
 
 // student-photos — фото с занятий, которые сотрудники загрузили в папку ученика.
-const USER_BUCKETS = ['avatars', 'portfolio', 'marketplace', 'student-photos'];
+const USER_BUCKETS = ['avatars', 'portfolio', 'marketplace', 'student-photos', 'stories'];
 
 function json(status: number, payload: unknown) {
   return new Response(JSON.stringify(payload), {

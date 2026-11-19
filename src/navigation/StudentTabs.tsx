@@ -8,6 +8,8 @@ import { FeedScreen } from '../screens/shared/FeedScreen';
 import { ProfileScreen } from '../screens/shared/ProfileScreen';
 import { CheckInScreen } from '../screens/shared/CheckInScreen';
 import { useStrings } from '../i18n';
+import { useAuth } from '../hooks/useAuth';
+import { useQrCheckInAvailable } from '../hooks/useQrCheckIn';
 
 const STRINGS = {
   ru: {
@@ -43,11 +45,13 @@ const TAB_CONFIG: Record<keyof StudentTabParamList, TabConfig> = {
 
 export function StudentTabs() {
   const s = useStrings(STRINGS);
+  const { profile } = useAuth();
+  const showScan = useQrCheckInAvailable(profile);
   return (
     <Tab.Navigator initialRouteName="FeedTab" screenOptions={makeTabScreenOptions(TAB_CONFIG, { showFriends: true, showMarket: true })}>
       <Tab.Screen name="ScheduleTab" component={ScheduleScreen} options={{ title: s.schedule }} />
       <Tab.Screen name="FeedTab" component={FeedScreen} options={{ title: s.community }} />
-      <Tab.Screen name="ScanTab" component={CheckInScreen} options={{ title: s.scan }} />
+      {showScan ? <Tab.Screen name="ScanTab" component={CheckInScreen} options={{ title: s.scan }} /> : null}
       <Tab.Screen name="ProfileTab" component={ProfileScreen} options={{ title: s.profile }} />
     </Tab.Navigator>
   );
