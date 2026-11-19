@@ -140,7 +140,16 @@ const STRINGS = {
 // Список учеников группы с кодами регистрации. Видят и ведут администратор
 // и преподаватель этой группы (RLS school_roster_manager); коды и привязку
 // к аккаунту меняет только сервер (protect_roster_fields).
-export function RosterSection({ groupId, initialFilter }: { groupId: string; initialFilter?: string }) {
+export function RosterSection({
+  groupId,
+  initialFilter,
+  canBulk = false,
+}: {
+  groupId: string;
+  initialFilter?: string;
+  // Массовая загрузка: администратор школы или администратор филиала.
+  canBulk?: boolean;
+}) {
   const s = useStrings(STRINGS);
   const { profile } = useAuth();
   const isAdmin = isAdminRole(profile?.role);
@@ -283,13 +292,13 @@ export function RosterSection({ groupId, initialFilter }: { groupId: string; ini
         </Pressable>
       </View>
 
-      {isAdmin ? (
+      {canBulk ? (
         <Pressable onPress={() => setBulkOpen((v) => !v)} style={styles.bulkToggle}>
           <Ionicons name={bulkOpen ? 'chevron-up' : 'cloud-upload-outline'} size={18} color={colors.primary} />
           <Text style={styles.bulkToggleText}>{bulkOpen ? s.bulkClose : s.bulkOpen}</Text>
         </Pressable>
       ) : null}
-      {isAdmin && bulkOpen ? (
+      {canBulk && bulkOpen ? (
         <View style={styles.bulkBox}>
           <Text style={styles.hint}>{s.bulkHint}</Text>
           <TextInput

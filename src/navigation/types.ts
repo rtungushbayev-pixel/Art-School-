@@ -86,6 +86,7 @@ export type StaffStackParamList = {
     | { groupId: string; kind: 'charge' };
   LessonChange: { lessonId: string; date: string };
   People: undefined;
+  InviteStaffList: undefined;
   LinkChild: { parentId: string };
   AddProgressNote: { studentId: string; studentName: string };
   AddStudentPhoto: { studentId: string; studentName: string };

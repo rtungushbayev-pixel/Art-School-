@@ -26,6 +26,7 @@ import { PaymentsScreen } from '../screens/shared/PaymentsScreen';
 import { StudentBalancesScreen } from '../screens/staff/StudentBalancesScreen';
 import { BillingEntryFormScreen } from '../screens/staff/BillingEntryFormScreen';
 import { LessonChangeScreen } from '../screens/staff/LessonChangeScreen';
+import { InviteStaffListScreen } from '../screens/staff/InviteStaffListScreen';
 import { PeopleScreen } from '../screens/staff/PeopleScreen';
 import { LinkChildScreen } from '../screens/staff/LinkChildScreen';
 import { AddProgressNoteScreen } from '../screens/staff/AddProgressNoteScreen';
@@ -54,6 +55,7 @@ import { useStrings } from '../i18n';
 
 const STRINGS = {
   ru: {
+    inviteStaffList: 'Пригласить списком',
     messages: 'Сообщения',
     market: 'Продажа работ',
     friends: 'Друзья',
@@ -100,6 +102,7 @@ const STRINGS = {
     profileSettings: 'Настройки профиля',
   },
   kk: {
+    inviteStaffList: 'Тізіммен шақыру',
     messages: 'Хабарламалар',
     market: 'Жұмыстарды сату',
     friends: 'Достар',
@@ -146,6 +149,7 @@ const STRINGS = {
     profileSettings: 'Профиль баптаулары',
   },
   en: {
+    inviteStaffList: 'Invite from a list',
     messages: 'Messages',
     market: 'Artwork sale',
     friends: 'Friends',
@@ -245,6 +249,7 @@ export function StaffNavigator() {
       <Stack.Screen name="BillingEntryForm" component={BillingEntryFormScreen} options={{ title: s.charge }} />
       <Stack.Screen name="LessonChange" component={LessonChangeScreen} options={{ title: s.lessonChange }} />
       <Stack.Screen name="People" component={PeopleScreen} options={{ title: s.people }} />
+      <Stack.Screen name="InviteStaffList" component={InviteStaffListScreen} options={{ title: s.inviteStaffList }} />
       <Stack.Screen name="LinkChild" component={LinkChildScreen} options={{ title: s.linkChild }} />
       <Stack.Screen name="AddProgressNote" component={AddProgressNoteScreen} options={{ title: s.progressNote }} />
       <Stack.Screen name="AddStudentPhoto" component={AddStudentPhotoScreen} options={{ title: s.galleryPhoto }} />
