@@ -74,7 +74,7 @@ export type StaffStackParamList = {
   EditArtwork: { postId: string };
   EditAchievement: { studentId: string; achievementId?: string };
   CreateGroup: undefined;
-  GroupDetail: { groupId: string };
+  GroupDetail: { groupId: string; focus?: string };
   AddStudentToGroup: { groupId: string };
   CreateLesson: { groupId: string; lessonId?: string };
   ListingDetail: { listingId: string };
