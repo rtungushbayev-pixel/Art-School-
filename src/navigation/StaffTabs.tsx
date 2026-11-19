@@ -8,6 +8,7 @@ import { GroupsScreen } from '../screens/staff/GroupsScreen';
 import { ModerationScreen } from '../screens/staff/ModerationScreen';
 import { FeedScreen } from '../screens/shared/FeedScreen';
 import { ProfileScreen } from '../screens/shared/ProfileScreen';
+import { EventsScreen } from '../screens/shared/EventsScreen';
 import { useStrings } from '../i18n';
 
 const STRINGS = {
@@ -16,6 +17,8 @@ const STRINGS = {
     groups: 'Группы',
     community: 'Комьюнити',
     review: 'Проверка',
+    events: 'Конкурсы',
+    eventsTitle: 'Выставки и конкурсы',
     profile: 'Профиль',
   },
   kk: {
@@ -23,6 +26,8 @@ const STRINGS = {
     groups: 'Топтар',
     community: 'Қауымдастық',
     review: 'Тексеру',
+    events: 'Байқаулар',
+    eventsTitle: 'Көрмелер мен байқаулар',
     profile: 'Профиль',
   },
   en: {
@@ -30,6 +35,8 @@ const STRINGS = {
     groups: 'Groups',
     community: 'Community',
     review: 'Review',
+    events: 'Contests',
+    eventsTitle: 'Exhibitions and competitions',
     profile: 'Profile',
   },
 };
@@ -44,6 +51,7 @@ const TAB_CONFIG: Record<keyof StaffTabParamList, TabConfig> = {
   GroupsTab: { color: paint.teal, icon: 'people', iconOutline: 'people-outline' },
   FeedTab: { color: paint.coral, icon: 'color-palette', iconOutline: 'color-palette-outline' },
   ModerationTab: { color: colors.primary, icon: 'shield-checkmark', iconOutline: 'shield-checkmark-outline' },
+  EventsTab: { color: paint.ochre, icon: 'trophy', iconOutline: 'trophy-outline' },
   ProfileTab: { color: colors.primary, icon: 'person-circle', iconOutline: 'person-circle-outline' },
 };
 
@@ -55,6 +63,7 @@ export function StaffTabs() {
       <Tab.Screen name="GroupsTab" component={GroupsScreen} options={{ title: s.groups }} />
       <Tab.Screen name="FeedTab" component={FeedScreen} options={{ title: s.community }} />
       <Tab.Screen name="ModerationTab" component={ModerationScreen} options={{ title: s.review }} />
+      <Tab.Screen name="EventsTab" component={EventsScreen} options={{ title: s.eventsTitle, tabBarLabel: s.events }} />
       <Tab.Screen name="ProfileTab" component={ProfileScreen} options={{ title: s.profile }} />
     </Tab.Navigator>
   );

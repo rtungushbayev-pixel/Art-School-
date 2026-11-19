@@ -8,7 +8,15 @@ import { Button } from '../../components/Button';
 import { useAuth } from '../../hooks/useAuth';
 import { isStaffRole } from '../../lib/roles';
 import { localISODate } from '../../lib/attendance';
-import { eventDates, eventKindLabel, fetchEvents, fetchParticipantCounts, type SchoolEvent } from '../../lib/events';
+import {
+  eventDates,
+  eventDeadline,
+  eventKindLabel,
+  fetchEvents,
+  fetchParticipantCounts,
+  type SchoolEvent,
+} from '../../lib/events';
+import { DeadlineBadge, DeadlineLine } from '../../components/EventDeadline';
 import { useStrings } from '../../i18n';
 import { colors, spacing } from '../../theme/colors';
 import type { StaffStackParamList } from '../../navigation/types';
@@ -18,6 +26,7 @@ const STRINGS = {
     create: '+ Новое событие',
     upcoming: 'Скоро',
     past: 'Прошедшие',
+    dates: (d: string) => `Проходит: ${d}`,
     empty: 'Пока нет запланированных выставок и конкурсов',
     participants: (n: number, max: number | null) => (max ? `записано ${n} из ${max}` : `записано ${n}`),
   },
@@ -25,6 +34,7 @@ const STRINGS = {
     create: '+ Жаңа іс-шара',
     upcoming: 'Жақында',
     past: 'Өткендер',
+    dates: (d: string) => `Өтетін күні: ${d}`,
     empty: 'Әзірге жоспарланған көрмелер мен байқаулар жоқ',
     participants: (n: number, max: number | null) => (max ? `${max} ішінен ${n} жазылды` : `${n} жазылды`),
   },
@@ -32,6 +42,7 @@ const STRINGS = {
     create: '+ New event',
     upcoming: 'Upcoming',
     past: 'Past',
+    dates: (d: string) => `Dates: ${d}`,
     empty: 'No exhibitions or competitions planned yet',
     participants: (n: number, max: number | null) => (max ? `${n} of ${max} signed up` : `${n} signed up`),
   },
@@ -65,16 +76,30 @@ export function EventsScreen() {
   );
 
   const today = localISODate(new Date());
-  const upcoming = events.filter((e) => (e.ends_on ?? e.starts_on) >= today);
+  // Сверху — то, куда ещё можно успеть: по ближайшему дедлайну.
+  const upcoming = events
+    .filter((e) => (e.ends_on ?? e.starts_on) >= today)
+    .sort((a, b) => {
+      const aOpen = eventDeadline(a) >= today;
+      const bOpen = eventDeadline(b) >= today;
+      if (aOpen !== bOpen) return aOpen ? -1 : 1;
+      return eventDeadline(a).localeCompare(eventDeadline(b));
+    });
   const past = events.filter((e) => (e.ends_on ?? e.starts_on) < today).reverse();
 
   const card = (e: SchoolEvent) => (
     <Pressable key={e.id} onPress={() => navigation.navigate('EventDetail', { eventId: e.id })}>
       <Card>
-        <Text style={styles.kind}>{eventKindLabel(e.kind)}</Text>
-        <Text style={styles.title}>{e.title}</Text>
+        <View style={styles.row}>
+          <View style={styles.info}>
+            <Text style={styles.kind}>{eventKindLabel(e.kind)}</Text>
+            <Text style={styles.title}>{e.title}</Text>
+            <DeadlineLine event={e} />
+          </View>
+          <DeadlineBadge event={e} />
+        </View>
         <Text style={styles.meta}>
-          {eventDates(e)}
+          {s.dates(eventDates(e))}
           {e.location ? ` · ${e.location}` : ''}
         </Text>
         <Text style={styles.meta}>{s.participants(counts[e.id] ?? 0, e.max_participants)}</Text>
@@ -102,7 +127,9 @@ const styles = StyleSheet.create({
   create: { marginBottom: spacing.md },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.lg },
   section: { fontSize: 18, fontWeight: '700', color: colors.text, marginTop: spacing.sm, marginBottom: spacing.sm },
+  row: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
+  info: { flex: 1 },
   kind: { fontSize: 12, fontWeight: '700', color: colors.accent, textTransform: 'uppercase' },
-  title: { fontSize: 17, fontWeight: '700', color: colors.text, marginTop: 2 },
+  title: { fontSize: 18, fontWeight: '700', color: colors.text, marginTop: 2 },
   meta: { color: colors.textMuted, fontSize: 13, marginTop: spacing.xs },
 });

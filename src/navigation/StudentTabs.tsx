@@ -7,6 +7,7 @@ import { ScheduleScreen } from '../screens/shared/ScheduleScreen';
 import { FeedScreen } from '../screens/shared/FeedScreen';
 import { ProfileScreen } from '../screens/shared/ProfileScreen';
 import { CheckInScreen } from '../screens/shared/CheckInScreen';
+import { EventsScreen } from '../screens/shared/EventsScreen';
 import { useStrings } from '../i18n';
 import { useAuth } from '../hooks/useAuth';
 import { useQrCheckInAvailable } from '../hooks/useQrCheckIn';
@@ -16,18 +17,24 @@ const STRINGS = {
     scan: 'Сканировать QR',
     schedule: 'Расписание',
     community: 'Комьюнити',
+    events: 'Конкурсы',
+    eventsTitle: 'Выставки и конкурсы',
     profile: 'Профиль',
   },
   kk: {
     scan: 'QR сканерлеу',
     schedule: 'Кесте',
     community: 'Қауымдастық',
+    events: 'Байқаулар',
+    eventsTitle: 'Көрмелер мен байқаулар',
     profile: 'Профиль',
   },
   en: {
     scan: 'Scan QR',
     schedule: 'Schedule',
     community: 'Community',
+    events: 'Contests',
+    eventsTitle: 'Exhibitions and competitions',
     profile: 'Profile',
   },
 };
@@ -40,6 +47,7 @@ const TAB_CONFIG: Record<keyof StudentTabParamList, TabConfig> = {
   ScheduleTab: { color: paint.sky, icon: 'calendar', iconOutline: 'calendar-outline' },
   FeedTab: { color: paint.coral, icon: 'color-palette', iconOutline: 'color-palette-outline' },
   ScanTab: { color: paint.teal, icon: 'qr-code', iconOutline: 'qr-code-outline' },
+  EventsTab: { color: paint.ochre, icon: 'trophy', iconOutline: 'trophy-outline' },
   ProfileTab: { color: colors.primary, icon: 'person-circle', iconOutline: 'person-circle-outline' },
 };
 
@@ -52,6 +60,7 @@ export function StudentTabs() {
       <Tab.Screen name="ScheduleTab" component={ScheduleScreen} options={{ title: s.schedule }} />
       <Tab.Screen name="FeedTab" component={FeedScreen} options={{ title: s.community }} />
       {showScan ? <Tab.Screen name="ScanTab" component={CheckInScreen} options={{ title: s.scan }} /> : null}
+      <Tab.Screen name="EventsTab" component={EventsScreen} options={{ title: s.eventsTitle, tabBarLabel: s.events }} />
       <Tab.Screen name="ProfileTab" component={ProfileScreen} options={{ title: s.profile }} />
     </Tab.Navigator>
   );

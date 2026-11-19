@@ -17,12 +17,12 @@ import {
   fetchEvent,
   fetchParticipantCounts,
   fetchRegistrations,
-  formatEventDate,
   register,
   unregister,
   type Registration,
   type SchoolEvent,
 } from '../../lib/events';
+import { DeadlineBadge, DeadlineLine } from '../../components/EventDeadline';
 import { useStrings } from '../../i18n';
 import { colors, spacing } from '../../theme/colors';
 import type { Profile } from '../../types/database';
@@ -31,7 +31,6 @@ import type { StaffStackParamList } from '../../navigation/types';
 const STRINGS = {
   ru: {
     notFound: 'Событие не найдено',
-    signupUntil: (d: string) => `Запись до ${d}`,
     places: (n: number, max: number | null) => (max ? `Записано ${n} из ${max}` : `Записано ${n}`),
     signUp: 'Записаться',
     signUpChild: (name: string) => `Записать: ${name}`,
@@ -50,7 +49,6 @@ const STRINGS = {
   },
   kk: {
     notFound: 'Іс-шара табылмады',
-    signupUntil: (d: string) => `${d} дейін жазылу`,
     places: (n: number, max: number | null) => (max ? `${max} ішінен ${n} жазылды` : `${n} жазылды`),
     signUp: 'Жазылу',
     signUpChild: (name: string) => `Жазу: ${name}`,
@@ -69,7 +67,6 @@ const STRINGS = {
   },
   en: {
     notFound: 'Event not found',
-    signupUntil: (d: string) => `Sign-up until ${d}`,
     places: (n: number, max: number | null) => (max ? `${n} of ${max} signed up` : `${n} signed up`),
     signUp: 'Sign up',
     signUpChild: (name: string) => `Sign up: ${name}`,
@@ -178,15 +175,20 @@ export function EventDetailScreen() {
 
   return (
     <Screen scroll refreshing={loading} onRefresh={load}>
-      <Text style={styles.kind}>{eventKindLabel(event.kind)}</Text>
-      <Text style={styles.title}>{event.title}</Text>
+      <View style={styles.head}>
+        <View style={styles.headInfo}>
+          <Text style={styles.kind}>{eventKindLabel(event.kind)}</Text>
+          <Text style={styles.title}>{event.title}</Text>
+          <DeadlineLine event={event} />
+        </View>
+        <DeadlineBadge event={event} />
+      </View>
       <Text style={styles.meta}>
         {eventDates(event)}
         {event.location ? ` · ${event.location}` : ''}
       </Text>
       <Text style={styles.meta}>
         {s.places(count, event.max_participants)}
-        {!closed ? ` · ${s.signupUntil(formatEventDate(event.signup_until ?? event.starts_on))}` : ` · ${s.closed}`}
       </Text>
       {event.description ? <Text style={styles.description}>{event.description}</Text> : null}
 
@@ -234,6 +236,8 @@ export function EventDetailScreen() {
 }
 
 const styles = StyleSheet.create({
+  head: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md, marginBottom: spacing.xs },
+  headInfo: { flex: 1 },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.lg },
   emptyLeft: { color: colors.textMuted, marginBottom: spacing.md },
   kind: { fontSize: 12, fontWeight: '700', color: colors.accent, textTransform: 'uppercase' },

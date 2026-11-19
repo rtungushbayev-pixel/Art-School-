@@ -33,6 +33,9 @@ export interface TabConfig {
   iconOutline: keyof typeof Ionicons.glyphMap;
 }
 
+// Размер иконок вверху: крупные, чтобы легко попадать пальцем.
+const ACTION_ICON = 26;
+
 // Иконки в правом верхнем углу: разделы, которые открывают не каждый день,
 // поэтому они не занимают место в нижней панели.
 interface HeaderActionsProps {
@@ -53,7 +56,7 @@ function HeaderActions({ showFriends, showMarket }: HeaderActionsProps) {
           accessibilityLabel={s.friends}
           style={styles.action}
         >
-          <Ionicons name="people-outline" size={22} color={colors.primary} />
+          <Ionicons name="people-outline" size={ACTION_ICON} color={colors.primary} />
         </Pressable>
       ) : null}
       {showMarket ? (
@@ -63,7 +66,7 @@ function HeaderActions({ showFriends, showMarket }: HeaderActionsProps) {
           accessibilityLabel={s.market}
           style={styles.action}
         >
-          <Ionicons name="pricetag-outline" size={22} color={colors.primary} />
+          <Ionicons name="storefront-outline" size={ACTION_ICON} color={colors.primary} />
         </Pressable>
       ) : null}
       <Pressable
@@ -72,7 +75,7 @@ function HeaderActions({ showFriends, showMarket }: HeaderActionsProps) {
         accessibilityLabel={s.messages}
         style={styles.action}
       >
-        <Ionicons name="chatbubble-ellipses-outline" size={22} color={colors.primary} />
+        <Ionicons name="chatbubble-ellipses-outline" size={ACTION_ICON} color={colors.primary} />
       </Pressable>
       <Pressable
         hitSlop={8}
@@ -80,7 +83,7 @@ function HeaderActions({ showFriends, showMarket }: HeaderActionsProps) {
         accessibilityLabel={s.help}
         style={styles.action}
       >
-        <Ionicons name="help-buoy-outline" size={22} color={colors.primary} />
+        <Ionicons name="help-buoy-outline" size={ACTION_ICON} color={colors.primary} />
       </Pressable>
     </View>
   );
@@ -131,8 +134,16 @@ export function makeTabScreenOptions(
 }
 
 const styles = StyleSheet.create({
-  actions: { flexDirection: 'row', alignItems: 'center', marginRight: spacing.md, gap: spacing.md },
-  action: { padding: 2 },
+  actions: { flexDirection: 'row', alignItems: 'center', marginRight: spacing.sm, gap: 6 },
+  // Круглая подложка делает кнопку заметной и увеличивает зону нажатия.
+  action: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(124, 42, 59, 0.08)',
+  },
   feedIconSlot: { width: 56, height: 56, marginTop: -14 },
   feedCircle: {
     width: 56,
