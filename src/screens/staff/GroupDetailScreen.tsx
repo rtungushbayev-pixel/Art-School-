@@ -13,6 +13,7 @@ import { GroupTeacherPicker } from '../../components/GroupTeacherPicker';
 import { GroupTeacherRequests } from '../../components/GroupTeacherRequests';
 import { useAuth } from '../../hooks/useAuth';
 import { isAdminRole } from '../../lib/roles';
+import { useAdminBranchIds } from '../../lib/branchAdmins';
 import { supabase } from '../../lib/supabase';
 import { fetchGroupMembers, removeStudentFromGroup } from '../../lib/groups';
 import { dayShort } from '../../lib/schedule';
@@ -78,7 +79,11 @@ export function GroupDetailScreen({ route }: Props) {
   // Состав, занятия и коды меняет администратор или преподаватель этой группы
   // (на сервере — can_manage_group).
   // Состав группы меняет только администратор (group_members_write_admin).
-  const isAdmin = isAdminRole(profile?.role);
+  const isSchoolAdmin = isAdminRole(profile?.role);
+  // Администратор филиала в группах своего филиала может то же, что
+  // администратор, кроме переноса группы в другой филиал и решений по заменам.
+  const adminBranchIds = useAdminBranchIds(profile);
+  const isAdmin = isSchoolAdmin || (!!group?.branch_id && adminBranchIds.includes(group.branch_id));
   const canManage = isAdmin || (!!group && group.teacher_id === profile?.id);
   const [members, setMembers] = useState<Profile[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
@@ -134,7 +139,7 @@ export function GroupDetailScreen({ route }: Props) {
       <Text style={styles.title}>{group.name}</Text>
       {group.description ? <Text style={styles.description}>{group.description}</Text> : null}
       {/* Пришли из поиска ребёнка — список с кодами сразу наверху, уже отфильтрован. */}
-      {canManage && focus ? <RosterSection groupId={groupId} initialFilter={focus} /> : null}
+      {canManage && focus ? <RosterSection groupId={groupId} initialFilter={focus} canBulk={isAdmin} /> : null}
       {isAdmin ? (
         <GroupTeacherPicker
           groupId={groupId}
@@ -142,13 +147,13 @@ export function GroupDetailScreen({ route }: Props) {
           onChange={(id) => setGroup((g) => (g ? { ...g, teacher_id: id } : g))}
         />
       ) : null}
-      {isAdmin ? <GroupBranchPicker groupId={groupId} branchId={group.branch_id} /> : null}
-      {profile && (isAdmin || profile.role === 'staff') ? (
+      {isSchoolAdmin ? <GroupBranchPicker groupId={groupId} branchId={group.branch_id} /> : null}
+      {profile && (isSchoolAdmin || profile.role === 'staff') ? (
         <GroupTeacherRequests
           groupId={groupId}
           teacherId={group.teacher_id}
           myId={profile.id}
-          mode={isAdmin ? 'admin' : group.teacher_id === profile.id ? 'owner' : 'teacher'}
+          mode={isSchoolAdmin ? 'admin' : group.teacher_id === profile.id ? 'owner' : 'teacher'}
           onChanged={load}
         />
       ) : null}
@@ -193,7 +198,7 @@ export function GroupDetailScreen({ route }: Props) {
         </Pressable>
       ) : null}
 
-      {canManage && !focus ? <RosterSection groupId={groupId} /> : null}
+      {canManage && !focus ? <RosterSection groupId={groupId} canBulk={isAdmin} /> : null}
 
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>{s.schedule}</Text>

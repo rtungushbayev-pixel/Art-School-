@@ -23,6 +23,7 @@ import {
   type StudentPhotoWithUrl,
 } from '../../lib/parents';
 import { Card } from '../../components/Card';
+import { BranchAdminPicker } from '../../components/BranchAdminPicker';
 import { BranchHeadPicker } from '../../components/BranchHeadPicker';
 import { startChat } from '../../lib/chats';
 import { errorText } from '../../lib/errors';
@@ -428,6 +429,7 @@ export function UserProfileScreen() {
         </View>
       ) : null}
       {isAdminRole(viewer?.role) && isStaffRole(profile.role) ? <BranchHeadPicker userId={profile.id} /> : null}
+      {isAdminRole(viewer?.role) && profile.role === 'staff' ? <BranchAdminPicker userId={profile.id} /> : null}
       {isAdminRole(viewer?.role) && viewer?.id !== profile.id ? (
         <View style={styles.roleAction}>
           {ROLE_ORDER.filter((role) => role !== profile.role).map((role) => (

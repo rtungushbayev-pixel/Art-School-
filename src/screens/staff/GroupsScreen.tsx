@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -15,6 +15,7 @@ import type { StaffStackParamList } from '../../navigation/types';
 import { useLanguage, useStrings } from '../../i18n';
 import { groupSections } from '../../lib/groupSections';
 import { ChildSearch } from '../../components/ChildSearch';
+import { useAdminBranchIds } from '../../lib/branchAdmins';
 
 const STRINGS = {
   ru: {
@@ -59,6 +60,11 @@ export function GroupsScreen() {
   // запросы к администратору — только он (RLS group_teacher_requests_select).
   const [requests, setRequests] = useState<Map<string, 'replacement' | 'takeover'>>(new Map());
   const [filter, setFilter] = useState<string | null>(null);
+  // Администратору филиала сразу показываем его филиал.
+  const adminBranchIds = useAdminBranchIds(profile);
+  useEffect(() => {
+    if (adminBranchIds.length > 0) setFilter((prev) => (prev === null || prev === 'all' || prev === 'mine' ? adminBranchIds[0] : prev));
+  }, [adminBranchIds]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
