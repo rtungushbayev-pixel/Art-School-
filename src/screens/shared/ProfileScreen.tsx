@@ -24,6 +24,7 @@ type NavParamList = StudentStackParamList & StaffStackParamList;
 
 const STRINGS = {
   ru: {
+    inviteStaffList: 'Пригласить сотрудников списком (Excel)',
     profileSettings: 'Настройки профиля',
     chats: 'Чаты с родителями',
     avatarFailed: 'Не удалось загрузить фото',
@@ -43,6 +44,7 @@ const STRINGS = {
     signOut: 'Выйти',
   },
   kk: {
+    inviteStaffList: 'Қызметкерлерді тізіммен шақыру (Excel)',
     profileSettings: 'Профиль баптаулары',
     chats: 'Ата-аналармен чаттар',
     avatarFailed: 'Фотоны жүктеу мүмкін болмады',
@@ -62,6 +64,7 @@ const STRINGS = {
     signOut: 'Шығу',
   },
   en: {
+    inviteStaffList: 'Invite staff from a list (Excel)',
     profileSettings: 'Profile settings',
     chats: 'Chats with parents',
     avatarFailed: 'Could not upload the photo',
@@ -210,6 +213,12 @@ export function ProfileScreen() {
                     { cancelable: true }
                   );
                 }}
+              />
+              <View style={{ height: spacing.sm }} />
+              <Button
+                title={s.inviteStaffList}
+                variant="secondary"
+                onPress={() => (navigation as any).navigate('InviteStaffList')}
               />
             </>
           ) : null}
