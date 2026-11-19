@@ -5,7 +5,6 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { Card } from '../../components/Card';
-import { Button } from '../../components/Button';
 import { useAuth } from '../../hooks/useAuth';
 import { fetchChildren } from '../../lib/parents';
 import type { Branch, Profile } from '../../types/database';
@@ -31,7 +30,6 @@ import { useStrings } from '../../i18n';
 
 const STRINGS = {
   ru: {
-    events: 'Выставки и конкурсы',
     thisWeek: 'Эта неделя',
     nextWeek: 'Следующая неделя',
     lastWeek: 'Прошлая неделя',
@@ -51,7 +49,6 @@ const STRINGS = {
     roomShort: (room: string) => `, каб. ${room}`,
   },
   kk: {
-    events: 'Көрмелер мен байқаулар',
     thisWeek: 'Осы апта',
     nextWeek: 'Келесі апта',
     lastWeek: 'Өткен апта',
@@ -71,7 +68,6 @@ const STRINGS = {
     roomShort: (room: string) => `, ${room} каб.`,
   },
   en: {
-    events: 'Exhibitions and competitions',
     thisWeek: 'This week',
     nextWeek: 'Next week',
     lastWeek: 'Last week',
@@ -188,10 +184,6 @@ export function ScheduleScreen() {
 
   return (
     <Screen scroll refreshing={loading} onRefresh={load}>
-      <View style={styles.checkIn}>
-        <Button title={s.events} variant="secondary" onPress={() => (navigation as any).navigate('Events')} />
-      </View>
-
       <View style={styles.weekNav}>
         <Pressable hitSlop={12} onPress={() => setWeekOffset((w) => w - 1)}>
           <Text style={styles.weekArrow}>‹</Text>
@@ -349,7 +341,6 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
 }
 
 const styles = StyleSheet.create({
-  checkIn: { marginBottom: spacing.md },
   header: { fontSize: 22, fontWeight: '700', color: colors.text, marginBottom: spacing.md },
   empty: { color: colors.textMuted, textAlign: 'center' },
   addChild: {

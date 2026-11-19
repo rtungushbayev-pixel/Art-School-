@@ -107,3 +107,19 @@ export async function deleteEvent(id: string): Promise<void> {
   const { error } = await supabase.from('school_events').delete().eq('id', id);
   if (error) throw error;
 }
+
+// Дедлайн события: до какого дня принимают заявки и работы. Если отдельный
+// срок не указан, приём идёт до дня начала.
+export function eventDeadline(e: SchoolEvent): string {
+  return e.signup_until ?? e.starts_on;
+}
+
+// Сколько полных дней осталось до дедлайна (0 — сегодня последний день,
+// отрицательное число — приём закрыт). Даты в формате YYYY-MM-DD.
+export function daysUntil(isoDate: string, todayIso: string): number {
+  const toUtc = (iso: string) => {
+    const [y, m, d] = iso.split('-').map(Number);
+    return Date.UTC(y, m - 1, d);
+  };
+  return Math.round((toUtc(isoDate) - toUtc(todayIso)) / 86_400_000);
+}

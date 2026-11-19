@@ -14,6 +14,7 @@ export type StudentTabParamList = {
   ScheduleTab: undefined;
   FeedTab: undefined;
   ScanTab: undefined;
+  EventsTab: undefined;
   ProfileTab: undefined;
 };
 
@@ -50,6 +51,7 @@ export type StaffTabParamList = {
   GroupsTab: undefined;
   FeedTab: undefined;
   ModerationTab: undefined;
+  EventsTab: undefined;
   ProfileTab: undefined;
 };
 
@@ -116,6 +118,7 @@ export type ParentTabParamList = {
   ScheduleTab: undefined;
   FeedTab: undefined;
   ScanTab: undefined;
+  EventsTab: undefined;
   ProfileTab: undefined;
 };
 
