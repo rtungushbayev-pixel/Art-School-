@@ -14,6 +14,7 @@ import type { Branch, Group } from '../../types/database';
 import type { StaffStackParamList } from '../../navigation/types';
 import { useLanguage, useStrings } from '../../i18n';
 import { groupSections } from '../../lib/groupSections';
+import { ChildSearch } from '../../components/ChildSearch';
 
 const STRINGS = {
   ru: {
@@ -99,6 +100,7 @@ export function GroupsScreen() {
 
   return (
     <Screen scroll refreshing={loading} onRefresh={load}>
+      <ChildSearch onPick={(hit) => navigation.navigate('GroupDetail', { groupId: hit.group_id, focus: hit.full_name })} />
       {canCreate ? <Button title={s.newGroup} onPress={() => navigation.navigate('CreateGroup')} /> : null}
       <View style={{ height: spacing.sm }} />
       <Button title={s.people} variant="secondary" onPress={() => navigation.navigate('People')} />

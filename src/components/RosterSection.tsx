@@ -7,7 +7,7 @@ import { useStrings } from '../i18n';
 import { useAuth } from '../hooks/useAuth';
 import { isAdminRole } from '../lib/roles';
 import { ExternalIdsEditor } from './ExternalIdsEditor';
-import { MAX_IMPORT, previewImport } from '../lib/rosterImport';
+import { MAX_IMPORT, normalizeName, previewImport } from '../lib/rosterImport';
 import { colors, radius, spacing } from '../theme/colors';
 
 interface RosterEntry {
@@ -22,6 +22,8 @@ type CodeKind = 'student' | 'parent';
 
 const STRINGS = {
   ru: {
+    filterPlaceholder: 'Найти в группе',
+    filterNone: 'Никого не нашли',
     bulkOpen: 'Загрузить список',
     bulkClose: 'Скрыть загрузку списка',
     bulkHint: 'Скопируйте столбец с ФИО из Excel или сообщения и вставьте сюда. Один ребёнок на строку, нумерацию можно не убирать.',
@@ -58,6 +60,8 @@ const STRINGS = {
       `Код для родителей ученика ${name} в приложении KasteyevSchool: ${code}. При регистрации выберите «Родитель» и введите код. Не передавайте его посторонним: по нему видны успехи и фото ребёнка.`,
   },
   kk: {
+    filterPlaceholder: 'Топтан іздеу',
+    filterNone: 'Ешкім табылмады',
     bulkOpen: 'Тізімді жүктеу',
     bulkClose: 'Тізімді жүктеуді жасыру',
     bulkHint: 'Excel-ден немесе хабарламадан аты-жөні бағанын көшіріп, осында қойыңыз. Әр жолда бір бала, нөмірлерді өшірмесеңіз де болады.',
@@ -94,6 +98,8 @@ const STRINGS = {
       `KasteyevSchool қолданбасындағы ${name} оқушысының ата-аналарына арналған код: ${code}. Тіркелу кезінде «Ата-ана» таңдап, кодты енгізіңіз. Оны бөгде адамдарға бермеңіз: ол арқылы баланың жетістіктері мен фотолары көрінеді.`,
   },
   en: {
+    filterPlaceholder: 'Find in this group',
+    filterNone: 'No one found',
     bulkOpen: 'Upload a list',
     bulkClose: 'Hide list upload',
     bulkHint: 'Copy the column of full names from Excel or a message and paste it here. One child per line; numbering is fine.',
@@ -134,7 +140,7 @@ const STRINGS = {
 // Список учеников группы с кодами регистрации. Видят и ведут администратор
 // и преподаватель этой группы (RLS school_roster_manager); коды и привязку
 // к аккаунту меняет только сервер (protect_roster_fields).
-export function RosterSection({ groupId }: { groupId: string }) {
+export function RosterSection({ groupId, initialFilter }: { groupId: string; initialFilter?: string }) {
   const s = useStrings(STRINGS);
   const { profile } = useAuth();
   const isAdmin = isAdminRole(profile?.role);
@@ -143,6 +149,11 @@ export function RosterSection({ groupId }: { groupId: string }) {
   const [entries, setEntries] = useState<RosterEntry[]>([]);
   const [name, setName] = useState('');
   const [adding, setAdding] = useState(false);
+  // Поиск внутри группы: по любой части фамилии или имени.
+  const [filter, setFilter] = useState(initialFilter ?? '');
+  useEffect(() => {
+    if (initialFilter) setFilter(initialFilter);
+  }, [initialFilter]);
   // Массовая загрузка списка (только администратор).
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkText, setBulkText] = useState('');
@@ -178,6 +189,14 @@ export function RosterSection({ groupId }: { groupId: string }) {
     [bulkText, entries]
   );
   const tooMany = preview.toAdd.length > MAX_IMPORT;
+
+  const filterWords = normalizeName(filter).split(' ').filter(Boolean);
+  const shown = filterWords.length
+    ? entries.filter((e) => {
+        const name = normalizeName(e.full_name);
+        return filterWords.every((w) => name.includes(w));
+      })
+    : entries;
 
   const onBulkAdd = async () => {
     if (preview.toAdd.length === 0 || tooMany) return;
@@ -309,7 +328,26 @@ export function RosterSection({ groupId }: { groupId: string }) {
       ) : null}
 
       {entries.length === 0 ? <Text style={styles.empty}>{s.empty}</Text> : null}
-      {entries.map((entry) => (
+      {entries.length > 5 || filter ? (
+        <View style={styles.filterRow}>
+          <Ionicons name="search" size={16} color={colors.textMuted} />
+          <TextInput
+            value={filter}
+            onChangeText={setFilter}
+            placeholder={s.filterPlaceholder}
+            placeholderTextColor={colors.textMuted}
+            style={styles.filterInput}
+            autoCorrect={false}
+          />
+          {filter ? (
+            <Pressable hitSlop={8} onPress={() => setFilter('')}>
+              <Ionicons name="close-circle" size={16} color={colors.textMuted} />
+            </Pressable>
+          ) : null}
+        </View>
+      ) : null}
+      {entries.length > 0 && shown.length === 0 ? <Text style={styles.empty}>{s.filterNone}</Text> : null}
+      {shown.map((entry) => (
         <View key={entry.id}>
           <Pressable style={styles.row} onPress={() => onActions(entry)} accessibilityLabel={s.actions}>
             <View style={styles.rowText}>
@@ -362,6 +400,18 @@ const styles = StyleSheet.create({
   disabled: { opacity: 0.5 },
   addText: { color: colors.white, fontWeight: '700' },
   empty: { color: colors.textMuted, fontSize: 13 },
+  filterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.sm,
+    backgroundColor: colors.surface,
+  },
+  filterInput: { flex: 1, paddingVertical: spacing.sm, color: colors.text },
   bulkToggle: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingVertical: spacing.sm },
   bulkToggleText: { color: colors.primary, fontWeight: '700' },
   bulkBox: {

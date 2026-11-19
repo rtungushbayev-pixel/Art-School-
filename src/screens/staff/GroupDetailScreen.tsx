@@ -69,7 +69,7 @@ const STRINGS = {
 type Props = NativeStackScreenProps<StaffStackParamList, 'GroupDetail'>;
 
 export function GroupDetailScreen({ route }: Props) {
-  const { groupId } = route.params;
+  const { groupId, focus } = route.params;
   const navigation = useNavigation<NativeStackNavigationProp<StaffStackParamList>>();
   const s = useStrings(STRINGS);
 
@@ -133,6 +133,8 @@ export function GroupDetailScreen({ route }: Props) {
     <Screen scroll>
       <Text style={styles.title}>{group.name}</Text>
       {group.description ? <Text style={styles.description}>{group.description}</Text> : null}
+      {/* Пришли из поиска ребёнка — список с кодами сразу наверху, уже отфильтрован. */}
+      {canManage && focus ? <RosterSection groupId={groupId} initialFilter={focus} /> : null}
       {isAdmin ? (
         <GroupTeacherPicker
           groupId={groupId}
@@ -191,7 +193,7 @@ export function GroupDetailScreen({ route }: Props) {
         </Pressable>
       ) : null}
 
-      {canManage ? <RosterSection groupId={groupId} /> : null}
+      {canManage && !focus ? <RosterSection groupId={groupId} /> : null}
 
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>{s.schedule}</Text>
