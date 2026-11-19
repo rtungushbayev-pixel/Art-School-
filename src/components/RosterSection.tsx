@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, Share, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
@@ -7,6 +7,7 @@ import { useStrings } from '../i18n';
 import { useAuth } from '../hooks/useAuth';
 import { isAdminRole } from '../lib/roles';
 import { ExternalIdsEditor } from './ExternalIdsEditor';
+import { MAX_IMPORT, previewImport } from '../lib/rosterImport';
 import { colors, radius, spacing } from '../theme/colors';
 
 interface RosterEntry {
@@ -21,6 +22,17 @@ type CodeKind = 'student' | 'parent';
 
 const STRINGS = {
   ru: {
+    bulkOpen: 'Загрузить список',
+    bulkClose: 'Скрыть загрузку списка',
+    bulkHint: 'Скопируйте столбец с ФИО из Excel или сообщения и вставьте сюда. Один ребёнок на строку, нумерацию можно не убирать.',
+    bulkPlaceholder: 'Иванов Иван\nПетрова Анна\n…',
+    bulkNew: (n: number) => `Новых: ${n}`,
+    bulkExisting: (n: number) => `Уже в группе, пропустим: ${n}`,
+    bulkRepeated: (n: number) => `Повторы в списке, пропустим: ${n}`,
+    bulkTooMany: (max: number) => `За один раз можно добавить до ${max} детей.`,
+    bulkAdd: (n: number) => `Добавить ${n}`,
+    bulkDone: (n: number) => `Добавлено детей: ${n}. Коды созданы.`,
+    done: 'Готово',
     externalIds: 'Коды 1С и Битрикс24',
     title: 'Коды учеников',
     hint: 'Список учеников группы от школы. У каждого два кода: код ученика (для регистрации ребёнка, одноразовый) и код для родителей (выдаётся лично родителям).',
@@ -30,7 +42,7 @@ const STRINGS = {
     waiting: 'ещё не зарегистрирован',
     studentCode: 'Ученик',
     parentCode: 'Родители',
-    empty: 'В списке пока никого. Добавьте учеников по одному или загрузите список в Supabase (таблица school_roster).',
+    empty: 'В списке пока никого. Добавьте учеников по одному или кнопкой «Загрузить список».',
     actions: 'Действия с кодами',
     shareStudent: 'Отправить код ученика',
     shareParent: 'Отправить код для родителей',
@@ -46,6 +58,17 @@ const STRINGS = {
       `Код для родителей ученика ${name} в приложении KasteyevSchool: ${code}. При регистрации выберите «Родитель» и введите код. Не передавайте его посторонним: по нему видны успехи и фото ребёнка.`,
   },
   kk: {
+    bulkOpen: 'Тізімді жүктеу',
+    bulkClose: 'Тізімді жүктеуді жасыру',
+    bulkHint: 'Excel-ден немесе хабарламадан аты-жөні бағанын көшіріп, осында қойыңыз. Әр жолда бір бала, нөмірлерді өшірмесеңіз де болады.',
+    bulkPlaceholder: 'Иванов Иван\nПетрова Анна\n…',
+    bulkNew: (n: number) => `Жаңалары: ${n}`,
+    bulkExisting: (n: number) => `Топта бар, өткізіп жібереміз: ${n}`,
+    bulkRepeated: (n: number) => `Тізімдегі қайталаулар: ${n}`,
+    bulkTooMany: (max: number) => `Бір рет ${max} балаға дейін қосуға болады.`,
+    bulkAdd: (n: number) => `${n} қосу`,
+    bulkDone: (n: number) => `Қосылған балалар: ${n}. Кодтар жасалды.`,
+    done: 'Дайын',
     externalIds: '1С және Битрикс24 кодтары',
     title: 'Оқушы кодтары',
     hint: 'Мектептен келген топ оқушыларының тізімі. Әрқайсысында екі код бар: оқушы коды (баланы тіркеуге, бір реттік) және ата-аналарға арналған код (ата-аналарға жеке беріледі).',
@@ -71,6 +94,17 @@ const STRINGS = {
       `KasteyevSchool қолданбасындағы ${name} оқушысының ата-аналарына арналған код: ${code}. Тіркелу кезінде «Ата-ана» таңдап, кодты енгізіңіз. Оны бөгде адамдарға бермеңіз: ол арқылы баланың жетістіктері мен фотолары көрінеді.`,
   },
   en: {
+    bulkOpen: 'Upload a list',
+    bulkClose: 'Hide list upload',
+    bulkHint: 'Copy the column of full names from Excel or a message and paste it here. One child per line; numbering is fine.',
+    bulkPlaceholder: 'Ivanov Ivan\nPetrova Anna\n…',
+    bulkNew: (n: number) => `New: ${n}`,
+    bulkExisting: (n: number) => `Already in the group, skipped: ${n}`,
+    bulkRepeated: (n: number) => `Repeated in the list, skipped: ${n}`,
+    bulkTooMany: (max: number) => `You can add up to ${max} children at a time.`,
+    bulkAdd: (n: number) => `Add ${n}`,
+    bulkDone: (n: number) => `Children added: ${n}. Codes created.`,
+    done: 'Done',
     externalIds: '1C and Bitrix24 codes',
     title: 'Student codes',
     hint: "The school's list of students in this group. Each has two codes: the student code (for the child's sign-up, single use) and the parent code (given to parents personally).",
@@ -109,6 +143,10 @@ export function RosterSection({ groupId }: { groupId: string }) {
   const [entries, setEntries] = useState<RosterEntry[]>([]);
   const [name, setName] = useState('');
   const [adding, setAdding] = useState(false);
+  // Массовая загрузка списка (только администратор).
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkText, setBulkText] = useState('');
+  const [bulkSaving, setBulkSaving] = useState(false);
 
   const load = useCallback(async () => {
     const { data } = await supabase
@@ -133,6 +171,27 @@ export function RosterSection({ groupId }: { groupId: string }) {
     if (error) return fail(error);
     setName('');
     load();
+  };
+
+  const preview = useMemo(
+    () => previewImport(bulkText, entries.map((e) => e.full_name)),
+    [bulkText, entries]
+  );
+  const tooMany = preview.toAdd.length > MAX_IMPORT;
+
+  const onBulkAdd = async () => {
+    if (preview.toAdd.length === 0 || tooMany) return;
+    setBulkSaving(true);
+    const { error } = await supabase
+      .from('school_roster')
+      .insert(preview.toAdd.map((full_name) => ({ full_name, group_id: groupId })));
+    setBulkSaving(false);
+    if (error) return fail(error);
+    const added = preview.toAdd.length;
+    setBulkText('');
+    setBulkOpen(false);
+    load();
+    Alert.alert(s.done, s.bulkDone(added));
   };
 
   const regenerate = (entry: RosterEntry, kind: CodeKind) =>
@@ -205,6 +264,50 @@ export function RosterSection({ groupId }: { groupId: string }) {
         </Pressable>
       </View>
 
+      {isAdmin ? (
+        <Pressable onPress={() => setBulkOpen((v) => !v)} style={styles.bulkToggle}>
+          <Ionicons name={bulkOpen ? 'chevron-up' : 'cloud-upload-outline'} size={18} color={colors.primary} />
+          <Text style={styles.bulkToggleText}>{bulkOpen ? s.bulkClose : s.bulkOpen}</Text>
+        </Pressable>
+      ) : null}
+      {isAdmin && bulkOpen ? (
+        <View style={styles.bulkBox}>
+          <Text style={styles.hint}>{s.bulkHint}</Text>
+          <TextInput
+            value={bulkText}
+            onChangeText={setBulkText}
+            placeholder={s.bulkPlaceholder}
+            placeholderTextColor={colors.textMuted}
+            multiline
+            textAlignVertical="top"
+            style={[styles.input, styles.bulkInput]}
+          />
+          {bulkText.trim() ? (
+            <View style={styles.bulkPreview}>
+              <Text style={styles.bulkCountNew}>{s.bulkNew(preview.toAdd.length)}</Text>
+              {preview.toAdd.slice(0, 50).map((n, i) => (
+                <Text key={`${i}-${n}`} style={styles.bulkName}>
+                  {i + 1}. {n}
+                </Text>
+              ))}
+              {preview.toAdd.length > 50 ? <Text style={styles.bulkName}>…</Text> : null}
+              {preview.existing.length > 0 ? (
+                <Text style={styles.bulkCountSkip}>{s.bulkExisting(preview.existing.length)}</Text>
+              ) : null}
+              {preview.repeated > 0 ? <Text style={styles.bulkCountSkip}>{s.bulkRepeated(preview.repeated)}</Text> : null}
+              {tooMany ? <Text style={styles.bulkError}>{s.bulkTooMany(MAX_IMPORT)}</Text> : null}
+            </View>
+          ) : null}
+          <Pressable
+            onPress={onBulkAdd}
+            disabled={bulkSaving || preview.toAdd.length === 0 || tooMany}
+            style={[styles.bulkButton, (bulkSaving || preview.toAdd.length === 0 || tooMany) && styles.disabled]}
+          >
+            <Text style={styles.addText}>{s.bulkAdd(preview.toAdd.length)}</Text>
+          </Pressable>
+        </View>
+      ) : null}
+
       {entries.length === 0 ? <Text style={styles.empty}>{s.empty}</Text> : null}
       {entries.map((entry) => (
         <View key={entry.id}>
@@ -259,6 +362,29 @@ const styles = StyleSheet.create({
   disabled: { opacity: 0.5 },
   addText: { color: colors.white, fontWeight: '700' },
   empty: { color: colors.textMuted, fontSize: 13 },
+  bulkToggle: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingVertical: spacing.sm },
+  bulkToggleText: { color: colors.primary, fontWeight: '700' },
+  bulkBox: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    backgroundColor: colors.surface,
+  },
+  bulkInput: { minHeight: 140, maxHeight: 260, flex: 0 },
+  bulkPreview: { marginTop: spacing.sm },
+  bulkCountNew: { fontWeight: '700', color: colors.success, marginBottom: 2 },
+  bulkName: { color: colors.text, fontSize: 13 },
+  bulkCountSkip: { color: colors.textMuted, fontSize: 12, marginTop: spacing.xs },
+  bulkError: { color: colors.danger, fontSize: 13, fontWeight: '600', marginTop: spacing.xs },
+  bulkButton: {
+    backgroundColor: colors.primary,
+    borderRadius: radius.md,
+    paddingVertical: spacing.sm + 2,
+    alignItems: 'center',
+    marginTop: spacing.sm,
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
