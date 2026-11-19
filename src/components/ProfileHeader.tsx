@@ -7,18 +7,53 @@ import { colorFromSeed, colors, radius, shadow, spacing } from '../theme/colors'
 import type { EnrollmentStatus, Profile, UserRole } from '../types/database';
 
 const AVATAR_SIZE = 168;
+import { useStrings } from '../i18n';
 
-const ROLE_LABELS: Record<UserRole, string> = {
-  student: 'Ученик',
-  staff: 'Сотрудник школы',
-  parent: 'Родитель',
+const STRINGS = {
+  ru: {
+    roles: { student: 'Ученик', staff: 'Преподаватель', parent: 'Родитель', admin: 'Администратор', office: 'Администрация' } as Record<UserRole, string>,
+    statuses: {
+      planning: 'Планирует поступать',
+      applied: 'Подал документы',
+      enrolled: 'Поступил(а)',
+    } as Record<EnrollmentStatus, string>,
+    studySince: (year: string | number) => `в школе с ${year} года`,
+    noName: 'Без имени',
+    changePhoto: 'Изменить фото',
+    goal: 'Цель',
+    addGoal: 'Куда планирую поступать',
+    addGoalHint: 'Нажмите, чтобы указать вуз или колледж',
+  },
+  kk: {
+    roles: { student: 'Оқушы', staff: 'Мұғалім', parent: 'Ата-ана', admin: 'Әкімші', office: 'Әкімшілік' } as Record<UserRole, string>,
+    statuses: {
+      planning: 'Түсуді жоспарлап жүр',
+      applied: 'Құжат тапсырды',
+      enrolled: 'Оқуға түсті',
+    } as Record<EnrollmentStatus, string>,
+    studySince: (year: string | number) => `мектепте ${year} жылдан бері`,
+    noName: 'Аты жоқ',
+    changePhoto: 'Фотоны өзгерту',
+    goal: 'Мақсат',
+    addGoal: 'Қайда түсуді жоспарлаймын',
+    addGoalHint: 'ЖОО немесе колледжді көрсету үшін басыңыз',
+  },
+  en: {
+    roles: { student: 'Student', staff: 'Teacher', parent: 'Parent', admin: 'Administrator', office: 'Administration' } as Record<UserRole, string>,
+    statuses: {
+      planning: 'Planning to apply',
+      applied: 'Applied',
+      enrolled: 'Enrolled',
+    } as Record<EnrollmentStatus, string>,
+    studySince: (year: string | number) => `at the school since ${year}`,
+    noName: 'No name',
+    changePhoto: 'Change photo',
+    goal: 'Goal',
+    addGoal: 'Where I plan to study',
+    addGoalHint: 'Tap to add a university or college',
+  },
 };
 
-const STATUS_LABELS: Record<EnrollmentStatus, string> = {
-  planning: 'Планирует поступать',
-  applied: 'Подал документы',
-  enrolled: 'Поступил(а)',
-};
 
 interface ProfileHeaderProps {
   profile: Profile;
@@ -27,12 +62,15 @@ interface ProfileHeaderProps {
   // Свой профиль: нажатие на аватар меняет фото
   onAvatarPress?: () => void;
   avatarUploading?: boolean;
+  // Свой профиль ученика: пустая цель показывается подсказкой, нажатие — редактирование.
+  onAddGoal?: () => void;
 }
 
-export function ProfileHeader({ profile, groups, onAvatarPress, avatarUploading }: ProfileHeaderProps) {
+export function ProfileHeader({ profile, groups, onAvatarPress, avatarUploading, onAddGoal }: ProfileHeaderProps) {
+  const s = useStrings(STRINGS);
   const studyLine = [
     profile.specialization,
-    profile.study_since ? `в школе с ${profile.study_since} года` : null,
+    profile.study_since ? s.studySince(profile.study_since) : null,
   ]
     .filter(Boolean)
     .join(' · ');
@@ -41,7 +79,7 @@ export function ProfileHeader({ profile, groups, onAvatarPress, avatarUploading 
   // Бледное и уходит в фон экрана, поэтому не спорит с фото на аватаре,
   // а белая рамка отделяет снимок от фона.
   const glow = colorFromSeed(profile.full_name?.trim() || profile.id);
-  const subtitle = [ROLE_LABELS[profile.role], ...(groups ?? []).map((g) => g.name)].join(' · ');
+  const subtitle = [s.roles[profile.role], ...(groups ?? []).map((g) => g.name)].join(' · ');
 
   const avatar = (
     <View style={styles.avatarRing}>
@@ -62,12 +100,12 @@ export function ProfileHeader({ profile, groups, onAvatarPress, avatarUploading 
           </Defs>
           <Rect x="0" y="0" width="100%" height="100%" fill="url(#glow)" />
         </Svg>
-        <Text style={styles.name}>{profile.full_name || 'Без имени'}</Text>
+        <Text style={styles.name}>{profile.full_name || s.noName}</Text>
         <Text style={styles.subtitle} numberOfLines={2}>
           {subtitle}
         </Text>
       {onAvatarPress ? (
-        <Pressable onPress={onAvatarPress} disabled={avatarUploading} accessibilityLabel="Изменить фото">
+        <Pressable onPress={onAvatarPress} disabled={avatarUploading} accessibilityLabel={s.changePhoto}>
           {avatar}
           <View style={styles.cameraBadge}>
             {avatarUploading ? (
@@ -84,19 +122,26 @@ export function ProfileHeader({ profile, groups, onAvatarPress, avatarUploading 
       {studyLine ? <Text style={styles.study}>{studyLine}</Text> : null}
       {profile.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
 
-      {profile.target_institution ? (
+      {profile.role === 'student' && profile.target_institution ? (
         <View style={styles.institutionBadge}>
           <Text style={styles.institutionStatus}>
-            {profile.target_institution_status ? STATUS_LABELS[profile.target_institution_status] : 'Цель'}
+            {profile.target_institution_status ? s.statuses[profile.target_institution_status] : s.goal}
           </Text>
           <Text style={styles.institutionName}>{profile.target_institution}</Text>
         </View>
+      ) : profile.role === 'student' && onAddGoal ? (
+        <Pressable onPress={onAddGoal} style={[styles.institutionBadge, styles.institutionEmpty]}>
+          <Text style={styles.institutionStatus}>{s.addGoal}</Text>
+          <Text style={styles.addGoalHint}>{s.addGoalHint}</Text>
+        </Pressable>
       ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  institutionEmpty: { borderStyle: 'dashed', borderWidth: 1.5, borderColor: colors.primary, backgroundColor: 'transparent' },
+  addGoalHint: { color: colors.textMuted, fontSize: 13, marginTop: 2, textAlign: 'center' },
   hero: {
     // Фон на всю ширину экрана, поверх внутренних отступов Screen.
     marginHorizontal: -spacing.md,

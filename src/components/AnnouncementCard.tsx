@@ -4,21 +4,39 @@ import { Card } from './Card';
 import { colors, paint, radius, spacing } from '../theme/colors';
 import type { AnnouncementAudience } from '../types/database';
 import type { AnnouncementWithAuthor } from '../lib/announcements';
+import { useStrings } from '../i18n';
 
-const AUDIENCE: Record<AnnouncementAudience, { label: string; color: string }> = {
-  all: { label: 'Всем', color: paint.coral },
-  students: { label: 'Ученикам', color: paint.teal },
-  staff: { label: 'Сотрудникам', color: paint.violet },
-  group: { label: 'Группе', color: paint.ochre },
+const STRINGS = {
+  ru: {
+    administration: 'Администрация',
+    audience: { all: 'Всем', students: 'Ученикам', staff: 'Сотрудникам', group: 'Группе' } as Record<AnnouncementAudience, string>,
+  },
+  kk: {
+    administration: 'Әкімшілік',
+    audience: { all: 'Барлығына', students: 'Оқушыларға', staff: 'Қызметкерлерге', group: 'Топқа' } as Record<AnnouncementAudience, string>,
+  },
+  en: {
+    administration: 'Administration',
+    audience: { all: 'Everyone', students: 'Students', staff: 'Staff', group: 'Group' } as Record<AnnouncementAudience, string>,
+  },
+};
+
+const AUDIENCE_COLORS: Record<AnnouncementAudience, string> = {
+  all: paint.coral,
+  students: paint.teal,
+  staff: paint.violet,
+  group: paint.ochre,
 };
 
 interface AnnouncementCardProps {
   announcement: AnnouncementWithAuthor;
   editable?: boolean;
+  // В списке — первые строки текста; целиком сообщение открывается отдельным экраном.
+  preview?: boolean;
 }
 
-export function AnnouncementCard({ announcement, editable }: AnnouncementCardProps) {
-  const audience = AUDIENCE[announcement.audience];
+export function AnnouncementCard({ announcement, editable, preview }: AnnouncementCardProps) {
+  const s = useStrings(STRINGS);
   return (
     <Card>
       <View style={styles.row}>
@@ -26,11 +44,13 @@ export function AnnouncementCard({ announcement, editable }: AnnouncementCardPro
         <Text style={styles.title}>{announcement.title}</Text>
         {editable ? <Text style={styles.editIcon}>✏️</Text> : null}
       </View>
-      <Text style={styles.body}>{announcement.body}</Text>
+      <Text style={styles.body} numberOfLines={preview ? 3 : undefined}>
+        {announcement.body}
+      </Text>
       <View style={styles.metaRow}>
-        <Text style={styles.meta}>{announcement.author?.full_name ?? 'Администрация'}</Text>
-        <View style={[styles.audienceTag, { backgroundColor: audience.color }]}>
-          <Text style={styles.audienceText}>{audience.label}</Text>
+        <Text style={styles.meta}>{announcement.author?.full_name ?? s.administration}</Text>
+        <View style={[styles.audienceTag, { backgroundColor: AUDIENCE_COLORS[announcement.audience] }]}>
+          <Text style={styles.audienceText}>{s.audience[announcement.audience]}</Text>
         </View>
       </View>
     </Card>

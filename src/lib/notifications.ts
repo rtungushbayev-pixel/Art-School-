@@ -61,7 +61,17 @@ export type PushEvent =
   | { event: 'post_comment'; id: string } // id комментария
   | { event: 'post_moderated'; id: string } // id публикации
   | { event: 'listing_moderated'; id: string } // id объявления о продаже
-  | { event: 'announcement'; id: string }; // id объявления
+  | { event: 'announcement'; id: string } // id объявления
+  | { event: 'support_message'; id: string } // id сообщения в обращении
+  | { event: 'attendance_absent'; id: string } // id отметки «Нет» — пуш родителям
+  | { event: 'lesson_change'; id: string } // id отмены/переноса — ученикам и родителям группы
+  | { event: 'chat_message'; id: string } // id сообщения в чате родителя с преподавателем
+  | { event: 'school_event'; id: string } // id новой выставки/конкурса — ученикам и родителям
+  | { event: 'payment_claim'; id: string } // id заявки «Я оплатил» — администраторам
+  | { event: 'group_request'; id: string } // id запроса на замену преподавателя — администраторам
+  | { event: 'group_request_decided'; id: string } // решение по запросу — автору
+  | { event: 'group_replacement'; id: string } // преподаватель просит замену — всем сотрудникам
+  | { event: 'group_replacement_taken'; id: string }; // замену взяли — автору и администраторам
 
 export async function sendPushNotification(pushEvent: PushEvent) {
   try {

@@ -9,6 +9,27 @@
 //   post_moderated    { id: post_id }         — сотрудник → автору работы
 //   listing_moderated { id: listing_id }      — сотрудник → продавцу
 //   announcement      { id: announcement_id } — сотрудник → аудитории объявления
+//   support_message   { id: message_id }      — автор обращения → всем сотрудникам,
+//                                               сотрудник → автору обращения
+//   attendance_absent { id: attendance_id }   — преподаватель → родителям ученика,
+//                                               которого отметил «Нет» на занятии
+//   lesson_change     { id: lesson_change_id } — преподаватель группы → ученикам
+//                                               группы и их родителям (отмена/перенос)
+//   chat_message      { id: message_id }       — участник чата родителя с
+//                                               преподавателем → собеседнику
+//   school_event      { id: event_id }         — сотрудник → всем ученикам и
+//                                               родителям (новая выставка/конкурс)
+//   payment_claim     { id: claim_id }         — родитель/ученик «Я оплатил» →
+//                                               администраторам
+//   debt_reminder     { id: 'ГГГГ-ММ-ДД' }     — администратор → должникам и их
+//                                               родителям (не чаще раза в день)
+//   group_request     { id: request_id }       — преподаватель просит заменить
+//                                               преподавателя группы → администраторам
+//   group_request_decided { id: request_id }   — администратор → автору запроса
+//   group_replacement { id: request_id }       — преподаватель группы просит замену →
+//                                               администраторам и преподавателям
+//   group_replacement_taken { id: request_id } — преподаватель взял группу на замену →
+//                                               администраторам и автору запроса
 //
 // Каждое событие рассылается не более одного раза (таблица push_events).
 // Получатели, отключившие категорию в настройках (profiles.notify_*),
@@ -21,10 +42,25 @@
 // Необязательно: если в Expo включён Enhanced Push Security, задайте секрет
 // EXPO_ACCESS_TOKEN — тогда без него Expo не примет пуш даже по украденному токену.
 
-import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
+import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.117.2';
 
-type PushEvent = 'post_comment' | 'post_moderated' | 'listing_moderated' | 'announcement';
-type NotificationCategory = 'announcements' | 'comments' | 'moderation';
+type PushEvent =
+  | 'post_comment'
+  | 'post_moderated'
+  | 'listing_moderated'
+  | 'announcement'
+  | 'support_message'
+  | 'attendance_absent'
+  | 'lesson_change'
+  | 'chat_message'
+  | 'school_event'
+  | 'payment_claim'
+  | 'debt_reminder'
+  | 'group_request'
+  | 'group_request_decided'
+  | 'group_replacement'
+  | 'group_replacement_taken';
+type NotificationCategory = 'announcements' | 'comments' | 'moderation' | 'support' | 'attendance';
 
 interface RequestBody {
   event: PushEvent;
@@ -33,7 +69,7 @@ interface RequestBody {
 
 interface Caller {
   id: string;
-  role: 'student' | 'staff' | 'parent';
+  role: 'student' | 'staff' | 'parent' | 'admin' | 'office';
   full_name: string;
 }
 
@@ -59,17 +95,18 @@ const CATEGORY_COLUMNS: Record<NotificationCategory, string> = {
   announcements: 'notify_announcements',
   comments: 'notify_comments',
   moderation: 'notify_moderation',
+  support: 'notify_support',
+  attendance: 'notify_attendance',
 };
 
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
 const CHUNK_SIZE = 100;
 const MAX_BODY_LENGTH = 180;
 
-function corsHeaders() {
-  return {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  };
+// Функцию вызывает только мобильное приложение, браузерам доступ не нужен,
+// поэтому разрешающих CORS-заголовков нет.
+function corsHeaders(): Record<string, string> {
+  return {};
 }
 
 function json(status: number, payload: unknown) {
@@ -84,7 +121,7 @@ function truncate(text: string) {
 }
 
 function requireStaff(caller: Caller) {
-  if (caller.role !== 'staff') {
+  if (caller.role !== 'staff' && caller.role !== 'admin') {
     throw new HttpError(403, 'Только сотрудники могут отправлять это уведомление');
   }
 }
@@ -189,6 +226,293 @@ async function buildMessage(admin: SupabaseClient, caller: Caller, { event, id }
       };
     }
 
+    case 'support_message': {
+      const { data: message } = await admin
+        .from('support_messages')
+        .select('id, ticket_id, author_id, body, ticket:ticket_id ( author_id, subject )')
+        .eq('id', id)
+        .single();
+      if (!message) throw new HttpError(404, 'Сообщение не найдено');
+      if (message.author_id !== caller.id) throw new HttpError(403, 'Это не ваше сообщение');
+      const ticket = message.ticket as unknown as { author_id: string; subject: string } | null;
+      if (!ticket) return null;
+      const data = { type: 'support_ticket', ticketId: message.ticket_id };
+
+      // Написал автор обращения — сообщаем всем сотрудникам.
+      if (ticket.author_id === caller.id) {
+        const { data: staff, error } = await admin.from('profiles').select('id').in('role', ['staff', 'admin']);
+        if (error) throw error;
+        return {
+          dedupKey: `support_message:${message.id}`,
+          category: 'support',
+          recipientIds: (staff ?? []).map((row: { id: string }) => row.id),
+          title: `Обращение от ${caller.full_name}: ${ticket.subject}`,
+          body: truncate(message.body),
+          data,
+        };
+      }
+
+      // Иначе отвечает сотрудник (RLS не даст написать в чужое обращение
+      // никому другому) — сообщаем автору.
+      requireStaff(caller);
+      return {
+        dedupKey: `support_message:${message.id}`,
+        category: 'support',
+        recipientIds: [ticket.author_id],
+        title: `Ответ по обращению «${ticket.subject}»`,
+        body: truncate(message.body),
+        data,
+      };
+    }
+
+    case 'attendance_absent': {
+      requireStaff(caller);
+      const { data: mark } = await admin
+        .from('attendance')
+        .select('id, student_id, lesson_date, status, marked_by, group:group_id ( name ), student:student_id ( full_name )')
+        .eq('id', id)
+        .single();
+      if (!mark) throw new HttpError(404, 'Отметка не найдена');
+      if (mark.marked_by !== caller.id) throw new HttpError(403, 'Это не ваша отметка');
+      if (mark.status !== 'absent') return null;
+      const { data: links, error } = await admin
+        .from('parent_children')
+        .select('parent_id')
+        .eq('student_id', mark.student_id);
+      if (error) throw error;
+      const group = mark.group as unknown as { name: string } | null;
+      const student = mark.student as unknown as { full_name: string } | null;
+      const [y, m, d] = String(mark.lesson_date).split('-');
+      return {
+        dedupKey: `attendance_absent:${mark.id}:${mark.lesson_date}`,
+        category: 'attendance',
+        recipientIds: (links ?? []).map((row: { parent_id: string }) => row.parent_id),
+        title: 'Ребёнок не пришёл на занятие',
+        body: truncate(
+          `${student?.full_name ?? 'Ваш ребёнок'} отсутствует на занятии${group?.name ? ` группы «${group.name}»` : ''} ${d}.${m}.${y}. Если это ошибка, свяжитесь с преподавателем.`
+        ),
+        data: { type: 'attendance', studentId: mark.student_id },
+      };
+    }
+
+    case 'lesson_change': {
+      requireStaff(caller);
+      const { data: change } = await admin
+        .from('lesson_changes')
+        .select('id, lesson_date, cancelled, start_time, room, note, lesson:lesson_id ( group_id, start_time, group:group_id ( name, teacher_id ) )')
+        .eq('id', id)
+        .single();
+      if (!change) throw new HttpError(404, 'Изменение не найдено');
+      const lesson = change.lesson as unknown as {
+        group_id: string;
+        start_time: string;
+        group: { name: string; teacher_id: string | null } | null;
+      } | null;
+      if (!lesson) return null;
+      if (caller.role !== 'admin' && lesson.group?.teacher_id !== caller.id) {
+        throw new HttpError(403, 'Это не ваша группа');
+      }
+      // Не больше 3 рассылок по одному изменению занятия.
+      const { count: sentBefore } = await admin
+        .from('push_events')
+        .select('key', { count: 'exact', head: true })
+        .like('key', `lesson_change:${change.id}:%`);
+      if ((sentBefore ?? 0) >= 3) return null;
+      const recipientIds = await resolveAudience(admin, 'group', lesson.group_id);
+      const [, m, d] = String(change.lesson_date).split('-');
+      const groupName = lesson.group?.name ?? '';
+      const time = String(change.start_time ?? lesson.start_time).slice(0, 5);
+      const details = change.cancelled
+        ? 'Занятие отменено.'
+        : `Новое время: ${time}${change.room ? `, каб. ${change.room}` : ''}.`;
+      return {
+        dedupKey: `lesson_change:${change.id}:${change.cancelled}:${change.start_time}:${change.room}`,
+        category: 'announcements',
+        recipientIds,
+        title: change.cancelled ? `Отмена занятия ${d}.${m}` : `Изменение занятия ${d}.${m}`,
+        body: truncate(`${groupName}. ${details}${change.note ? ` ${change.note}` : ''}`),
+        data: { type: 'announcement' },
+      };
+    }
+
+    case 'chat_message': {
+      const { data: message } = await admin
+        .from('parent_chat_messages')
+        .select('id, chat_id, author_id, body, chat:chat_id ( parent_id, teacher_id, student:student_id ( full_name ) )')
+        .eq('id', id)
+        .single();
+      if (!message) throw new HttpError(404, 'Сообщение не найдено');
+      if (message.author_id !== caller.id) throw new HttpError(403, 'Это не ваше сообщение');
+      const chat = message.chat as unknown as {
+        parent_id: string;
+        teacher_id: string;
+        student: { full_name: string } | null;
+      } | null;
+      if (!chat) return null;
+      const toTeacher = caller.id === chat.parent_id;
+      const child = chat.student?.full_name ?? '';
+      return {
+        dedupKey: `chat_message:${message.id}`,
+        category: 'support',
+        recipientIds: [toTeacher ? chat.teacher_id : chat.parent_id],
+        title: toTeacher ? `${caller.full_name} (родитель: ${child})` : `${caller.full_name} · преподаватель`,
+        body: truncate(message.body),
+        data: { type: 'chat_message', chatId: message.chat_id },
+      };
+    }
+
+    case 'school_event': {
+      requireStaff(caller);
+      const { data: schoolEvent } = await admin
+        .from('school_events')
+        .select('id, title, kind, starts_on, created_by')
+        .eq('id', id)
+        .single();
+      if (!schoolEvent) throw new HttpError(404, 'Событие не найдено');
+      // Рассылает только автор события (или администратор).
+      if (schoolEvent.created_by !== caller.id && caller.role !== 'admin') {
+        throw new HttpError(403, 'Это не ваше событие');
+      }
+      const { data: people, error } = await admin.from('profiles').select('id').in('role', ['student', 'parent']);
+      if (error) throw error;
+      const kinds: Record<string, string> = {
+        exhibition: 'Выставка',
+        competition: 'Конкурс',
+        masterclass: 'Мастер-класс',
+        other: 'Событие',
+      };
+      const [y, m, d] = String(schoolEvent.starts_on).split('-');
+      return {
+        dedupKey: `school_event:${schoolEvent.id}`,
+        category: 'announcements',
+        recipientIds: (people ?? []).map((row: { id: string }) => row.id),
+        title: `${kinds[schoolEvent.kind] ?? 'Событие'}: ${schoolEvent.title}`,
+        body: truncate(`${d}.${m}.${y}. Подробности и запись — в приложении.`),
+        data: { type: 'school_event', eventId: schoolEvent.id },
+      };
+    }
+
+    case 'payment_claim': {
+      const { data: claim } = await admin
+        .from('payment_claims')
+        .select('id, amount, claimed_by, student:student_id ( full_name )')
+        .eq('id', id)
+        .single();
+      if (!claim) throw new HttpError(404, 'Заявка не найдена');
+      if (claim.claimed_by !== caller.id) throw new HttpError(403, 'Это не ваша заявка');
+      const { data: admins, error } = await admin.from('profiles').select('id').eq('role', 'admin');
+      if (error) throw error;
+      const student = claim.student as unknown as { full_name: string } | null;
+      const amount = Math.round(Number(claim.amount)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+      return {
+        dedupKey: `payment_claim:${claim.id}`,
+        category: 'support',
+        recipientIds: (admins ?? []).map((row: { id: string }) => row.id),
+        title: 'Оплата через Kaspi: проверьте поступление',
+        body: truncate(`${student?.full_name ?? ''}: ${amount} ₸. Подтвердите в «Оплатах учеников».`),
+        data: { type: 'payment_claim' },
+      };
+    }
+
+    case 'debt_reminder': {
+      if (caller.role !== 'admin') throw new HttpError(403, 'Только администратор');
+      // Не чаще раза в день: ключ — сегодняшняя дата по Алматы (не из запроса).
+      const today = new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      const { data: debtors, error } = await admin.from('student_balances').select('student_id').lt('balance', 0);
+      if (error) throw error;
+      const studentIds = [...new Set((debtors ?? []).map((row: { student_id: string }) => row.student_id))];
+      if (studentIds.length === 0) return null;
+      const { data: links, error: linksError } = await admin
+        .from('parent_children')
+        .select('parent_id')
+        .in('student_id', studentIds);
+      if (linksError) throw linksError;
+      return {
+        dedupKey: `debt_reminder:${today}`,
+        category: 'announcements',
+        recipientIds: [...studentIds, ...(links ?? []).map((row: { parent_id: string }) => row.parent_id)],
+        title: 'Напоминание об оплате',
+        body: 'По оплате занятий есть задолженность. Подробности и оплата через Kaspi — в разделе «Оплаты».',
+        data: { type: 'debt_reminder' },
+      };
+    }
+
+    case 'group_request':
+    case 'group_request_decided': {
+      const { data: request } = await admin
+        .from('group_teacher_requests')
+        .select('id, group_id, requested_by, status, decided_by, group:group_id ( name )')
+        .eq('id', id)
+        .single();
+      if (!request) throw new HttpError(404, 'Запрос не найден');
+      const groupName = (request.group as unknown as { name: string } | null)?.name ?? '';
+      const data = { type: 'group_request', groupId: request.group_id };
+      if (event === 'group_request') {
+        if (request.requested_by !== caller.id) throw new HttpError(403, 'Это не ваш запрос');
+        if (request.status !== 'pending') return null;
+        const { data: admins, error } = await admin.from('profiles').select('id').eq('role', 'admin');
+        if (error) throw error;
+        return {
+          dedupKey: `group_request:${request.id}`,
+          category: 'support',
+          recipientIds: (admins ?? []).map((row: { id: string }) => row.id),
+          title: 'Запрос на замену преподавателя',
+          body: truncate(`${caller.full_name} просит взять группу «${groupName}».`),
+          data,
+        };
+      }
+      if (caller.role !== 'admin' || request.decided_by !== caller.id) throw new HttpError(403, 'Только администратор');
+      if (request.status === 'pending') return null;
+      const approved = request.status === 'approved';
+      return {
+        dedupKey: `group_request_decided:${request.id}`,
+        category: 'support',
+        recipientIds: [request.requested_by],
+        title: approved ? 'Замена одобрена' : 'Замена отклонена',
+        body: truncate(
+          approved ? `Группа «${groupName}» теперь ваша.` : `Администратор не одобрил замену в группе «${groupName}».`
+        ),
+        data,
+      };
+    }
+
+    case 'group_replacement':
+    case 'group_replacement_taken': {
+      const { data: request } = await admin
+        .from('group_teacher_requests')
+        .select('id, group_id, requested_by, taken_by, kind, status, group:group_id ( name )')
+        .eq('id', id)
+        .single();
+      if (!request || request.kind !== 'replacement') throw new HttpError(404, 'Запрос не найден');
+      const groupName = (request.group as unknown as { name: string } | null)?.name ?? '';
+      const data = { type: 'group_request', groupId: request.group_id };
+      if (event === 'group_replacement') {
+        if (request.requested_by !== caller.id) throw new HttpError(403, 'Это не ваш запрос');
+        if (request.status !== 'pending') return null;
+        const { data: staff, error } = await admin.from('profiles').select('id').in('role', ['staff', 'admin']);
+        if (error) throw error;
+        return {
+          dedupKey: `group_replacement:${request.id}`,
+          category: 'support',
+          recipientIds: (staff ?? []).map((row: { id: string }) => row.id),
+          title: `Нужна замена: ${groupName}`,
+          body: truncate(`${caller.full_name} просит замену в группе «${groupName}». Откройте группу, чтобы взять её.`),
+          data,
+        };
+      }
+      if (request.status !== 'approved' || request.taken_by !== caller.id) return null;
+      const { data: admins, error } = await admin.from('profiles').select('id').eq('role', 'admin');
+      if (error) throw error;
+      return {
+        dedupKey: `group_replacement_taken:${request.id}`,
+        category: 'support',
+        recipientIds: [request.requested_by, ...(admins ?? []).map((row: { id: string }) => row.id)],
+        title: 'Замена найдена',
+        body: truncate(`${caller.full_name} взял(а) группу «${groupName}» на замену.`),
+        data,
+      };
+    }
+
     default:
       throw new HttpError(400, `Неизвестное событие: ${event}`);
   }
@@ -213,7 +537,7 @@ async function resolveAudience(admin: SupabaseClient, audience: string, groupId:
 
   let query = admin.from('profiles').select('id');
   if (audience === 'students') query = query.eq('role', 'student');
-  if (audience === 'staff') query = query.eq('role', 'staff');
+  if (audience === 'staff') query = query.in('role', ['staff', 'admin']);
   const { data, error } = await query;
   if (error) throw error;
   return (data ?? []).map((row: { id: string }) => row.id);
@@ -239,7 +563,7 @@ async function resolveTokens(admin: SupabaseClient, userIds: string[], category:
   return (tokens ?? []).map((t: { token: string }) => t.token);
 }
 
-async function sendToExpo(tokens: string[], message: PushMessage) {
+async function sendToExpo(admin: SupabaseClient, tokens: string[], message: PushMessage) {
   const accessToken = Deno.env.get('EXPO_ACCESS_TOKEN');
   let sent = 0;
   for (let i = 0; i < tokens.length; i += CHUNK_SIZE) {
@@ -265,6 +589,16 @@ async function sendToExpo(tokens: string[], message: PushMessage) {
 
     if (response.ok) {
       sent += chunk.length;
+      // Токены удалённых приложений Expo помечает DeviceNotRegistered — удаляем их.
+      try {
+        const result = (await response.json()) as { data?: { status?: string; details?: { error?: string } }[] };
+        const dead = (result.data ?? [])
+          .map((ticket, index) => (ticket?.details?.error === 'DeviceNotRegistered' ? chunk[index] : null))
+          .filter((t): t is string => !!t);
+        if (dead.length > 0) await admin.from('push_tokens').delete().in('token', dead);
+      } catch {
+        // Ответ без подробностей — ничего не чистим.
+      }
     }
   }
   return sent;
@@ -286,7 +620,19 @@ Deno.serve(async (req) => {
     const message = await buildMessage(admin, caller, request);
 
     // Себе уведомления не шлём (свой комментарий, модерация своей работы).
-    const recipientIds = message ? [...new Set(message.recipientIds)].filter((id) => id !== caller.id) : [];
+    let recipientIds = message ? [...new Set(message.recipientIds)].filter((id) => id !== caller.id) : [];
+    // Тем, кто заблокировал отправителя, его уведомления не приходят.
+    // Уведомления от сотрудников (модерация, объявления, ответы в «Помощи»)
+    // блокировкой не отключаются.
+    if (recipientIds.length > 0 && caller.role !== 'staff' && caller.role !== 'admin') {
+      const { data: blocks } = await admin
+        .from('user_blocks')
+        .select('blocker_id')
+        .eq('blocked_id', caller.id)
+        .in('blocker_id', recipientIds);
+      const blockedBy = new Set((blocks ?? []).map((b: { blocker_id: string }) => b.blocker_id));
+      recipientIds = recipientIds.filter((id) => !blockedBy.has(id));
+    }
     if (!message || recipientIds.length === 0) {
       return json(200, { recipients: 0, sent: 0 });
     }
@@ -302,12 +648,14 @@ Deno.serve(async (req) => {
     }
 
     const tokens = await resolveTokens(admin, recipientIds, message.category);
-    const sent = await sendToExpo(tokens, message);
+    const sent = await sendToExpo(admin, tokens, message);
     return json(200, { recipients: tokens.length, sent });
   } catch (e) {
     if (e instanceof HttpError) {
       return json(e.status, { error: e.message });
     }
-    return json(500, { error: e instanceof Error ? e.message : 'Unknown error' });
+    // Подробности ошибки — только в журнал функции, не в ответ приложению.
+    console.error(e);
+    return json(500, { error: 'Internal error' });
   }
 });

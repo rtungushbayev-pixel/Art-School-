@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import type { PostCardData } from '../components/PostCard';
 import type { AchievementKind, Group, StudentAchievement } from '../types/database';
+import { pick, type Lang } from '../i18n';
 
 export const ACHIEVEMENT_KIND_LABELS: Record<AchievementKind, string> = {
   competition: 'Конкурс',
@@ -8,6 +9,27 @@ export const ACHIEVEMENT_KIND_LABELS: Record<AchievementKind, string> = {
   award: 'Награда',
   other: 'Другое',
 };
+
+const ACHIEVEMENT_KIND_LABELS_I18N = {
+  ru: ACHIEVEMENT_KIND_LABELS,
+  kk: {
+    competition: 'Байқау',
+    exhibition: 'Көрме',
+    award: 'Марапат',
+    other: 'Басқа',
+  } as Record<AchievementKind, string>,
+  en: {
+    competition: 'Competition',
+    exhibition: 'Exhibition',
+    award: 'Award',
+    other: 'Other',
+  } as Record<AchievementKind, string>,
+};
+
+// Подписи видов достижений на текущем (или переданном) языке.
+export function achievementKindLabels(lang?: Lang): Record<AchievementKind, string> {
+  return pick(ACHIEVEMENT_KIND_LABELS_I18N, lang);
+}
 
 // Сколько работ можно закрепить в начале портфолио
 export const MAX_FEATURED_WORKS = 6;

@@ -3,6 +3,13 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { colors, radius, shadow, spacing } from '../theme/colors';
 import { formatPrice, ListingCardData } from '../lib/marketplace';
+import { useStrings } from '../i18n';
+
+const STRINGS = {
+  ru: { sold: 'Продано', pending: 'На модерации', rejected: 'Отклонено', unknownAuthor: 'Автор неизвестен' },
+  kk: { sold: 'Сатылды', pending: 'Тексеруде', rejected: 'Қабылданбады', unknownAuthor: 'Авторы белгісіз' },
+  en: { sold: 'Sold', pending: 'Under review', rejected: 'Rejected', unknownAuthor: 'Unknown author' },
+};
 
 interface ListingCardProps {
   listing: ListingCardData;
@@ -11,6 +18,7 @@ interface ListingCardProps {
 }
 
 export function ListingCard({ listing, onPress, showModerationBadge }: ListingCardProps) {
+  const s = useStrings(STRINGS);
   const cover = listing.images[0];
   return (
     <View style={styles.shadowWrapper}>
@@ -22,11 +30,11 @@ export function ListingCard({ listing, onPress, showModerationBadge }: ListingCa
         )}
         {listing.sold ? (
           <View style={styles.soldBadge}>
-            <Text style={styles.soldBadgeText}>Продано</Text>
+            <Text style={styles.soldBadgeText}>{s.sold}</Text>
           </View>
         ) : showModerationBadge && listing.status !== 'approved' ? (
           <View style={[styles.badge, listing.status === 'pending' ? styles.badgePending : styles.badgeRejected]}>
-            <Text style={styles.badgeText}>{listing.status === 'pending' ? 'На модерации' : 'Отклонено'}</Text>
+            <Text style={styles.badgeText}>{listing.status === 'pending' ? s.pending : s.rejected}</Text>
           </View>
         ) : null}
 
@@ -36,7 +44,7 @@ export function ListingCard({ listing, onPress, showModerationBadge }: ListingCa
           </Text>
           <Text style={styles.price}>{formatPrice(listing.price, listing.currency)}</Text>
           <Text style={styles.seller} numberOfLines={1}>
-            {listing.seller?.full_name ?? 'Автор неизвестен'}
+            {listing.seller?.full_name ?? s.unknownAuthor}
           </Text>
         </View>
       </Pressable>

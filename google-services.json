@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "661957077437",
+    "project_id": "kasteyevschool-671a4",
+    "storage_bucket": "kasteyevschool-671a4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:661957077437:android:5cfa46e80eb6ed7f61cad4",
+        "android_client_info": {
+          "package_name": "kz.kasteyev.artschool"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCnx_P8_n1XK1PQG2jHBh34zazAyr1g7pw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

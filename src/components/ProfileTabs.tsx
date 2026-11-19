@@ -1,24 +1,29 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, shadow, spacing } from '../theme/colors';
+import { useStrings } from '../i18n';
+
+const STRINGS = {
+  ru: { profile: 'Профиль', posts: 'Публикации' },
+  kk: { profile: 'Профиль', posts: 'Жарияланымдар' },
+  en: { profile: 'Profile', posts: 'Posts' },
+};
 
 export type ProfileTab = 'profile' | 'posts';
 
-const TABS: { value: ProfileTab; label: string }[] = [
-  { value: 'profile', label: 'Профиль' },
-  { value: 'posts', label: 'Публикации' },
-];
+const TABS: ProfileTab[] = ['profile', 'posts'];
 
 export function ProfileTabs({ value, onChange }: { value: ProfileTab; onChange: (tab: ProfileTab) => void }) {
+  const s = useStrings(STRINGS);
   return (
     <View style={styles.segment}>
       {TABS.map((tab) => (
         <Pressable
-          key={tab.value}
-          onPress={() => onChange(tab.value)}
-          style={[styles.item, value === tab.value && styles.itemActive]}
+          key={tab}
+          onPress={() => onChange(tab)}
+          style={[styles.item, value === tab && styles.itemActive]}
         >
-          <Text style={[styles.text, value === tab.value && styles.textActive]}>{tab.label}</Text>
+          <Text style={[styles.text, value === tab && styles.textActive]}>{s[tab]}</Text>
         </Pressable>
       ))}
     </View>

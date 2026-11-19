@@ -8,11 +8,52 @@ import { TextField } from '../../components/TextField';
 import { addProgressNote } from '../../lib/parents';
 import { colors, spacing } from '../../theme/colors';
 import type { StaffStackParamList } from '../../navigation/types';
+import { useStrings } from '../../i18n';
+
+const STRINGS = {
+  ru: {
+    needTopic: 'Укажите тему',
+    needTopicHint: 'Например: «Натюрморт с драпировкой» или «Итоги месяца».',
+    saveFailed: 'Не удалось сохранить',
+    hint: 'Отзыв увидят ученик и его родители.',
+    topic: 'Тема',
+    topicPlaceholder: 'Например: Итоги сентября',
+    comment: 'Комментарий',
+    commentPlaceholder: 'Что получается, над чем поработать',
+    rating: 'Оценка (необязательно)',
+    save: 'Сохранить',
+  },
+  kk: {
+    needTopic: 'Тақырыпты көрсетіңіз',
+    needTopicHint: 'Мысалы: «Драпировкасы бар натюрморт» немесе «Ай қорытындысы».',
+    saveFailed: 'Сақтау мүмкін болмады',
+    hint: 'Пікірді оқушы мен оның ата-анасы көреді.',
+    topic: 'Тақырып',
+    topicPlaceholder: 'Мысалы: Қыркүйек қорытындысы',
+    comment: 'Пікір',
+    commentPlaceholder: 'Не жақсы шығып жатыр, неге көңіл бөлу керек',
+    rating: 'Баға (міндетті емес)',
+    save: 'Сақтау',
+  },
+  en: {
+    needTopic: 'Enter a topic',
+    needTopicHint: 'For example: “Still life with drapery” or “Month summary”.',
+    saveFailed: 'Could not save',
+    hint: 'The student and their parents will see this feedback.',
+    topic: 'Topic',
+    topicPlaceholder: 'For example: September summary',
+    comment: 'Comment',
+    commentPlaceholder: 'What is going well and what to work on',
+    rating: 'Rating (optional)',
+    save: 'Save',
+  },
+};
 
 type Props = NativeStackScreenProps<StaffStackParamList, 'AddProgressNote'>;
 
 export function AddProgressNoteScreen({ route, navigation }: Props) {
   const { studentId, studentName } = route.params;
+  const s = useStrings(STRINGS);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [rating, setRating] = useState<number | null>(null);
@@ -20,7 +61,7 @@ export function AddProgressNoteScreen({ route, navigation }: Props) {
 
   const onSave = async () => {
     if (!title.trim()) {
-      Alert.alert('Укажите тему', 'Например: «Натюрморт с драпировкой» или «Итоги месяца».');
+      Alert.alert(s.needTopic, s.needTopicHint);
       return;
     }
     setSaving(true);
@@ -28,7 +69,7 @@ export function AddProgressNoteScreen({ route, navigation }: Props) {
       await addProgressNote({ studentId, title: title.trim(), body: body.trim(), rating });
       navigation.goBack();
     } catch (e) {
-      Alert.alert('Не удалось сохранить', e instanceof Error ? e.message : undefined);
+      Alert.alert(s.saveFailed, e instanceof Error ? e.message : undefined);
     } finally {
       setSaving(false);
     }
@@ -37,17 +78,17 @@ export function AddProgressNoteScreen({ route, navigation }: Props) {
   return (
     <Screen scroll>
       <Text style={styles.student}>{studentName}</Text>
-      <Text style={styles.hint}>Отзыв увидят ученик и его родители.</Text>
-      <TextField label="Тема" value={title} onChangeText={setTitle} placeholder="Например: Итоги сентября" />
+      <Text style={styles.hint}>{s.hint}</Text>
+      <TextField label={s.topic} value={title} onChangeText={setTitle} placeholder={s.topicPlaceholder} />
       <TextField
-        label="Комментарий"
+        label={s.comment}
         value={body}
         onChangeText={setBody}
         multiline
-        placeholder="Что получается, над чем поработать"
+        placeholder={s.commentPlaceholder}
         style={styles.bodyInput}
       />
-      <Text style={styles.label}>Оценка (необязательно)</Text>
+      <Text style={styles.label}>{s.rating}</Text>
       <View style={styles.stars}>
         {[1, 2, 3, 4, 5].map((n) => (
           <Pressable key={n} onPress={() => setRating(rating === n ? null : n)} hitSlop={6}>
@@ -59,7 +100,7 @@ export function AddProgressNoteScreen({ route, navigation }: Props) {
           </Pressable>
         ))}
       </View>
-      <Button title="Сохранить" onPress={onSave} loading={saving} />
+      <Button title={s.save} onPress={onSave} loading={saving} />
     </Screen>
   );
 }

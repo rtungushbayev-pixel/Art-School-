@@ -1,16 +1,70 @@
 import React, { useCallback, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { Card } from '../../components/Card';
 import { Avatar } from '../../components/Avatar';
 import { TextField } from '../../components/TextField';
+import { Button } from '../../components/Button';
+import { errorText } from '../../lib/errors';
 import { supabase } from '../../lib/supabase';
-import { fetchBalances, formatMoney } from '../../lib/payments';
+import { fetchBalances, fetchPaymentClaims, formatMoney, remindDebtors, type PaymentClaim } from '../../lib/payments';
 import { colors, spacing } from '../../theme/colors';
 import type { Profile } from '../../types/database';
 import type { StaffStackParamList } from '../../navigation/types';
+import { useStrings } from '../../i18n';
+
+const STRINGS = {
+  ru: {
+    claims: (n: number) => `Ждут подтверждения (Kaspi): ${n}`,
+    remind: 'Напомнить должникам',
+    remindQ: 'Отправить напоминание об оплате всем должникам и их родителям?',
+    remindDone: 'Напоминание отправлено',
+    remindFailed: 'Не удалось отправить',
+    send: 'Отправить',
+    cancel: 'Отмена',
+    kaspiLinks: 'Ссылки Kaspi на оплату',
+    totalDebt: 'Общий долг учеников',
+    debtors: (count: number) => `Должников: ${count}`,
+    search: 'Поиск по имени',
+    onlyDebtors: 'Только должники',
+    nobody: 'Никого не найдено',
+    noName: 'Без имени',
+  },
+  kk: {
+    claims: (n: number) => `Растауды күтуде (Kaspi): ${n}`,
+    remind: 'Қарыздарларға еске салу',
+    remindQ: 'Барлық қарыздарлар мен олардың ата-аналарына төлем туралы еске салу жіберу керек пе?',
+    remindDone: 'Еске салу жіберілді',
+    remindFailed: 'Жіберу мүмкін болмады',
+    send: 'Жіберу',
+    cancel: 'Бас тарту',
+    kaspiLinks: 'Kaspi төлем сілтемелері',
+    totalDebt: 'Оқушылардың жалпы қарызы',
+    debtors: (count: number) => `Қарыздарлар: ${count}`,
+    search: 'Аты бойынша іздеу',
+    onlyDebtors: 'Тек қарыздарлар',
+    nobody: 'Ешкім табылмады',
+    noName: 'Аты жоқ',
+  },
+  en: {
+    claims: (n: number) => `Awaiting confirmation (Kaspi): ${n}`,
+    remind: 'Remind debtors',
+    remindQ: 'Send a payment reminder to all debtors and their parents?',
+    remindDone: 'Reminder sent',
+    remindFailed: 'Could not send',
+    send: 'Send',
+    cancel: 'Cancel',
+    kaspiLinks: 'Kaspi payment links',
+    totalDebt: 'Total student debt',
+    debtors: (count: number) => `Students in debt: ${count}`,
+    search: 'Search by name',
+    onlyDebtors: 'Only students in debt',
+    nobody: 'No one found',
+    noName: 'No name',
+  },
+};
 
 interface Row {
   student: Profile;
@@ -21,10 +75,12 @@ interface Row {
 // Все ученики с балансом: сначала должники (по сумме долга), потом остальные.
 export function StudentBalancesScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<StaffStackParamList>>();
+  const s = useStrings(STRINGS);
   const [rows, setRows] = useState<Row[]>([]);
   const [query, setQuery] = useState('');
   const [onlyDebtors, setOnlyDebtors] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [claims, setClaims] = useState<PaymentClaim[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -41,6 +97,7 @@ export function StudentBalancesScreen() {
       });
       list.sort((a, b) => a.balance - b.balance || a.student.full_name.localeCompare(b.student.full_name));
       setRows(list);
+      setClaims(await fetchPaymentClaims({ pendingOnly: true }).catch(() => [] as PaymentClaim[]));
     } catch {
       // Нет сети — оставляем то, что уже показано.
     }
@@ -63,23 +120,64 @@ export function StudentBalancesScreen() {
   return (
     <Screen scroll refreshing={loading} onRefresh={load}>
       <Card style={styles.summary}>
-        <Text style={styles.summaryLabel}>Общий долг учеников</Text>
+        <Text style={styles.summaryLabel}>{s.totalDebt}</Text>
         <Text style={[styles.summaryValue, totalDebt > 0 && styles.debt]}>{formatMoney(totalDebt)}</Text>
-        <Text style={styles.summaryHint}>Должников: {debtorsCount}</Text>
+        <Text style={styles.summaryHint}>{s.debtors(debtorsCount)}</Text>
       </Card>
 
-      <TextField placeholder="Поиск по имени" value={query} onChangeText={setQuery} />
+      {claims.length > 0 ? (
+        <Card>
+          <Text style={styles.claimsTitle}>{s.claims(claims.length)}</Text>
+          {claims.map((c) => (
+            <Pressable key={c.id} onPress={() => navigation.navigate('Payments', { studentId: c.student_id })}>
+              <View style={styles.claimRow}>
+                <Text style={styles.claimName} numberOfLines={1}>
+                  {c.student?.full_name ?? ''}
+                </Text>
+                <Text style={styles.claimAmount}>{formatMoney(c.amount)}</Text>
+              </View>
+            </Pressable>
+          ))}
+        </Card>
+      ) : null}
+      <View style={styles.buttons}>
+        {debtorsCount > 0 ? (
+          <Button
+            title={s.remind}
+            variant="secondary"
+            onPress={() =>
+              Alert.alert(s.remind, s.remindQ, [
+                { text: s.cancel, style: 'cancel' },
+                {
+                  text: s.send,
+                  onPress: async () => {
+                    try {
+                      await remindDebtors();
+                      Alert.alert(s.remindDone);
+                    } catch (e) {
+                      Alert.alert(s.remindFailed, errorText(e));
+                    }
+                  },
+                },
+              ])
+            }
+          />
+        ) : null}
+        <Button title={s.kaspiLinks} variant="secondary" onPress={() => navigation.navigate('KaspiSettings')} />
+      </View>
+
+      <TextField placeholder={s.search} value={query} onChangeText={setQuery} />
       <Pressable onPress={() => setOnlyDebtors((v) => !v)} style={styles.filterRow}>
         <View style={[styles.checkbox, onlyDebtors && styles.checkboxOn]} />
-        <Text style={styles.filterText}>Только должники</Text>
+        <Text style={styles.filterText}>{s.onlyDebtors}</Text>
       </Pressable>
 
-      {visible.length === 0 && !loading ? <Text style={styles.empty}>Никого не найдено</Text> : null}
+      {visible.length === 0 && !loading ? <Text style={styles.empty}>{s.nobody}</Text> : null}
       {visible.map(({ student, balance, currency }) => (
         <Pressable key={student.id} onPress={() => navigation.navigate('Payments', { studentId: student.id })}>
           <Card style={styles.row}>
             <Avatar uri={student.avatar_url} name={student.full_name} size={36} />
-            <Text style={styles.name}>{student.full_name || 'Без имени'}</Text>
+            <Text style={styles.name}>{student.full_name || s.noName}</Text>
             <Text style={[styles.balance, balance < 0 ? styles.debt : balance > 0 ? styles.credit : null]}>
               {balance > 0 ? '+' : ''}
               {formatMoney(balance, currency)}
@@ -92,6 +190,11 @@ export function StudentBalancesScreen() {
 }
 
 const styles = StyleSheet.create({
+  claimsTitle: { fontWeight: '700', color: colors.warning, marginBottom: spacing.xs },
+  claimRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.xs },
+  claimName: { flex: 1, color: colors.text },
+  claimAmount: { fontWeight: '700', color: colors.text },
+  buttons: { gap: spacing.sm, marginBottom: spacing.md },
   summary: { alignItems: 'center' },
   summaryLabel: { color: colors.textMuted, fontWeight: '600' },
   summaryValue: { fontSize: 26, fontWeight: '800', color: colors.text, marginTop: spacing.xs },

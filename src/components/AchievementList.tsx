@@ -2,8 +2,15 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, paint, radius, spacing } from '../theme/colors';
-import { ACHIEVEMENT_KIND_LABELS } from '../lib/portfolio';
+import { achievementKindLabels } from '../lib/portfolio';
 import type { AchievementKind, StudentAchievement } from '../types/database';
+import { useLanguage, useStrings } from '../i18n';
+
+const STRINGS = {
+  ru: { school: 'Школа' },
+  kk: { school: 'Мектеп' },
+  en: { school: 'School' },
+};
 
 const KIND_ICONS: Record<AchievementKind, keyof typeof Ionicons.glyphMap> = {
   competition: 'trophy-outline',
@@ -32,10 +39,12 @@ interface AchievementListProps {
 }
 
 export function AchievementList({ achievements, onPress }: AchievementListProps) {
+  const s = useStrings(STRINGS);
+  const kindLabels = achievementKindLabels(useLanguage().lang);
   return (
     <View style={styles.list}>
       {achievements.map((item) => {
-        const meta = [ACHIEVEMENT_KIND_LABELS[item.kind], item.result, formatEventDate(item.event_date)]
+        const meta = [kindLabels[item.kind], item.result, formatEventDate(item.event_date)]
           .filter(Boolean)
           .join(' · ');
         return (
@@ -55,7 +64,7 @@ export function AchievementList({ achievements, onPress }: AchievementListProps)
             {item.verified ? (
               <View style={styles.verified}>
                 <Ionicons name="checkmark-circle" size={14} color={colors.success} />
-                <Text style={styles.verifiedText}>Школа</Text>
+                <Text style={styles.verifiedText}>{s.school}</Text>
               </View>
             ) : null}
           </Pressable>

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -11,15 +11,44 @@ import type { Profile } from '../../types/database';
 import { PostCard, PostCardData } from '../../components/PostCard';
 import { fetchFeedPosts, fetchUserPosts, toggleLike } from '../../lib/posts';
 import { useAuth } from '../../hooks/useAuth';
+import { useStrings } from '../../i18n';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { StaffStackParamList, StudentStackParamList } from '../../navigation/types';
 
 type NavParamList = StudentStackParamList & StaffStackParamList;
 type FeedView = 'all' | 'mine';
 
+const STRINGS = {
+  ru: {
+    searchPeople: 'Поиск по участникам',
+    friends: 'Друзья',
+    allPosts: 'Все публикации',
+    myPosts: 'Мои публикации',
+    emptyMine: 'Вы ещё ничего не публиковали',
+    emptyAll: 'Пока нет публикаций. Будьте первым!',
+  },
+  kk: {
+    searchPeople: 'Қатысушыларды іздеу',
+    friends: 'Достар',
+    allPosts: 'Барлық жарияланымдар',
+    myPosts: 'Менің жарияланымдарым',
+    emptyMine: 'Сіз әлі ештеңе жарияламадыңыз',
+    emptyAll: 'Әзірге жарияланымдар жоқ. Бірінші болыңыз!',
+  },
+  en: {
+    searchPeople: 'Search members',
+    friends: 'Friends',
+    allPosts: 'All posts',
+    myPosts: 'My posts',
+    emptyMine: 'You have not posted anything yet',
+    emptyAll: 'No posts yet. Be the first!',
+  },
+};
+
 export function FeedScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<NavParamList>>();
   const { profile } = useAuth();
+  const s = useStrings(STRINGS);
   const [posts, setPosts] = useState<PostCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<FeedView>('all');
@@ -28,6 +57,8 @@ export function FeedScreen() {
   // Друзья — у учеников и сотрудников.
   const hasFriends = canPost;
   const [friends, setFriends] = useState<Profile[]>([]);
+  // Нажатие на значок «Комьюнити» — лента к началу, к самой свежей публикации.
+  const [scrollTop, setScrollTop] = useState(0);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -52,6 +83,14 @@ export function FeedScreen() {
     }, [load])
   );
 
+  useEffect(() => {
+    const unsubscribe = (navigation as any).addListener('tabPress', () => {
+      setView('all');
+      setScrollTop((n) => n + 1);
+    });
+    return unsubscribe;
+  }, [navigation]);
+
   const onToggleLike = async (post: PostCardData) => {
     if (!profile) return;
     setPosts((prev) =>
@@ -65,16 +104,16 @@ export function FeedScreen() {
   };
 
   return (
-    <Screen scroll refreshing={loading} onRefresh={load}>
+    <Screen scroll refreshing={loading} onRefresh={load} scrollToTopSignal={scrollTop}>
       {canPost && profile ? (
         <>
           <View style={styles.topRow}>
             <Pressable style={styles.search} onPress={() => navigation.navigate('Friends', { focusSearch: true })}>
               <Ionicons name="search" size={18} color={colors.textMuted} />
-              <Text style={styles.searchText}>Поиск по участникам</Text>
+              <Text style={styles.searchText}>{s.searchPeople}</Text>
             </Pressable>
             <Pressable style={styles.friends} onPress={() => navigation.navigate('Friends')}>
-              <Text style={styles.friendsLabel}>Друзья</Text>
+              <Text style={styles.friendsLabel}>{s.friends}</Text>
               <View style={styles.avatars}>
                 {friends.slice(0, 2).map((f, i) => (
                   <View key={f.id} style={[styles.stackAvatar, i > 0 && styles.stackOverlap]}>
@@ -93,8 +132,8 @@ export function FeedScreen() {
           <View style={styles.segment}>
             {(
               [
-                ['all', 'Все публикации'],
-                ['mine', 'Мои публикации'],
+                ['all', s.allPosts],
+                ['mine', s.myPosts],
               ] as [FeedView, string][]
             ).map(([value, label]) => (
               <Pressable
@@ -111,7 +150,7 @@ export function FeedScreen() {
 
       {posts.length === 0 && !loading ? (
         <Text style={styles.empty}>
-          {view === 'mine' ? 'Вы ещё ничего не публиковали' : 'Пока нет публикаций. Будьте первым!'}
+          {view === 'mine' ? s.emptyMine : s.emptyAll}
         </Text>
       ) : null}
 

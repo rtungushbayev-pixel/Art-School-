@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { StaffStackParamList } from './types';
 import { StaffTabs } from './StaffTabs';
 import { ComposeAnnouncementScreen } from '../screens/staff/ComposeAnnouncementScreen';
+import { AnnouncementDetailScreen } from '../screens/shared/AnnouncementDetailScreen';
 import { StaffAnnouncementsScreen } from '../screens/staff/AnnouncementsScreen';
 import { MarketplaceScreen } from '../screens/shared/MarketplaceScreen';
 import { FriendsScreen } from '../screens/shared/FriendsScreen';
@@ -29,11 +30,168 @@ import { LinkChildScreen } from '../screens/staff/LinkChildScreen';
 import { AddProgressNoteScreen } from '../screens/staff/AddProgressNoteScreen';
 import { AddStudentPhotoScreen } from '../screens/staff/AddStudentPhotoScreen';
 import { PhotoViewScreen } from '../screens/shared/PhotoViewScreen';
+import { SupportScreen } from '../screens/shared/SupportScreen';
+import { NewSupportTicketScreen } from '../screens/shared/NewSupportTicketScreen';
+import { SupportTicketScreen } from '../screens/shared/SupportTicketScreen';
+import { AttendanceScreen } from '../screens/staff/AttendanceScreen';
+import { AttendanceSummaryScreen } from '../screens/staff/AttendanceSummaryScreen';
+import { MaterialRequestsScreen } from '../screens/materials/MaterialRequestsScreen';
+import { NewMaterialRequestScreen } from '../screens/materials/NewMaterialRequestScreen';
+import { MaterialRequestScreen } from '../screens/materials/MaterialRequestScreen';
+import { MaterialSummaryScreen } from '../screens/materials/MaterialSummaryScreen';
+import { BranchQrScreen } from '../screens/staff/BranchQrScreen';
+import { ChatsScreen } from '../screens/shared/ChatsScreen';
+import { ChatScreen } from '../screens/shared/ChatScreen';
+import { EventsScreen } from '../screens/shared/EventsScreen';
+import { EventDetailScreen } from '../screens/shared/EventDetailScreen';
+import { EditEventScreen } from '../screens/staff/EditEventScreen';
+import { KaspiSettingsScreen } from '../screens/staff/KaspiSettingsScreen';
+import { ProfileSettingsScreen } from '../screens/shared/ProfileSettingsScreen';
 import { colors } from '../theme/colors';
+import { useStrings } from '../i18n';
+
+const STRINGS = {
+  ru: {
+    messages: 'Сообщения',
+    market: 'Продажа работ',
+    friends: 'Друзья',
+    newAnnouncement: 'Новое объявление',
+    post: 'Публикация',
+    newWork: 'Новая работа',
+    editProfile: 'Редактирование профиля',
+    notifications: 'Уведомления',
+    profile: 'Профиль',
+    portfolio: 'Портфолио',
+    aboutWork: 'О работе',
+    achievement: 'Достижение',
+    newGroup: 'Новая группа',
+    group: 'Группа',
+    addStudent: 'Добавить ученика',
+    newLesson: 'Новое занятие',
+    listing: 'Объявление',
+    sellWork: 'Продажа работы',
+    studentPayments: 'Оплаты ученика',
+    studentsPayments: 'Оплаты учеников',
+    charge: 'Начисление',
+    lessonChange: 'Изменение занятия',
+    people: 'Ученики и родители',
+    linkChild: 'Привязать ребёнка',
+    progressNote: 'Отзыв о прогрессе',
+    galleryPhoto: 'Фото в галерею',
+    photo: 'Фото',
+    tickets: 'Обращения',
+    help: 'Помощь',
+    ticket: 'Обращение',
+    materialRequests: 'Заявки на материалы',
+    newMaterialRequest: 'Новая заявка',
+    materialRequest: 'Заявка',
+    materialSummary: 'Сводка по материалам',
+    attendance: 'Посещаемость',
+    attendanceSummary: 'Сводка посещаемости',
+    branchQr: 'QR-коды филиалов',
+    chats: 'Чаты',
+    events: 'Выставки и конкурсы',
+    event: 'Событие',
+    editEvent: 'Событие',
+    kaspi: 'Kaspi',
+    profileSettings: 'Настройки профиля',
+  },
+  kk: {
+    messages: 'Хабарламалар',
+    market: 'Жұмыстарды сату',
+    friends: 'Достар',
+    newAnnouncement: 'Жаңа хабарландыру',
+    post: 'Жарияланым',
+    newWork: 'Жаңа жұмыс',
+    editProfile: 'Профильді өңдеу',
+    notifications: 'Хабарландырулар',
+    profile: 'Профиль',
+    portfolio: 'Портфолио',
+    aboutWork: 'Жұмыс туралы',
+    achievement: 'Жетістік',
+    newGroup: 'Жаңа топ',
+    group: 'Топ',
+    addStudent: 'Оқушы қосу',
+    newLesson: 'Жаңа сабақ',
+    listing: 'Хабарландыру',
+    sellWork: 'Жұмысты сату',
+    studentPayments: 'Оқушы төлемдері',
+    studentsPayments: 'Оқушылардың төлемдері',
+    charge: 'Есептеу',
+    lessonChange: 'Сабақты өзгерту',
+    people: 'Оқушылар мен ата-аналар',
+    linkChild: 'Баланы байланыстыру',
+    progressNote: 'Үлгерім туралы пікір',
+    galleryPhoto: 'Галереяға фото',
+    photo: 'Фото',
+    tickets: 'Өтініштер',
+    help: 'Көмек',
+    ticket: 'Өтініш',
+    materialRequests: 'Материалдарға өтінімдер',
+    newMaterialRequest: 'Жаңа өтінім',
+    materialRequest: 'Өтінім',
+    materialSummary: 'Материалдар жиынтығы',
+    attendance: 'Сабаққа қатысу',
+    attendanceSummary: 'Қатысу жиынтығы',
+    branchQr: 'Филиалдардың QR-кодтары',
+    chats: 'Чаттар',
+    events: 'Көрмелер мен байқаулар',
+    event: 'Іс-шара',
+    editEvent: 'Іс-шара',
+    kaspi: 'Kaspi',
+    profileSettings: 'Профиль баптаулары',
+  },
+  en: {
+    messages: 'Messages',
+    market: 'Artwork sale',
+    friends: 'Friends',
+    newAnnouncement: 'New announcement',
+    post: 'Post',
+    newWork: 'New artwork',
+    editProfile: 'Edit profile',
+    notifications: 'Notifications',
+    profile: 'Profile',
+    portfolio: 'Portfolio',
+    aboutWork: 'About the artwork',
+    achievement: 'Achievement',
+    newGroup: 'New group',
+    group: 'Group',
+    addStudent: 'Add student',
+    newLesson: 'New lesson',
+    listing: 'Listing',
+    sellWork: 'Sell artwork',
+    studentPayments: 'Student payments',
+    studentsPayments: 'Students\' payments',
+    charge: 'Charge',
+    lessonChange: 'Lesson change',
+    people: 'Students and parents',
+    linkChild: 'Link a child',
+    progressNote: 'Progress note',
+    galleryPhoto: 'Photo for gallery',
+    photo: 'Photo',
+    tickets: 'Requests',
+    help: 'Help',
+    ticket: 'Request',
+    materialRequests: 'Supply requests',
+    newMaterialRequest: 'New request',
+    materialRequest: 'Request',
+    materialSummary: 'Supplies summary',
+    attendance: 'Attendance',
+    attendanceSummary: 'Attendance summary',
+    branchQr: 'Branch QR codes',
+    chats: 'Chats',
+    events: 'Exhibitions and competitions',
+    event: 'Event',
+    editEvent: 'Event',
+    kaspi: 'Kaspi',
+    profileSettings: 'Profile settings',
+  },
+};
 
 const Stack = createNativeStackNavigator<StaffStackParamList>();
 
 export function StaffNavigator() {
+  const s = useStrings(STRINGS);
   return (
     <Stack.Navigator
       screenOptions={{
@@ -43,45 +201,75 @@ export function StaffNavigator() {
       }}
     >
       <Stack.Screen name="StaffTabs" component={StaffTabs} options={{ headerShown: false }} />
-      <Stack.Screen name="Messages" component={StaffAnnouncementsScreen} options={{ title: 'Сообщения' }} />
-      <Stack.Screen name="Market" component={MarketplaceScreen} options={{ title: 'Продажа работ' }} />
-      <Stack.Screen name="Friends" component={FriendsScreen} options={{ title: 'Друзья' }} />
+      <Stack.Screen name="Messages" component={StaffAnnouncementsScreen} options={{ title: s.messages }} />
+      <Stack.Screen name="AnnouncementDetail" component={AnnouncementDetailScreen} options={{ title: s.messages }} />
+      <Stack.Screen name="Market" component={MarketplaceScreen} options={{ title: s.market }} />
+      <Stack.Screen name="Friends" component={FriendsScreen} options={{ title: s.friends }} />
       <Stack.Screen
         name="ComposeAnnouncement"
         component={ComposeAnnouncementScreen}
-        options={{ title: 'Новое объявление' }}
+        options={{ title: s.newAnnouncement }}
       />
-      <Stack.Screen name="PostDetail" component={PostDetailScreen} options={{ title: 'Публикация' }} />
-      <Stack.Screen name="CreatePost" component={CreatePostScreen} options={{ title: 'Новая работа' }} />
-      <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Редактирование профиля' }} />
+      <Stack.Screen name="PostDetail" component={PostDetailScreen} options={{ title: s.post }} />
+      <Stack.Screen name="CreatePost" component={CreatePostScreen} options={{ title: s.newWork }} />
+      <Stack.Screen name="ProfileSettings" component={ProfileSettingsScreen} options={{ title: s.profileSettings }} />
+      <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: s.editProfile }} />
       <Stack.Screen
         name="NotificationSettings"
         component={NotificationSettingsScreen}
-        options={{ title: 'Уведомления' }}
+        options={{ title: s.notifications }}
       />
-      <Stack.Screen name="UserProfile" component={UserProfileScreen} options={{ title: 'Профиль' }} />
-      <Stack.Screen name="Portfolio" component={PortfolioScreen} options={{ title: 'Портфолио' }} />
-      <Stack.Screen name="EditArtwork" component={EditArtworkScreen} options={{ title: 'О работе' }} />
-      <Stack.Screen name="EditAchievement" component={EditAchievementScreen} options={{ title: 'Достижение' }} />
-      <Stack.Screen name="CreateGroup" component={CreateGroupScreen} options={{ title: 'Новая группа' }} />
-      <Stack.Screen name="GroupDetail" component={GroupDetailScreen} options={{ title: 'Группа' }} />
+      <Stack.Screen name="UserProfile" component={UserProfileScreen} options={{ title: s.profile }} />
+      <Stack.Screen name="Portfolio" component={PortfolioScreen} options={{ title: s.portfolio }} />
+      <Stack.Screen name="EditArtwork" component={EditArtworkScreen} options={{ title: s.aboutWork }} />
+      <Stack.Screen name="EditAchievement" component={EditAchievementScreen} options={{ title: s.achievement }} />
+      <Stack.Screen name="CreateGroup" component={CreateGroupScreen} options={{ title: s.newGroup }} />
+      <Stack.Screen name="GroupDetail" component={GroupDetailScreen} options={{ title: s.group }} />
       <Stack.Screen
         name="AddStudentToGroup"
         component={AddStudentToGroupScreen}
-        options={{ title: 'Добавить ученика' }}
+        options={{ title: s.addStudent }}
       />
-      <Stack.Screen name="CreateLesson" component={CreateLessonScreen} options={{ title: 'Новое занятие' }} />
-      <Stack.Screen name="ListingDetail" component={ListingDetailScreen} options={{ title: 'Объявление' }} />
-      <Stack.Screen name="CreateListing" component={CreateListingScreen} options={{ title: 'Продажа работы' }} />
-      <Stack.Screen name="Payments" component={PaymentsScreen} options={{ title: 'Оплаты ученика' }} />
-      <Stack.Screen name="StudentBalances" component={StudentBalancesScreen} options={{ title: 'Оплаты учеников' }} />
-      <Stack.Screen name="BillingEntryForm" component={BillingEntryFormScreen} options={{ title: 'Начисление' }} />
-      <Stack.Screen name="LessonChange" component={LessonChangeScreen} options={{ title: 'Изменение занятия' }} />
-      <Stack.Screen name="People" component={PeopleScreen} options={{ title: 'Ученики и родители' }} />
-      <Stack.Screen name="LinkChild" component={LinkChildScreen} options={{ title: 'Привязать ребёнка' }} />
-      <Stack.Screen name="AddProgressNote" component={AddProgressNoteScreen} options={{ title: 'Отзыв о прогрессе' }} />
-      <Stack.Screen name="AddStudentPhoto" component={AddStudentPhotoScreen} options={{ title: 'Фото в галерею' }} />
-      <Stack.Screen name="PhotoView" component={PhotoViewScreen} options={{ title: 'Фото' }} />
+      <Stack.Screen name="CreateLesson" component={CreateLessonScreen} options={{ title: s.newLesson }} />
+      <Stack.Screen name="ListingDetail" component={ListingDetailScreen} options={{ title: s.listing }} />
+      <Stack.Screen name="CreateListing" component={CreateListingScreen} options={{ title: s.sellWork }} />
+      <Stack.Screen name="Payments" component={PaymentsScreen} options={{ title: s.studentPayments }} />
+      <Stack.Screen name="StudentBalances" component={StudentBalancesScreen} options={{ title: s.studentsPayments }} />
+      <Stack.Screen name="BillingEntryForm" component={BillingEntryFormScreen} options={{ title: s.charge }} />
+      <Stack.Screen name="LessonChange" component={LessonChangeScreen} options={{ title: s.lessonChange }} />
+      <Stack.Screen name="People" component={PeopleScreen} options={{ title: s.people }} />
+      <Stack.Screen name="LinkChild" component={LinkChildScreen} options={{ title: s.linkChild }} />
+      <Stack.Screen name="AddProgressNote" component={AddProgressNoteScreen} options={{ title: s.progressNote }} />
+      <Stack.Screen name="AddStudentPhoto" component={AddStudentPhotoScreen} options={{ title: s.galleryPhoto }} />
+      <Stack.Screen name="PhotoView" component={PhotoViewScreen} options={{ title: s.photo }} />
+      <Stack.Screen name="BranchQr" component={BranchQrScreen} options={{ title: s.branchQr }} />
+      <Stack.Screen name="Chats" component={ChatsScreen} options={{ title: s.chats }} />
+      <Stack.Screen name="Chat" component={ChatScreen} options={{ title: s.chats }} />
+      <Stack.Screen name="Events" component={EventsScreen} options={{ title: s.events }} />
+      <Stack.Screen name="EventDetail" component={EventDetailScreen} options={{ title: s.event }} />
+      <Stack.Screen name="EditEvent" component={EditEventScreen} options={{ title: s.editEvent }} />
+      <Stack.Screen name="KaspiSettings" component={KaspiSettingsScreen} options={{ title: s.kaspi }} />
+      <Stack.Screen name="Support" component={SupportScreen} options={{ title: s.tickets }} />
+      <Stack.Screen
+        name="NewSupportTicket"
+        component={NewSupportTicketScreen}
+        options={{ title: s.help }}
+      />
+      <Stack.Screen name="SupportTicket" component={SupportTicketScreen} options={{ title: s.ticket }} />
+      <Stack.Screen name="Attendance" component={AttendanceScreen} options={{ title: s.attendance }} />
+      <Stack.Screen
+        name="AttendanceSummary"
+        component={AttendanceSummaryScreen}
+        options={{ title: s.attendanceSummary }}
+      />
+      <Stack.Screen name="MaterialRequests" component={MaterialRequestsScreen} options={{ title: s.materialRequests }} />
+      <Stack.Screen
+        name="NewMaterialRequest"
+        component={NewMaterialRequestScreen}
+        options={{ title: s.newMaterialRequest }}
+      />
+      <Stack.Screen name="MaterialRequest" component={MaterialRequestScreen} options={{ title: s.materialRequest }} />
+      <Stack.Screen name="MaterialSummary" component={MaterialSummaryScreen} options={{ title: s.materialSummary }} />
     </Stack.Navigator>
   );
 }

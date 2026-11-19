@@ -1,41 +1,114 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { TextField } from '../../components/TextField';
 import { Button } from '../../components/Button';
 import { PaintDots } from '../../components/PaintDots';
+import { SvgXml } from 'react-native-svg';
+import { LOGO_RU_XML } from '../../components/logoRuXml';
+import { LanguageSwitcher } from '../../components/LanguageSwitcher';
 import { useAuth } from '../../hooks/useAuth';
+import { useStartKioskPairing } from '../../lib/kioskMode';
+import { useLanguage, useStrings } from '../../i18n';
 import { colors, spacing } from '../../theme/colors';
 import type { AuthStackParamList } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
+const STRINGS = {
+  ru: {
+    kiosk: 'Режим планшета (QR филиала)',
+    fillAll: 'Заполните все поля',
+    loginFailed: 'Не удалось войти',
+    school: 'Школа искусств и дизайна',
+    schoolName: 'им. А. Кастеева',
+    password: 'Пароль',
+    signIn: 'Войти',
+    noAccount: 'Нет аккаунта?',
+    signUp: 'Зарегистрироваться',
+    forgot: 'Забыли пароль?',
+  },
+  kk: {
+    kiosk: 'Планшет режимі (филиал QR-ы)',
+    fillAll: 'Барлық өрістерді толтырыңыз',
+    loginFailed: 'Кіру мүмкін болмады',
+    school: 'Өнер және дизайн мектебі',
+    schoolName: 'Ә. Қастеев атындағы',
+    password: 'Құпиясөз',
+    signIn: 'Кіру',
+    noAccount: 'Аккаунтыңыз жоқ па?',
+    signUp: 'Тіркелу',
+    forgot: 'Құпиясөзді ұмыттыңыз ба?',
+  },
+  en: {
+    kiosk: 'Tablet mode (branch QR)',
+    fillAll: 'Please fill in all fields',
+    loginFailed: 'Could not sign in',
+    school: 'School of Art and Design',
+    schoolName: 'named after A. Kasteyev',
+    password: 'Password',
+    signIn: 'Sign in',
+    noAccount: 'No account?',
+    signUp: 'Sign up',
+    forgot: 'Forgot password?',
+  },
+};
+
 export function LoginScreen({ navigation }: Props) {
   const { signIn } = useAuth();
+  const startKiosk = useStartKioskPairing();
+  const s = useStrings(STRINGS);
+  const { lang } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  // Автозаполнение из памяти телефона вставляет пароль целиком, а не по букве —
+  // тогда входим сразу, без нажатия «Войти».
+  const [autofilled, setAutofilled] = useState(false);
+  const autoTried = useRef(false);
+
+  const onPasswordChange = (next: string) => {
+    if (next.length - password.length >= 4) setAutofilled(true);
+    setPassword(next);
+  };
+
+  useEffect(() => {
+    if (!autofilled || autoTried.current || loading || !email.trim() || !password) return;
+    autoTried.current = true;
+    // Короткая пауза: автозаполнение может дописать email чуть позже пароля.
+    const timer = setTimeout(() => onSubmit(), 300);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autofilled, email, password]);
 
   const onSubmit = async () => {
     if (!email || !password) {
-      Alert.alert('Заполните все поля');
+      Alert.alert(s.fillAll);
       return;
     }
     setLoading(true);
     const error = await signIn(email.trim(), password);
     setLoading(false);
     if (error) {
-      Alert.alert('Не удалось войти', error);
+      Alert.alert(s.loginFailed, error);
     }
   };
 
   return (
     <Screen scroll>
+      <LanguageSwitcher compact />
       <View style={styles.header}>
-        <PaintDots />
-        <Text style={styles.title}>Школа искусств и дизайна</Text>
-        <Text style={styles.subtitle}>им. А. Кастеева</Text>
+        {/* Логотип с надписью по-русски; для других языков — название текстом. */}
+        {lang === 'ru' ? (
+          <SvgXml xml={LOGO_RU_XML} width={220} height={220} accessibilityLabel={`${s.school} ${s.schoolName}`} />
+        ) : (
+          <>
+            <PaintDots />
+            <Text style={styles.title}>{s.school}</Text>
+            <Text style={styles.subtitle}>{s.schoolName}</Text>
+          </>
+        )}
       </View>
 
       <TextField
@@ -44,34 +117,49 @@ export function LoginScreen({ navigation }: Props) {
         onChangeText={setEmail}
         autoCapitalize="none"
         keyboardType="email-address"
+        autoComplete="email"
+        textContentType="username"
         placeholder="you@example.com"
       />
       <TextField
-        label="Пароль"
+        label={s.password}
         value={password}
-        onChangeText={setPassword}
+        onChangeText={onPasswordChange}
         secureTextEntry
+        autoComplete="current-password"
+        textContentType="password"
+        returnKeyType="go"
+        onSubmitEditing={onSubmit}
         placeholder="••••••••"
       />
 
-      <Button title="Войти" onPress={onSubmit} loading={loading} />
+      <Text style={styles.forgot} onPress={() => navigation.navigate('ForgotPassword')}>
+        {s.forgot}
+      </Text>
+
+      <Button title={s.signIn} onPress={onSubmit} loading={loading} />
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>Нет аккаунта?</Text>
+        <Text style={styles.footerText}>{s.noAccount}</Text>
         <Text style={styles.link} onPress={() => navigation.navigate('SignUp')}>
           {' '}
-          Зарегистрироваться
+          {s.signUp}
         </Text>
       </View>
+      <Text style={styles.kiosk} onPress={startKiosk}>
+        {s.kiosk}
+      </Text>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  header: { marginTop: spacing.xl, marginBottom: spacing.xl, alignItems: 'center' },
+  kiosk: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.xl, fontSize: 13 },
+  header: { marginTop: spacing.lg, marginBottom: spacing.xl, alignItems: 'center' },
   title: { fontSize: 24, fontWeight: '800', color: colors.primary, textAlign: 'center', marginTop: spacing.md },
   subtitle: { fontSize: 15, color: colors.textMuted, marginTop: spacing.xs },
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: spacing.lg },
   footerText: { color: colors.textMuted },
   link: { color: colors.primary, fontWeight: '700' },
+  forgot: { color: colors.primary, fontWeight: '600', textAlign: 'right', marginTop: -spacing.sm, marginBottom: spacing.md },
 });

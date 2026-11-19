@@ -2,12 +2,20 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, radius, shadow, spacing } from '../theme/colors';
 import type { PortfolioStats } from '../lib/portfolio';
+import { useStrings } from '../i18n';
+
+const STRINGS = {
+  ru: { works: 'Работ', likes: 'Лайков', achievements: 'Достижений' },
+  kk: { works: 'Жұмыс', likes: 'Лайк', achievements: 'Жетістік' },
+  en: { works: 'Artworks', likes: 'Likes', achievements: 'Achievements' },
+};
 
 export function ProfileStats({ stats, showAchievements }: { stats: PortfolioStats; showAchievements: boolean }) {
+  const s = useStrings(STRINGS);
   const items = [
-    { label: 'Работ', value: stats.works },
-    { label: 'Лайков', value: stats.likes },
-    ...(showAchievements ? [{ label: 'Достижений', value: stats.achievements }] : []),
+    { label: s.works, value: stats.works },
+    { label: s.likes, value: stats.likes },
+    ...(showAchievements ? [{ label: s.achievements, value: stats.achievements }] : []),
   ];
   return (
     <View style={styles.row}>

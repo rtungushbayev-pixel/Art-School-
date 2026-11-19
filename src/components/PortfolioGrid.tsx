@@ -4,6 +4,13 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing } from '../theme/colors';
 import type { PostCardData } from './PostCard';
+import { useStrings } from '../i18n';
+
+const STRINGS = {
+  ru: { pending: 'На модерации', rejected: 'Отклонено' },
+  kk: { pending: 'Тексеруде', rejected: 'Қабылданбады' },
+  en: { pending: 'Under review', rejected: 'Rejected' },
+};
 
 interface PortfolioGridProps {
   posts: PostCardData[];
@@ -13,6 +20,7 @@ interface PortfolioGridProps {
 }
 
 export function PortfolioGrid({ posts, onPressPost, showStatus }: PortfolioGridProps) {
+  const s = useStrings(STRINGS);
   return (
     <View style={styles.grid}>
       {posts.map((post) => (
@@ -29,7 +37,7 @@ export function PortfolioGrid({ posts, onPressPost, showStatus }: PortfolioGridP
           ) : null}
           {showStatus && post.status !== 'approved' ? (
             <View style={styles.statusOverlay}>
-              <Text style={styles.statusText}>{post.status === 'pending' ? 'На модерации' : 'Отклонено'}</Text>
+              <Text style={styles.statusText}>{post.status === 'pending' ? s.pending : s.rejected}</Text>
             </View>
           ) : null}
         </Pressable>

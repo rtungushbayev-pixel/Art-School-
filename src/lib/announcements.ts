@@ -14,3 +14,13 @@ export async function fetchAnnouncements(): Promise<AnnouncementWithAuthor[]> {
   if (error) throw error;
   return (data as unknown as AnnouncementWithAuthor[]) ?? [];
 }
+
+export async function fetchAnnouncement(id: string): Promise<AnnouncementWithAuthor | null> {
+  const { data, error } = await supabase
+    .from('announcements')
+    .select('*, author:author_id ( full_name )')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw error;
+  return (data as unknown as AnnouncementWithAuthor | null) ?? null;
+}

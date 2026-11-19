@@ -1,12 +1,16 @@
-export type UserRole = 'student' | 'staff' | 'parent';
+export type UserRole = 'student' | 'staff' | 'parent' | 'admin' | 'office';
 export type EnrollmentStatus = 'planning' | 'applied' | 'enrolled';
 export type PostStatus = 'pending' | 'approved' | 'rejected';
 export type AnnouncementAudience = 'all' | 'students' | 'staff' | 'group';
 export type AttendanceStatus = 'present' | 'absent' | 'late' | 'excused';
 export type ListingStatus = 'pending' | 'approved' | 'rejected';
 export type BillingKind = 'charge' | 'payment';
-export type PaymentMethod = 'cash' | 'card' | 'transfer';
+export type PaymentMethod = 'cash' | 'card' | 'transfer' | 'kaspi';
 export type AchievementKind = 'competition' | 'exhibition' | 'award' | 'other';
+export type SupportCategory = 'bug' | 'schedule' | 'operations' | 'question' | 'other';
+export type SupportStatus = 'open' | 'answered' | 'closed';
+export type MaterialUnit = 'pcs' | 'pack' | 'set' | 'l' | 'kg' | 'm' | 'sheet';
+export type MaterialRequestStatus = 'pending' | 'issued' | 'rejected';
 
 export interface Profile {
   id: string;
@@ -21,6 +25,9 @@ export interface Profile {
   notify_announcements: boolean;
   notify_comments: boolean;
   notify_moderation: boolean;
+  notify_support: boolean;
+  notify_attendance: boolean; // родителю: ребёнок отсутствует на занятии
+  notify_reminders: boolean; // напоминание за 2 часа до занятия (ученику и родителю)
   created_at: string;
   updated_at: string;
 }
@@ -37,6 +44,9 @@ export interface Group {
   name: string;
   description: string | null;
   teacher_id: string | null;
+  branch_id: string | null;
+  // Курс (0–6) для подгрупп внутри филиала; у детских групп — null.
+  course?: number | null;
   created_at: string;
 }
 
@@ -218,6 +228,26 @@ export interface MarketplaceListingImage {
   position: number;
 }
 
+// Обращение в «Помощь»: переписка пользователя с сотрудниками школы.
+export interface SupportTicket {
+  id: string;
+  author_id: string;
+  category: SupportCategory;
+  subject: string;
+  status: SupportStatus;
+  device_info: string | null;
+  created_at: string;
+  last_message_at: string;
+}
+
+export interface SupportMessage {
+  id: string;
+  ticket_id: string;
+  author_id: string;
+  body: string;
+  created_at: string;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -251,6 +281,8 @@ export interface Database {
         Insert: Partial<MarketplaceListing>;
         Update: Partial<MarketplaceListing>;
       };
+      support_tickets: { Row: SupportTicket; Insert: Partial<SupportTicket>; Update: Partial<SupportTicket> };
+      support_messages: { Row: SupportMessage; Insert: Partial<SupportMessage>; Update: Partial<SupportMessage> };
       marketplace_listing_images: {
         Row: MarketplaceListingImage;
         Insert: Partial<MarketplaceListingImage>;
@@ -258,4 +290,30 @@ export interface Database {
       };
     };
   };
+}
+
+// Заявка преподавателя на материалы. Решение («Выдано» / «Отклонено»)
+// ставит Администрация через decide_material_request.
+export interface MaterialRequest {
+  id: string;
+  teacher_id: string;
+  material: string;
+  quantity: number;
+  unit: MaterialUnit;
+  comment: string | null;
+  status: MaterialRequestStatus;
+  issued_quantity: number | null;
+  office_note: string | null;
+  decided_by: string | null;
+  decided_at: string | null;
+  branch_id: string | null;
+  cost: number | null; // сумма выдачи, ₸ — ставит Администрация
+  created_at: string;
+}
+
+// Филиал школы. Руководителей отмечает администратор (branch_heads).
+export interface Branch {
+  id: string;
+  name: string;
+  sort_order: number;
 }

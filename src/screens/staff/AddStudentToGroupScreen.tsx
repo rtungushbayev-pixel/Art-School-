@@ -10,11 +10,37 @@ import { addStudentToGroup, fetchStudentsNotInGroup } from '../../lib/groups';
 import { colors, spacing } from '../../theme/colors';
 import type { Profile } from '../../types/database';
 import type { StaffStackParamList } from '../../navigation/types';
+import { useStrings } from '../../i18n';
+
+const STRINGS = {
+  ru: {
+    addFailed: 'Не удалось добавить',
+    title: 'Добавить ученика',
+    search: 'Поиск по имени…',
+    nobody: 'Никого не найдено',
+    add: '+ Добавить',
+  },
+  kk: {
+    addFailed: 'Қосу мүмкін болмады',
+    title: 'Оқушы қосу',
+    search: 'Аты бойынша іздеу…',
+    nobody: 'Ешкім табылмады',
+    add: '+ Қосу',
+  },
+  en: {
+    addFailed: 'Could not add',
+    title: 'Add student',
+    search: 'Search by name…',
+    nobody: 'No one found',
+    add: '+ Add',
+  },
+};
 
 export function AddStudentToGroupScreen() {
   const navigation = useNavigation();
   const route = useRoute<RouteProp<StaffStackParamList, 'AddStudentToGroup'>>();
   const { groupId } = route.params;
+  const s = useStrings(STRINGS);
   const [query, setQuery] = useState('');
   const [students, setStudents] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,24 +62,24 @@ export function AddStudentToGroupScreen() {
   const onAdd = async (student: Profile) => {
     try {
       await addStudentToGroup(groupId, student.id);
-      setStudents((prev) => prev.filter((s) => s.id !== student.id));
+      setStudents((prev) => prev.filter((p) => p.id !== student.id));
     } catch (e) {
-      Alert.alert('Не удалось добавить', e instanceof Error ? e.message : undefined);
+      Alert.alert(s.addFailed, e instanceof Error ? e.message : undefined);
     }
   };
 
   return (
     <Screen scroll refreshing={loading} onRefresh={load}>
-      <Text style={styles.title}>Добавить ученика</Text>
-      <TextField placeholder="Поиск по имени…" value={query} onChangeText={setQuery} autoCapitalize="none" />
+      <Text style={styles.title}>{s.title}</Text>
+      <TextField placeholder={s.search} value={query} onChangeText={setQuery} autoCapitalize="none" />
 
-      {students.length === 0 && !loading ? <Text style={styles.empty}>Никого не найдено</Text> : null}
+      {students.length === 0 && !loading ? <Text style={styles.empty}>{s.nobody}</Text> : null}
       {students.map((student) => (
         <Pressable key={student.id} onPress={() => onAdd(student)}>
           <Card style={styles.row}>
             <Avatar uri={student.avatar_url} name={student.full_name} size={36} />
             <Text style={styles.name}>{student.full_name}</Text>
-            <Text style={styles.addLabel}>+ Добавить</Text>
+            <Text style={styles.addLabel}>{s.add}</Text>
           </Card>
         </Pressable>
       ))}

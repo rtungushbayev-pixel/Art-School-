@@ -1,5 +1,5 @@
 import 'react-native-url-polyfill/auto';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { sessionStorage } from './secureStorage';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
@@ -27,10 +27,14 @@ export const supabase = createClient(
   supabaseAnonKey || FALLBACK_KEY,
   {
     auth: {
-      storage: AsyncStorage,
+      // Сессия — в защищённом хранилище телефона (Keychain / Keystore).
+      storage: sessionStorage,
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: false,
+      // PKCE: ссылка из письма срабатывает только на том телефоне, где её
+      // запросили (секрет для обмена хранится здесь), и не несёт токены.
+      flowType: 'pkce',
     },
   }
 );

@@ -1,8 +1,10 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { AppState } from 'react-native';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { clearPushToken, syncPushToken } from '../lib/notifications';
-import { AUTH_REDIRECT_URL, listenForAuthLinks } from '../lib/authLinks';
+import { syncLessonReminders } from '../lib/lessonReminders';
+import { AUTH_REDIRECT_URL, PASSWORD_RESET_URL, listenForAuthLinks } from '../lib/authLinks';
 import type { Profile } from '../types/database';
 
 interface AuthContextValue {
@@ -16,13 +18,25 @@ interface AuthContextValue {
     fullName: string;
     accountType: SignUpAccountType;
     groupId: string | null;
-  }) => Promise<string | null>;
+    // Код из школы: ученика (для ученика и родителя) или приглашение сотрудника.
+    code: string;
+    phone: string;
+  }) => Promise<SignUpResult>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  // Восстановление пароля: письмо со ссылкой, затем ввод нового пароля.
+  requestPasswordReset: (email: string) => Promise<string | null>;
+  passwordRecovery: boolean;
+  updatePassword: (password: string) => Promise<string | null>;
 }
 
-// Сотрудником при регистрации стать нельзя: эту роль назначает администрация.
-export type SignUpAccountType = 'student' | 'parent';
+// needsConfirmation: Supabase ждёт подтверждения почты; иначе пользователь
+// уже вошёл (подтверждение выключено в настройках проекта).
+export type SignUpResult = { error: string | null; needsConfirmation: boolean };
+
+// Регистрация только по коду из школы: код ученика (ученик, родитель) или
+// одноразовое приглашение сотрудника. Сервер проверяет код в handle_new_user.
+export type SignUpAccountType = 'student' | 'parent' | 'staff';
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
@@ -70,13 +84,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // Вход по ссылке подтверждения из письма.
-  useEffect(() => listenForAuthLinks(), []);
+  const [passwordRecovery, setPasswordRecovery] = useState(false);
+  useEffect(() => listenForAuthLinks(() => setPasswordRecovery(true)), []);
 
   useEffect(() => {
     if (profile) {
       syncPushToken();
     }
   }, [profile?.id]);
+
+  // Напоминания о занятиях пересчитываются при входе, смене настройки и
+  // каждом возвращении в приложение (расписание могли изменить).
+  useEffect(() => {
+    syncLessonReminders(profile);
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') syncLessonReminders(profile);
+    });
+    return () => sub.remove();
+  }, [profile?.id, profile?.notify_reminders]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -87,16 +112,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         return error?.message ?? null;
       },
-      signUp: async ({ email, password, fullName, accountType, groupId }) => {
-        const { error } = await supabase.auth.signUp({
+      signUp: async ({ email, password, fullName, accountType, groupId, code, phone }) => {
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: AUTH_REDIRECT_URL,
-            data: { full_name: fullName, account_type: accountType, group_id: groupId },
+            data: { full_name: fullName, account_type: accountType, group_id: groupId, code, phone },
           },
         });
-        return error?.message ?? null;
+        return { error: error?.message ?? null, needsConfirmation: !error && !data.session };
       },
       signOut: async () => {
         // Чистим push-токен устройства, чтобы после выхода на общем устройстве
@@ -107,13 +132,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         await supabase.auth.signOut();
       },
+      requestPasswordReset: async (email) => {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: PASSWORD_RESET_URL });
+        return error?.message ?? null;
+      },
+      passwordRecovery,
+      updatePassword: async (password) => {
+        const { error } = await supabase.auth.updateUser({ password });
+        if (!error) setPasswordRecovery(false);
+        return error?.message ?? null;
+      },
       refreshProfile: async () => {
         if (session?.user) {
           await loadProfile(session.user.id);
         }
       },
     }),
-    [session, profile, loading]
+    [session, profile, loading, passwordRecovery]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

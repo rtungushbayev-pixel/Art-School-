@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ReportsSection } from '../../components/ReportsSection';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
@@ -8,15 +9,69 @@ import { ListingCard } from '../../components/ListingCard';
 import { fetchPendingPosts } from '../../lib/posts';
 import { fetchPendingListings, ListingCardData } from '../../lib/marketplace';
 import { supabase } from '../../lib/supabase';
+import { Avatar } from '../../components/Avatar';
 import { sendPushNotification } from '../../lib/notifications';
 import { useAuth } from '../../hooks/useAuth';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { StaffStackParamList } from '../../navigation/types';
+import { useStrings } from '../../i18n';
 
-type ModerationScope = 'posts' | 'listings';
+const STRINGS = {
+  ru: {
+    failed: 'Не получилось',
+    works: 'Работы',
+    market: 'Продажа',
+    reports: 'Жалобы',
+    noPosts: 'Новых работ на проверку нет',
+    approve: 'Одобрить',
+    reject: 'Отклонить',
+    noRequests: 'Новых заявок от родителей нет',
+    parent: 'Родитель',
+    asksToLink: ' просит привязать ребёнка:',
+    student: 'Ученик',
+    linkHint: 'Подтвердите, только если уверены, что это родитель этого ребёнка.',
+    confirm: 'Подтвердить',
+    noListings: 'Новых объявлений на проверку нет',
+  },
+  kk: {
+    failed: 'Сәтсіз аяқталды',
+    works: 'Жұмыстар',
+    market: 'Сату',
+    reports: 'Шағымдар',
+    noPosts: 'Тексеруге жаңа жұмыстар жоқ',
+    approve: 'Мақұлдау',
+    reject: 'Қабылдамау',
+    noRequests: 'Ата-аналардан жаңа өтінімдер жоқ',
+    parent: 'Ата-ана',
+    asksToLink: ' баланы байланыстыруды сұрайды:',
+    student: 'Оқушы',
+    linkHint: 'Бұл осы баланың ата-анасы екеніне сенімді болсаңыз ғана растаңыз.',
+    confirm: 'Растау',
+    noListings: 'Тексеруге жаңа хабарландырулар жоқ',
+  },
+  en: {
+    failed: 'Something went wrong',
+    works: 'Artworks',
+    market: 'For sale',
+    reports: 'Reports',
+    noPosts: 'No new artworks to review',
+    approve: 'Approve',
+    reject: 'Reject',
+    noRequests: 'No new requests from parents',
+    parent: 'Parent',
+    asksToLink: ' asks to link a child:',
+    student: 'Student',
+    linkHint: 'Confirm only if you are sure this is the child’s parent.',
+    confirm: 'Confirm',
+    noListings: 'No new listings to review',
+  },
+};
+
+type ModerationScope = 'posts' | 'listings' | 'reports';
 
 export function ModerationScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<StaffStackParamList>>();
+  const s = useStrings(STRINGS);
   const { profile } = useAuth();
   const [scope, setScope] = useState<ModerationScope>('posts');
   const [posts, setPosts] = useState<PostCardData[]>([]);
@@ -28,7 +83,7 @@ export function ModerationScreen() {
     try {
       if (scope === 'posts') {
         setPosts(await fetchPendingPosts(profile?.id));
-      } else {
+      } else if (scope === 'listings') {
         setListings(await fetchPendingListings());
       }
     } finally {
@@ -70,20 +125,26 @@ export function ModerationScreen() {
           onPress={() => setScope('posts')}
           style={[styles.scopeOption, scope === 'posts' && styles.scopeOptionActive]}
         >
-          <Text style={[styles.scopeText, scope === 'posts' && styles.scopeTextActive]}>Работы в ленте</Text>
+          <Text style={[styles.scopeText, scope === 'posts' && styles.scopeTextActive]}>{s.works}</Text>
         </Pressable>
         <Pressable
           onPress={() => setScope('listings')}
           style={[styles.scopeOption, scope === 'listings' && styles.scopeOptionActive]}
         >
-          <Text style={[styles.scopeText, scope === 'listings' && styles.scopeTextActive]}>Товары на продажу</Text>
+          <Text style={[styles.scopeText, scope === 'listings' && styles.scopeTextActive]}>{s.market}</Text>
+        </Pressable>
+        <Pressable
+          onPress={() => setScope('reports')}
+          style={[styles.scopeOption, scope === 'reports' && styles.scopeOptionActive]}
+        >
+          <Text style={[styles.scopeText, scope === 'reports' && styles.scopeTextActive]}>{s.reports}</Text>
         </Pressable>
       </View>
 
       {scope === 'posts' ? (
         <>
           {posts.length === 0 && !loading ? (
-            <Text style={styles.empty}>Новых работ на проверку нет</Text>
+            <Text style={styles.empty}>{s.noPosts}</Text>
           ) : null}
           {posts.map((post) => (
             <View key={post.id}>
@@ -98,22 +159,24 @@ export function ModerationScreen() {
                   style={[styles.actionButton, styles.approve]}
                   onPress={() => moderatePost(post, 'approved')}
                 >
-                  <Text style={styles.actionText}>Одобрить</Text>
+                  <Text style={styles.actionText}>{s.approve}</Text>
                 </Pressable>
                 <Pressable
                   style={[styles.actionButton, styles.reject]}
                   onPress={() => moderatePost(post, 'rejected')}
                 >
-                  <Text style={styles.actionText}>Отклонить</Text>
+                  <Text style={styles.actionText}>{s.reject}</Text>
                 </Pressable>
               </View>
             </View>
           ))}
         </>
+      ) : scope === 'reports' ? (
+        <ReportsSection />
       ) : (
         <>
           {listings.length === 0 && !loading ? (
-            <Text style={styles.empty}>Новых объявлений на проверку нет</Text>
+            <Text style={styles.empty}>{s.noListings}</Text>
           ) : null}
           {listings.map((listing) => (
             <View key={listing.id}>
@@ -127,13 +190,13 @@ export function ModerationScreen() {
                   style={[styles.actionButton, styles.approve]}
                   onPress={() => moderateListing(listing, 'approved')}
                 >
-                  <Text style={styles.actionText}>Одобрить</Text>
+                  <Text style={styles.actionText}>{s.approve}</Text>
                 </Pressable>
                 <Pressable
                   style={[styles.actionButton, styles.reject]}
                   onPress={() => moderateListing(listing, 'rejected')}
                 >
-                  <Text style={styles.actionText}>Отклонить</Text>
+                  <Text style={styles.actionText}>{s.reject}</Text>
                 </Pressable>
               </View>
             </View>
@@ -165,4 +228,18 @@ const styles = StyleSheet.create({
   approve: { backgroundColor: colors.success },
   reject: { backgroundColor: colors.danger },
   actionText: { color: colors.white, fontWeight: '700' },
+  linkCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    gap: spacing.sm,
+  },
+  linkText: { color: colors.text },
+  linkName: { fontWeight: '700', color: colors.text },
+  linkChild: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  linkHint: { color: colors.textMuted, fontSize: 12 },
+  linkActions: { flexDirection: 'row', gap: spacing.sm },
 });

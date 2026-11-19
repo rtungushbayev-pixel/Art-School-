@@ -1,17 +1,22 @@
 import React, { useCallback, useMemo, useState } from 'react';
+import { isStaffRole } from '../../lib/roles';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { Card } from '../../components/Card';
+import { Button } from '../../components/Button';
 import { useAuth } from '../../hooks/useAuth';
+import { fetchChildren } from '../../lib/parents';
+import type { Branch, Profile } from '../../types/database';
+import { fetchBranches } from '../../lib/materials';
+import { supabase } from '../../lib/supabase';
 import {
-  DAY_NAMES,
   addDays,
   changeKey,
+  dayName,
   fetchLessonChanges,
   fetchScheduleLessons,
-  fetchParentGroupIds,
   fetchStudentGroupIds,
   formatDayMonth,
   formatTime,
@@ -22,13 +27,78 @@ import {
 import { colors, radius, spacing } from '../../theme/colors';
 import type { LessonChange } from '../../types/database';
 import type { StaffStackParamList } from '../../navigation/types';
+import { useStrings } from '../../i18n';
+
+const STRINGS = {
+  ru: {
+    events: 'Выставки и конкурсы',
+    thisWeek: 'Эта неделя',
+    nextWeek: 'Следующая неделя',
+    lastWeek: 'Прошлая неделя',
+    child: 'Ребёнок',
+    allGroups: 'Все группы',
+    myGroups: 'Мои группы',
+    emptyStaff: 'Пока нет занятий в расписании',
+    emptyParentChild: 'Ребёнок пока не записан в группу, или у группы нет занятий',
+    emptyParentNoChild: 'Добавьте ребёнка в Профиль → «Мои дети», и здесь появится его расписание',
+    emptyStudent: 'Вы пока не записаны в группу, или у группы нет занятий',
+    addChild: '+ Добавить ребёнка',
+    today: 'Сегодня',
+    staffHint: 'Нажмите на занятие, чтобы отменить или перенести его на эту дату',
+    room: (room: string) => `Кабинет ${room}`,
+    cancelled: 'Отменено',
+    changedWas: 'Изменено: было',
+    roomShort: (room: string) => `, каб. ${room}`,
+  },
+  kk: {
+    events: 'Көрмелер мен байқаулар',
+    thisWeek: 'Осы апта',
+    nextWeek: 'Келесі апта',
+    lastWeek: 'Өткен апта',
+    child: 'Бала',
+    allGroups: 'Барлық топтар',
+    myGroups: 'Менің топтарым',
+    emptyStaff: 'Кестеде әзірге сабақ жоқ',
+    emptyParentChild: 'Бала әзірге топқа жазылмаған немесе топта сабақ жоқ',
+    emptyParentNoChild: 'Баланы Профиль → «Менің балаларым» бөліміне қосыңыз, сонда мұнда оның кестесі шығады',
+    emptyStudent: 'Сіз әзірге топқа жазылмағансыз немесе топта сабақ жоқ',
+    addChild: '+ Бала қосу',
+    today: 'Бүгін',
+    staffHint: 'Сабақты осы күнге болдырмау немесе ауыстыру үшін оны басыңыз',
+    room: (room: string) => `${room} кабинет`,
+    cancelled: 'Болдырылмады',
+    changedWas: 'Өзгертілді: бұрын',
+    roomShort: (room: string) => `, ${room} каб.`,
+  },
+  en: {
+    events: 'Exhibitions and competitions',
+    thisWeek: 'This week',
+    nextWeek: 'Next week',
+    lastWeek: 'Last week',
+    child: 'Child',
+    allGroups: 'All groups',
+    myGroups: 'My groups',
+    emptyStaff: 'No classes in the schedule yet',
+    emptyParentChild: 'Your child is not in a group yet, or the group has no classes',
+    emptyParentNoChild: 'Add your child in Profile → “My children” and their schedule will appear here',
+    emptyStudent: 'You are not in a group yet, or the group has no classes',
+    addChild: '+ Add child',
+    today: 'Today',
+    staffHint: 'Tap a class to cancel or reschedule it for this date',
+    room: (room: string) => `Room ${room}`,
+    cancelled: 'Cancelled',
+    changedWas: 'Changed: was',
+    roomShort: (room: string) => `, room ${room}`,
+  },
+};
 
 // Расписание на конкретную неделю: регулярные занятия + разовые изменения
 // (отмена, перенос) на даты этой недели. Ученик видит занятия своих групп,
 // сотрудник — всей школы и может отменить или перенести занятие на дату.
 export function ScheduleScreen() {
   const { profile } = useAuth();
-  const isStaff = profile?.role === 'staff';
+  const s = useStrings(STRINGS);
+  const isStaff = isStaffRole(profile?.role);
   const navigation = useNavigation<NativeStackNavigationProp<StaffStackParamList>>();
 
   const [weekOffset, setWeekOffset] = useState(0);
@@ -36,6 +106,13 @@ export function ScheduleScreen() {
   const [changes, setChanges] = useState<Map<string, LessonChange>>(new Map());
   const [groupFilter, setGroupFilter] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  // Родитель: дети и выбранный ребёнок — показываем расписание его групп.
+  const isParent = profile?.role === 'parent';
+  const [children, setChildren] = useState<Profile[]>([]);
+  const [childId, setChildId] = useState<string | null>(null);
+  // Сотрудник: свои группы или все группы одного филиала (групп в школе много).
+  const [scope, setScope] = useState<string | null>(null);
+  const [scopes, setScopes] = useState<{ id: string; name: string }[]>([]);
 
   const today = toDateKey(new Date());
   const weekStart = useMemo(() => addDays(startOfWeek(new Date()), weekOffset * 7), [weekOffset]);
@@ -45,11 +122,33 @@ export function ScheduleScreen() {
     if (!profile) return;
     setLoading(true);
     try {
-      const groupIds = isStaff
-        ? null
-        : profile.role === 'parent'
-          ? await fetchParentGroupIds(profile.id)
-          : await fetchStudentGroupIds(profile.id);
+      let groupIds: string[] | null = null;
+      if (isParent) {
+        const kids = await fetchChildren(profile.id);
+        setChildren(kids);
+        const selected = kids.find((k) => k.id === childId) ?? kids[0] ?? null;
+        if (selected && selected.id !== childId) setChildId(selected.id);
+        // Расписание — только групп привязанных детей.
+        groupIds = selected ? await fetchStudentGroupIds(selected.id) : [];
+      } else if (!isStaff) {
+        groupIds = await fetchStudentGroupIds(profile.id);
+      } else {
+        const [{ data: groupRows }, branchList] = await Promise.all([
+          supabase.from('groups').select('id, branch_id, teacher_id'),
+          fetchBranches().catch(() => [] as Branch[]),
+        ]);
+        const all = (groupRows as { id: string; branch_id: string | null; teacher_id: string | null }[]) ?? [];
+        const mine = all.filter((g) => g.teacher_id === profile.id);
+        const options = [
+          ...(mine.length > 0 ? [{ id: 'mine', name: s.myGroups }] : []),
+          ...branchList.filter((b) => all.some((g) => g.branch_id === b.id)).map((b) => ({ id: b.id, name: b.name })),
+        ];
+        setScopes(options);
+        const current = options.find((o) => o.id === scope)?.id ?? options[0]?.id ?? null;
+        if (current !== scope) setScope(current);
+        groupIds =
+          current === 'mine' ? mine.map((g) => g.id) : current ? all.filter((g) => g.branch_id === current).map((g) => g.id) : null;
+      }
       const lessonRows = await fetchScheduleLessons(groupIds);
       const changeRows = await fetchLessonChanges(
         lessonRows.map((l) => l.id),
@@ -62,7 +161,7 @@ export function ScheduleScreen() {
       // Нет сети — оставляем то, что уже показано; потянуть вниз, чтобы повторить.
     }
     setLoading(false);
-  }, [profile, isStaff, weekDates]);
+  }, [profile, isStaff, isParent, childId, weekDates, scope, s.myGroups]);
 
   useFocusEffect(
     useCallback(() => {
@@ -80,15 +179,18 @@ export function ScheduleScreen() {
 
   const weekTitle =
     weekOffset === 0
-      ? 'Эта неделя'
+      ? s.thisWeek
       : weekOffset === 1
-        ? 'Следующая неделя'
+        ? s.nextWeek
         : weekOffset === -1
-          ? 'Прошлая неделя'
+          ? s.lastWeek
           : `${formatDayMonth(weekDates[0])} – ${formatDayMonth(weekDates[6])}`;
 
   return (
     <Screen scroll refreshing={loading} onRefresh={load}>
+      <View style={styles.checkIn}>
+        <Button title={s.events} variant="secondary" onPress={() => (navigation as any).navigate('Events')} />
+      </View>
 
       <View style={styles.weekNav}>
         <Pressable hitSlop={12} onPress={() => setWeekOffset((w) => w - 1)}>
@@ -105,9 +207,38 @@ export function ScheduleScreen() {
         </Pressable>
       </View>
 
+      {isParent && children.length > 0 ? (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filters}>
+          {children.map((child) => (
+            <Chip
+              key={child.id}
+              label={child.full_name || s.child}
+              active={childId === child.id}
+              onPress={() => setChildId(child.id)}
+            />
+          ))}
+        </ScrollView>
+      ) : null}
+
+      {isStaff && scopes.length > 1 ? (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filters}>
+          {scopes.map((o) => (
+            <Chip
+              key={o.id}
+              label={o.name}
+              active={scope === o.id}
+              onPress={() => {
+                setGroupFilter(null);
+                setScope(o.id);
+              }}
+            />
+          ))}
+        </ScrollView>
+      ) : null}
+
       {isStaff && groups.length > 1 ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filters}>
-          <Chip label="Все группы" active={!groupFilter} onPress={() => setGroupFilter(null)} />
+          <Chip label={s.allGroups} active={!groupFilter} onPress={() => setGroupFilter(null)} />
           {groups.map(([id, name]) => (
             <Chip key={id} label={name} active={groupFilter === id} onPress={() => setGroupFilter(id)} />
           ))}
@@ -117,10 +248,21 @@ export function ScheduleScreen() {
       {visibleLessons.length === 0 && !loading ? (
         <Card>
           <Text style={styles.empty}>
-            {isStaff ? 'Пока нет занятий в расписании' : profile?.role === 'parent'
-                ? 'Группа не выбрана, или у группы пока нет занятий'
-                : 'Вы пока не записаны в группу, или у группы нет занятий'}
+            {isStaff ? s.emptyStaff : isParent
+                ? children.length > 0
+                  ? s.emptyParentChild
+                  : s.emptyParentNoChild
+                : s.emptyStudent}
           </Text>
+          {isParent && children.length === 0 ? (
+            <Pressable
+              style={styles.addChild}
+              // AddChild есть только в стеке родителя.
+              onPress={() => (navigation as any).navigate('AddChild')}
+            >
+              <Text style={styles.addChildText}>{s.addChild}</Text>
+            </Pressable>
+          ) : null}
         </Card>
       ) : null}
 
@@ -135,9 +277,9 @@ export function ScheduleScreen() {
           <View key={dateKey} style={[styles.dayBlock, isPast && styles.past]}>
             <View style={styles.dayHeader}>
               <Text style={[styles.dayTitle, isToday && styles.todayTitle]}>
-                {DAY_NAMES[day]}, {formatDayMonth(date)}
+                {dayName(day)}, {formatDayMonth(date)}
               </Text>
-              {isToday ? <Text style={styles.todayBadge}>Сегодня</Text> : null}
+              {isToday ? <Text style={styles.todayBadge}>{s.today}</Text> : null}
             </View>
             {dayLessons.map((lesson) => {
               const change = changes.get(changeKey(lesson.id, dateKey));
@@ -158,13 +300,14 @@ export function ScheduleScreen() {
       })}
 
       {isStaff && visibleLessons.length > 0 ? (
-        <Text style={styles.hint}>Нажмите на занятие, чтобы отменить или перенести его на эту дату</Text>
+        <Text style={styles.hint}>{s.staffHint}</Text>
       ) : null}
     </Screen>
   );
 }
 
 function LessonCard({ lesson, change }: { lesson: ScheduleLesson; change?: LessonChange }) {
+  const s = useStrings(STRINGS);
   const cancelled = !!change?.cancelled;
   const moved = !cancelled && !!change && (!!change.start_time || !!change.room);
   const start = !cancelled && change?.start_time ? change.start_time : lesson.start_time;
@@ -183,12 +326,12 @@ function LessonCard({ lesson, change }: { lesson: ScheduleLesson; change?: Lesso
           {lesson.group_name}
           {lesson.teacher_name ? ` · ${lesson.teacher_name}` : ''}
         </Text>
-        {room ? <Text style={styles.meta}>Кабинет {room}</Text> : null}
-        {cancelled ? <Text style={[styles.badge, styles.badgeCancelled]}>Отменено</Text> : null}
+        {room ? <Text style={styles.meta}>{s.room(room)}</Text> : null}
+        {cancelled ? <Text style={[styles.badge, styles.badgeCancelled]}>{s.cancelled}</Text> : null}
         {moved ? (
           <Text style={[styles.badge, styles.badgeMoved]}>
-            Изменено: было {formatTime(lesson.start_time)}–{formatTime(lesson.end_time)}
-            {lesson.room ? `, каб. ${lesson.room}` : ''}
+            {s.changedWas} {formatTime(lesson.start_time)}–{formatTime(lesson.end_time)}
+            {lesson.room ? s.roomShort(lesson.room) : ''}
           </Text>
         ) : null}
         {change?.note ? <Text style={styles.note}>{change.note}</Text> : null}
@@ -206,8 +349,18 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
 }
 
 const styles = StyleSheet.create({
+  checkIn: { marginBottom: spacing.md },
   header: { fontSize: 22, fontWeight: '700', color: colors.text, marginBottom: spacing.md },
   empty: { color: colors.textMuted, textAlign: 'center' },
+  addChild: {
+    alignSelf: 'center',
+    marginTop: spacing.md,
+    backgroundColor: colors.primary,
+    borderRadius: 999,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm + 2,
+  },
+  addChildText: { color: colors.white, fontWeight: '700' },
   weekNav: {
     flexDirection: 'row',
     alignItems: 'center',

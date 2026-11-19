@@ -1,15 +1,24 @@
 import { supabase } from './supabase';
+import { MAX_AVATAR_SIDE, shrinkAsset } from './imageResize';
 import { askImageSource, pickImage } from './pickImage';
+import { pick } from '../i18n';
+
+const STRINGS = {
+  ru: { profilePhoto: 'Фото профиля' },
+  kk: { profilePhoto: 'Профиль фотосы' },
+  en: { profilePhoto: 'Profile photo' },
+};
 
 /**
  * Спрашивает, откуда взять фото, загружает его в бакет avatars и возвращает
  * публичную ссылку. null — если пользователь передумал.
  */
 export async function pickAndUploadAvatar(profileId: string): Promise<string | null> {
-  const source = await askImageSource('Фото профиля');
+  const source = await askImageSource(pick(STRINGS).profilePhoto);
   if (!source) return null;
-  const asset = await pickImage(source);
-  if (!asset) return null;
+  const picked = await pickImage(source);
+  if (!picked) return null;
+  const asset = await shrinkAsset(picked, MAX_AVATAR_SIDE);
 
   const ext = asset.uri.split('.').pop()?.toLowerCase() || 'jpg';
   const path = `${profileId}/avatar.${ext}`;
