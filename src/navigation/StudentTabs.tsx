@@ -11,12 +11,13 @@ import { EventsScreen } from '../screens/shared/EventsScreen';
 import { useStrings } from '../i18n';
 import { useAuth } from '../hooks/useAuth';
 import { useQrCheckInAvailable } from '../hooks/useQrCheckIn';
+import { useHeroOnboarding } from '../lib/heroOnboarding';
 
 const STRINGS = {
   ru: {
     scan: 'Сканировать QR',
     schedule: 'Расписание',
-    community: 'Комьюнити',
+    community: 'Арт-двор',
     events: 'Конкурсы',
     eventsTitle: 'Выставки и конкурсы',
     profile: 'Профиль',
@@ -24,7 +25,7 @@ const STRINGS = {
   kk: {
     scan: 'QR сканерлеу',
     schedule: 'Кесте',
-    community: 'Қауымдастық',
+    community: 'Арт-аула',
     events: 'Байқаулар',
     eventsTitle: 'Көрмелер мен байқаулар',
     profile: 'Профиль',
@@ -32,7 +33,7 @@ const STRINGS = {
   en: {
     scan: 'Scan QR',
     schedule: 'Schedule',
-    community: 'Community',
+    community: 'Art Yard',
     events: 'Contests',
     eventsTitle: 'Exhibitions and competitions',
     profile: 'Profile',
@@ -55,6 +56,8 @@ export function StudentTabs() {
   const s = useStrings(STRINGS);
   const { profile } = useAuth();
   const showScan = useQrCheckInAvailable(profile);
+  // Первый вход ученика: предлагаем выбрать героя.
+  useHeroOnboarding(profile);
   return (
     <Tab.Navigator initialRouteName="FeedTab" screenOptions={makeTabScreenOptions(TAB_CONFIG, { showFriends: true, showMarket: true })}>
       <Tab.Screen name="ScheduleTab" component={ScheduleScreen} options={{ title: s.schedule }} />

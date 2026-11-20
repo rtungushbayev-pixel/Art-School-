@@ -9,6 +9,8 @@ import { NewCommunityPostScreen } from '../screens/shared/NewCommunityPostScreen
 import { EditProfileScreen } from '../screens/shared/EditProfileScreen';
 import { NotificationSettingsScreen } from '../screens/shared/NotificationSettingsScreen';
 import { UserProfileScreen } from '../screens/shared/UserProfileScreen';
+import { HeroScreen } from '../screens/shared/HeroScreen';
+import { HeroPickerScreen } from '../screens/student/HeroPickerScreen';
 import { PortfolioScreen } from '../screens/shared/PortfolioScreen';
 import { EditArtworkScreen } from '../screens/shared/EditArtworkScreen';
 import { EditAchievementScreen } from '../screens/shared/EditAchievementScreen';
@@ -40,6 +42,7 @@ const STRINGS = {
     editProfile: 'Редактирование профиля',
     notifications: 'Уведомления',
     profile: 'Профиль',
+    hero: 'Герой',
     portfolio: 'Портфолио',
     aboutWork: 'О работе',
     achievement: 'Достижение',
@@ -63,6 +66,7 @@ const STRINGS = {
     editProfile: 'Профильді өңдеу',
     notifications: 'Хабарландырулар',
     profile: 'Профиль',
+    hero: 'Кейіпкер',
     portfolio: 'Портфолио',
     aboutWork: 'Жұмыс туралы',
     achievement: 'Жетістік',
@@ -86,6 +90,7 @@ const STRINGS = {
     editProfile: 'Edit profile',
     notifications: 'Notifications',
     profile: 'Profile',
+    hero: 'Hero',
     portfolio: 'Portfolio',
     aboutWork: 'About the artwork',
     achievement: 'Achievement',
@@ -130,6 +135,12 @@ export function StudentNavigator() {
         options={{ title: s.notifications }}
       />
       <Stack.Screen name="UserProfile" component={UserProfileScreen} options={{ title: s.profile }} />
+      <Stack.Screen name="Hero" component={HeroScreen} options={{ title: s.hero }} />
+      <Stack.Screen
+        name="HeroPicker"
+        component={HeroPickerScreen}
+        options={{ title: s.hero, presentation: 'modal' }}
+      />
       <Stack.Screen name="Portfolio" component={PortfolioScreen} options={{ title: s.portfolio }} />
       <Stack.Screen name="EditArtwork" component={EditArtworkScreen} options={{ title: s.aboutWork }} />
       <Stack.Screen name="EditAchievement" component={EditAchievementScreen} options={{ title: s.achievement }} />

@@ -6,6 +6,8 @@ import { Screen } from '../../components/Screen';
 import { Button } from '../../components/Button';
 import { DeleteAccountButton } from '../../components/DeleteAccountButton';
 import { ProfileHeader } from '../../components/ProfileHeader';
+import { HeroCard } from '../../components/HeroCard';
+import { useHero } from '../../hooks/useHero';
 import { PortfolioSections } from '../../components/PortfolioSections';
 import { ProfileTabs, type ProfileTab } from '../../components/ProfileTabs';
 import { useAuth } from '../../hooks/useAuth';
@@ -90,6 +92,7 @@ export function ProfileScreen() {
   const { profile, signOut, refreshProfile } = useAuth();
   const s = useStrings(STRINGS);
   const { posts, achievements, groups } = useStudentPortfolio(profile?.id, profile?.id);
+  const heroState = useHero(profile, groups);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [tab, setTab] = useState<ProfileTab>('profile');
   const [headsBranch, setHeadsBranch] = useState(false);
@@ -125,6 +128,15 @@ export function ProfileScreen() {
         avatarUploading={avatarUploading}
         onAddGoal={() => navigation.navigate('EditProfile')}
       />
+
+      {profile.role === 'student' ? (
+        <HeroCard
+          state={heroState}
+          isOwner
+          onOpen={() => navigation.navigate('Hero', { userId: profile.id })}
+          onChoose={() => navigation.navigate('HeroPicker')}
+        />
+      ) : null}
 
       <Button title={s.profileSettings} onPress={() => navigation.navigate('ProfileSettings')} />
 
