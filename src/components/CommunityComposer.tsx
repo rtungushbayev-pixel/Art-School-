@@ -50,9 +50,9 @@ const STRINGS = {
   },
   en: {
     sent: 'Sent',
-    sentMessage: 'Your post will appear in the Community after review. For now you can see it in the Feed under “Mine”.',
+    sentMessage: 'Your post will appear in the Art Yard after review. For now you can see it in the Feed under “Mine”.',
     published: 'Published',
-    publishedMessage: 'Your post is now in the Community.',
+    publishedMessage: 'Your post is now in the Art Yard.',
     rejectedTitle: 'Your post did not pass review',
     rejectedMessage: 'See the reason in the Feed under “Mine”. If you think this is a mistake, write to Help.',
     publishFailed: 'Could not publish',
