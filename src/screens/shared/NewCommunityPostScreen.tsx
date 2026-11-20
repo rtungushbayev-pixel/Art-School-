@@ -4,7 +4,7 @@ import { Screen } from '../../components/Screen';
 import { CommunityComposer } from '../../components/CommunityComposer';
 import { useAuth } from '../../hooks/useAuth';
 
-// Новая публикация в Комьюнити: открывается кнопкой «+» в ленте.
+// Новая публикация в Арт-дворе: открывается кнопкой «+» в ленте.
 export function NewCommunityPostScreen() {
   const navigation = useNavigation();
   const { profile } = useAuth();

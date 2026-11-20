@@ -83,12 +83,12 @@ export function FeedScreen() {
   const [posts, setPosts] = useState<PostCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<FeedView>('all');
-  // Родитель смотрит Комьюнити, но сам не публикует.
+  // Родитель смотрит Арт-двор, но сам не публикует.
   const canPost = !!profile && profile.role !== 'parent';
   // Друзья — у учеников и сотрудников.
   const hasFriends = canPost;
   const [friends, setFriends] = useState<Profile[]>([]);
-  // Нажатие на значок «Комьюнити» — лента к началу, к самой свежей публикации.
+  // Нажатие на значок «Арт-двор» — лента к началу, к самой свежей публикации.
   const [scrollTop, setScrollTop] = useState(0);
   const [storyGroups, setStoryGroups] = useState<StoryGroup[]>([]);
   const [openStory, setOpenStory] = useState<number | null>(null);
