@@ -94,14 +94,21 @@ Deno.serve(async (req) => {
       .eq('post_id', postId);
     if (reports) return json(200, { skipped: true, reason: 'reported' });
 
-    // Лимиты: попытки на работу и вызовы за сутки. Сверх лимита — к сотруднику.
-    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const { count: calls } = await admin
-      .from('ai_moderation_calls')
-      .select('user_id', { count: 'exact', head: true })
-      .eq('user_id', auth.user.id)
-      .gte('created_at', since);
-    if ((post.ai_attempts ?? 0) >= MAX_ATTEMPTS_PER_POST || (calls ?? 0) >= MAX_CALLS_PER_DAY) {
+    const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
+    if (!apiKey) return json(200, { skipped: true, reason: 'no api key' });
+
+    // Лимиты: попытки на работу и вызовы за сутки. Проверка и учёт попытки —
+    // одной функцией в базе под блокировкой, чтобы параллельные запросы не
+    // обошли лимит (миграция 0054). Сверх лимита — к сотруднику.
+    const { data: claim, error: claimError } = await admin.rpc('claim_post_moderation', {
+      p_post_id: postId,
+      p_user_id: auth.user.id,
+      p_max_attempts: MAX_ATTEMPTS_PER_POST,
+      p_max_calls: MAX_CALLS_PER_DAY,
+    });
+    if (claimError) throw claimError;
+    if (claim === 'skip') return json(200, { skipped: true });
+    if (claim === 'limit') {
       await admin.rpc('apply_ai_decision', {
         p_post_id: postId,
         p_version: post.content_version,
@@ -110,12 +117,6 @@ Deno.serve(async (req) => {
       });
       return json(200, { decision: 'review' });
     }
-
-    const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
-    if (!apiKey) return json(200, { skipped: true, reason: 'no api key' });
-
-    await admin.from('ai_moderation_calls').insert({ user_id: auth.user.id, post_id: postId });
-    await admin.from('posts').update({ ai_attempts: (post.ai_attempts ?? 0) + 1 }).eq('id', postId);
 
     const { data: images } = await admin
       .from('post_images')

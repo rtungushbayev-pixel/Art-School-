@@ -57,6 +57,16 @@ Deno.serve(async (req) => {
       return json(403, { error: 'reauthentication_required' });
     }
 
+    // Пока за учеником числится долг, аккаунт не удаляем: вместе с ним
+    // каскадом пропали бы начисления и оплаты. Пусть сначала обратится в школу.
+    const { data: balances } = await admin
+      .from('student_balances')
+      .select('balance')
+      .eq('student_id', userId);
+    if ((balances ?? []).some((b: { balance: number | string }) => Number(b.balance) < 0)) {
+      return json(409, { error: 'outstanding_balance' });
+    }
+
     await removeUserFiles(admin, userId);
     // Push-токены удалятся каскадом вместе с профилем.
     const { error: deleteError } = await admin.auth.admin.deleteUser(userId);

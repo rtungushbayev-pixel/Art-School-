@@ -19,6 +19,7 @@ const STRINGS = {
     password: 'Введите пароль, чтобы подтвердить удаление',
     wrongPassword: 'Неверный пароль',
     confirmDelete: 'Удалить навсегда',
+    debt: 'За вами числится задолженность. Чтобы удалить аккаунт, обратитесь в администрацию школы.',
   },
   kk: {
     button: 'Аккаунтты жою',
@@ -32,6 +33,7 @@ const STRINGS = {
     password: 'Жоюды растау үшін құпиясөзді енгізіңіз',
     wrongPassword: 'Құпиясөз қате',
     confirmDelete: 'Біржола жою',
+    debt: 'Сізде қарыз бар. Аккаунтты жою үшін мектеп әкімшілігіне хабарласыңыз.',
   },
   en: {
     button: 'Delete account',
@@ -45,6 +47,7 @@ const STRINGS = {
     password: 'Enter your password to confirm deletion',
     wrongPassword: 'Wrong password',
     confirmDelete: 'Delete forever',
+    debt: 'You have an outstanding balance. To delete the account, please contact the school office.',
   },
 };
 
@@ -72,7 +75,9 @@ export function DeleteAccountButton() {
     const { error } = await supabase.functions.invoke('delete-account', { method: 'POST' });
     setBusy(false);
     if (error) {
-      Alert.alert(s.failed);
+      // Сервер отвечает 409 outstanding_balance, если есть долг.
+      const status = (error as { context?: { status?: number } }).context?.status;
+      Alert.alert(status === 409 ? s.debt : s.failed);
       return;
     }
     // Аккаунта на сервере уже нет — просто забываем сессию на телефоне.
