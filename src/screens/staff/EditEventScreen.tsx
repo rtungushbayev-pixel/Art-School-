@@ -5,7 +5,16 @@ import { Screen } from '../../components/Screen';
 import { TextField } from '../../components/TextField';
 import { Button } from '../../components/Button';
 import { errorText } from '../../lib/errors';
-import { EVENT_KINDS, eventKindLabel, fetchEvent, saveEvent, type EventKind } from '../../lib/events';
+import {
+  EVENT_KINDS,
+  EVENT_LEVELS,
+  eventKindLabel,
+  eventLevelLabel,
+  fetchEvent,
+  saveEvent,
+  type EventKind,
+  type EventLevel,
+} from '../../lib/events';
 import { useStrings } from '../../i18n';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { StaffStackParamList } from '../../navigation/types';
@@ -16,6 +25,8 @@ const STRINGS = {
     title: 'Название',
     titlePlaceholder: 'Например: Весенняя выставка учеников',
     kind: 'Тип',
+    level: 'Уровень',
+    levelNone: 'Не указан',
     startsOn: 'Дата начала (ГГГГ-ММ-ДД)',
     endsOn: 'Дата окончания (необязательно)',
     signupUntil: 'Дедлайн: приём работ / запись до (иначе до начала)',
@@ -34,6 +45,8 @@ const STRINGS = {
     title: 'Атауы',
     titlePlaceholder: 'Мысалы: Оқушылардың көктемгі көрмесі',
     kind: 'Түрі',
+    level: 'Деңгейі',
+    levelNone: 'Көрсетілмеген',
     startsOn: 'Басталу күні (ЖЖЖЖ-АА-КК)',
     endsOn: 'Аяқталу күні (міндетті емес)',
     signupUntil: 'Соңғы мерзім: жұмыстар / жазылу (міндетті емес)',
@@ -52,6 +65,8 @@ const STRINGS = {
     title: 'Title',
     titlePlaceholder: 'For example: Spring student exhibition',
     kind: 'Type',
+    level: 'Level',
+    levelNone: 'Not set',
     startsOn: 'Start date (YYYY-MM-DD)',
     endsOn: 'End date (optional)',
     signupUntil: 'Deadline: submissions / sign-up until (otherwise until start)',
@@ -77,6 +92,7 @@ export function EditEventScreen() {
   const s = useStrings(STRINGS);
   const [title, setTitle] = useState('');
   const [kind, setKind] = useState<EventKind>('exhibition');
+  const [level, setLevel] = useState<EventLevel | null>(null);
   const [startsOn, setStartsOn] = useState('');
   const [endsOn, setEndsOn] = useState('');
   const [signupUntil, setSignupUntil] = useState('');
@@ -92,6 +108,7 @@ export function EditEventScreen() {
         if (!e) return;
         setTitle(e.title);
         setKind(e.kind);
+        setLevel(e.level ?? null);
         setStartsOn(e.starts_on);
         setEndsOn(e.ends_on ?? '');
         setSignupUntil(e.signup_until ?? '');
@@ -124,6 +141,7 @@ export function EditEventScreen() {
       await saveEvent(eventId, {
         title: title.trim(),
         kind,
+        level,
         starts_on: start,
         ends_on: end || null,
         signup_until: until || null,
@@ -147,6 +165,14 @@ export function EditEventScreen() {
         {EVENT_KINDS.map((k) => (
           <Pressable key={k} onPress={() => setKind(k)} style={[styles.chip, kind === k && styles.chipActive]}>
             <Text style={[styles.chipText, kind === k && styles.chipTextActive]}>{eventKindLabel(k)}</Text>
+          </Pressable>
+        ))}
+      </View>
+      <Text style={styles.label}>{s.level}</Text>
+      <View style={styles.row}>
+        {([null, ...EVENT_LEVELS] as (EventLevel | null)[]).map((l) => (
+          <Pressable key={l ?? 'none'} onPress={() => setLevel(l)} style={[styles.chip, level === l && styles.chipActive]}>
+            <Text style={[styles.chipText, level === l && styles.chipTextActive]}>{l ? eventLevelLabel(l) : s.levelNone}</Text>
           </Pressable>
         ))}
       </View>

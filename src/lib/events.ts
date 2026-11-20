@@ -5,6 +5,10 @@ import { pick, type Translations } from '../i18n';
 export type EventKind = 'exhibition' | 'competition' | 'masterclass' | 'other';
 export const EVENT_KINDS: EventKind[] = ['exhibition', 'competition', 'masterclass', 'other'];
 
+// Уровень: городской (местный), республиканский или зарубежный.
+export type EventLevel = 'city' | 'republic' | 'international';
+export const EVENT_LEVELS: EventLevel[] = ['city', 'republic', 'international'];
+
 export interface SchoolEvent {
   id: string;
   title: string;
@@ -15,6 +19,7 @@ export interface SchoolEvent {
   ends_on: string | null;
   signup_until: string | null;
   max_participants: number | null;
+  level: EventLevel | null;
   created_at: string;
 }
 
@@ -33,6 +38,25 @@ const KIND_LABELS: Translations<Record<EventKind, string>> = {
 
 export function eventKindLabel(kind: EventKind): string {
   return pick(KIND_LABELS)[kind];
+}
+
+const LEVEL_LABELS: Translations<Record<EventLevel, string>> = {
+  ru: { city: 'Городской', republic: 'Республиканский', international: 'Зарубежный' },
+  kk: { city: 'Қалалық', republic: 'Республикалық', international: 'Шетелдік' },
+  en: { city: 'City', republic: 'National', international: 'International' },
+};
+
+export function eventLevelLabel(level: EventLevel): string {
+  return pick(LEVEL_LABELS)[level];
+}
+
+// Поиск по названию, месту и описанию без учёта регистра и разницы е/ё.
+export function matchesEventQuery(e: SchoolEvent, query: string): boolean {
+  const norm = (v: string) => v.toLowerCase().replace(/ё/g, 'е');
+  const words = norm(query).split(/\s+/).filter(Boolean);
+  if (words.length === 0) return true;
+  const hay = norm([e.title, e.location ?? '', e.description ?? '', eventKindLabel(e.kind), e.level ? eventLevelLabel(e.level) : ''].join(' '));
+  return words.every((w) => hay.includes(w));
 }
 
 export function formatEventDate(iso: string): string {

@@ -114,6 +114,9 @@ export function makeTabScreenOptions(
       headerStyle: { backgroundColor: colors.surface },
       headerTitleStyle: { color: colors.text, fontWeight: '700' },
       headerShadowVisible: false,
+      // Название нижней вкладки уже видно в нижней панели, поэтому вверху его не повторяем.
+      // Экраны, открытые иконками справа (Друзья, Продажа работ, Помощь), свой заголовок сохраняют.
+      headerTitle: '',
       headerRight: () => <HeaderActions {...actions} />,
       tabBarActiveTintColor: colors.primary,
       tabBarInactiveTintColor: colors.textMuted,
