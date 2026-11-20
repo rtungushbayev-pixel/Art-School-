@@ -1,83 +1,96 @@
-import React, { useCallback, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { Button } from '../../components/Button';
-import { HeroAvatar } from '../../components/HeroAvatar';
+import { HeroFigure } from '../../components/HeroFigure';
 import { useAuth } from '../../hooks/useAuth';
 import { useHero } from '../../hooks/useHero';
 import { supabase } from '../../lib/supabase';
+import { errorText } from '../../lib/errors';
 import {
+  HERO_SKINS,
   MAX_LEVEL,
-  POWER_THRESHOLDS,
-  powerName,
+  heroStory,
+  levelGroupName,
+  saveHeroSkin,
+  skinName,
+  skinRarity,
+  skinUnlockText,
+  stageForLevel,
   stageName,
-  stageUnlockText,
+  type HeroSkin,
 } from '../../lib/heroes';
-import type { HeroPower, HeroStage } from '../../lib/heroArt';
 import { useLanguage, useStrings } from '../../i18n';
 import { colors, radius, shadow, spacing } from '../../theme/colors';
 import type { Profile } from '../../types/database';
 import type { StudentStackParamList } from '../../navigation/types';
 
-const STAGES: HeroStage[] = [1, 2, 3, 4, 5];
-const POWERS: Exclude<HeroPower, 0>[] = [1, 2, 3, 4];
+const LEVELS = Array.from({ length: MAX_LEVEL }, (_, i) => i + 1);
+
+// Цвет плашки редкости скина.
+const RARITY_COLOR: Record<HeroSkin, string> = {
+  base: '#B9A27E',
+  rare: '#2E8B57',
+  epic: '#7B4FD6',
+  legendary: '#D9A441',
+};
 
 const STRINGS = {
   ru: {
-    level: (n: number, max: number) => `Уровень ${n} из ${max}`,
-    levelHint: 'Герой взрослеет, когда школа переводит тебя в следующую группу или на следующий курс.',
-    growth: 'Путь героя',
-    power: 'Сила за конкурсы',
-    powerHint:
-      'Участвуй в конкурсах и выставках школы, и твой герой станет сильнее. 1 очко — за участие в прошедшем конкурсе или выставке, 2 очка — за достижение, которое подтвердила школа, и ещё 2 — если это 1–3 место, Гран-при или звание лауреата.',
+    level: (n: number) => `${n} уровень`,
+    levelOf: (n: number, max: number) => `Уровень ${n} из ${max}`,
+    lockedLevel: (group: string) => `Откроется: ${group}. Герой растёт, когда школа переводит тебя в следующую группу или на следующий курс.`,
+    skins: 'Скины',
+    skinsHint: 'Новые скины открываются за конкурсы и выставки школы.',
+    wearing: 'Надето',
+    wear: 'Надеть',
+    saveFailed: 'Не удалось надеть скин',
+    contests: 'Мои конкурсы',
+    participations: 'участий',
+    prizes: 'призовых мест',
+    top: 'Гран-при и 1 мест',
     portraits: 'Настоящие автопортреты',
     portraitsHint: 'Так художник выглядел в разные годы. Картины — общественное достояние (Wikimedia Commons).',
-    points: (n: number) => `Очков силы: ${n}`,
-    toNext: (n: number, name: string) => `Ещё ${n} — и откроется «${name}»`,
-    maxPower: 'Открыта вся сила. Ты — магистр искусств!',
-    pointsNeeded: (n: number) => `от ${n} очк.`,
-    story: 'История героя',
-    locked: (when: string) => `Глава откроется ${when}`,
     change: 'Сменить героя',
     notChosen: 'Герой ещё не выбран',
   },
   kk: {
-    level: (n: number, max: number) => `${max} ішінен ${n}-деңгей`,
-    levelHint: 'Мектеп сені келесі топқа немесе курсқа ауыстырғанда кейіпкер есейеді.',
-    growth: 'Кейіпкердің жолы',
-    power: 'Байқаулар үшін күш',
-    powerHint:
-      'Мектептің байқаулары мен көрмелеріне қатыс — кейіпкерің күшейеді. Өткен байқауға не көрмеге қатысу — 1 ұпай, мектеп растаған жетістік — 2 ұпай, ал 1–3 орын, Гран-при немесе лауреат атағы үшін тағы 2 ұпай.',
+    level: (n: number) => `${n}-деңгей`,
+    levelOf: (n: number, max: number) => `${max} ішінен ${n}-деңгей`,
+    lockedLevel: (group: string) => `Ашылады: ${group}. Мектеп сені келесі топқа немесе курсқа ауыстырғанда кейіпкер өседі.`,
+    skins: 'Скиндер',
+    skinsHint: 'Жаңа скиндер мектептің байқаулары мен көрмелері үшін ашылады.',
+    wearing: 'Киілген',
+    wear: 'Кию',
+    saveFailed: 'Скинді кию мүмкін болмады',
+    contests: 'Менің байқауларым',
+    participations: 'қатысу',
+    prizes: 'жүлделі орын',
+    top: 'Гран-при және 1 орын',
     portraits: 'Нағыз автопортреттер',
     portraitsHint: 'Суретші әр жылдары осындай болған. Суреттер — қоғамдық игілік (Wikimedia Commons).',
-    points: (n: number) => `Күш ұпайлары: ${n}`,
-    toNext: (n: number, name: string) => `Тағы ${n} — және «${name}» ашылады`,
-    maxPower: 'Барлық күш ашылды. Сен — өнер магистрісің!',
-    pointsNeeded: (n: number) => `${n} ұпайдан`,
-    story: 'Кейіпкердің тарихы',
-    locked: (when: string) => `Тарау ашылады: ${when}`,
     change: 'Кейіпкерді ауыстыру',
     notChosen: 'Кейіпкер әлі таңдалмаған',
   },
   en: {
-    level: (n: number, max: number) => `Level ${n} of ${max}`,
-    levelHint: 'Your hero grows up when the school moves you to the next group or course.',
-    growth: "Hero's path",
-    power: 'Power from competitions',
-    powerHint:
-      'Take part in school competitions and exhibitions and your hero gets stronger. 1 point for taking part in a past competition or exhibition, 2 points for an achievement confirmed by the school, and 2 more for 1st–3rd place, Grand Prix or laureate.',
+    level: (n: number) => `Level ${n}`,
+    levelOf: (n: number, max: number) => `Level ${n} of ${max}`,
+    lockedLevel: (group: string) => `Unlocks in: ${group}. Your hero grows when the school moves you to the next group or course.`,
+    skins: 'Skins',
+    skinsHint: 'New skins unlock for school competitions and exhibitions.',
+    wearing: 'Wearing',
+    wear: 'Wear',
+    saveFailed: 'Could not change the skin',
+    contests: 'My competitions',
+    participations: 'entries',
+    prizes: 'prizes',
+    top: 'Grand Prix and 1st places',
     portraits: 'Real self-portraits',
     portraitsHint: 'How the artist looked over the years. The paintings are in the public domain (Wikimedia Commons).',
-    points: (n: number) => `Power points: ${n}`,
-    toNext: (n: number, name: string) => `${n} more to unlock “${name}”`,
-    maxPower: 'All power unlocked. You are a master of arts!',
-    pointsNeeded: (n: number) => `${n}+ pts`,
-    story: "Hero's story",
-    locked: (when: string) => `This chapter unlocks ${when}`,
     change: 'Change hero',
     notChosen: 'No hero chosen yet',
   },
@@ -86,12 +99,15 @@ const STRINGS = {
 export function HeroScreen() {
   const route = useRoute<RouteProp<StudentStackParamList, 'Hero'>>();
   const navigation = useNavigation<NativeStackNavigationProp<StudentStackParamList>>();
-  const { profile: me } = useAuth();
+  const { profile: me, refreshProfile } = useAuth();
   const s = useStrings(STRINGS);
   const { lang } = useLanguage();
   const isOwner = route.params.userId === me?.id;
   const [other, setOther] = useState<Profile | null>(null);
   const [openPortrait, setOpenPortrait] = useState<number | null>(null);
+  const [viewLevel, setViewLevel] = useState<number | null>(null);
+  const [viewSkin, setViewSkin] = useState<HeroSkin | null>(null);
+  const [saving, setSaving] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -106,7 +122,13 @@ export function HeroScreen() {
   );
 
   const profile = isOwner ? me : other;
-  const { hero, level, stage, points, power } = useHero(profile);
+  const { hero, level, progress, skin, unlocked, art } = useHero(profile);
+
+  // По умолчанию показываем текущий уровень и надетый скин.
+  useEffect(() => {
+    setViewLevel(null);
+    setViewSkin(null);
+  }, [level, skin]);
 
   if (!profile) return <Screen>{null}</Screen>;
   if (!hero) {
@@ -118,57 +140,117 @@ export function HeroScreen() {
     );
   }
 
-  const nextPower = POWERS.find((p) => points < POWER_THRESHOLDS[p]);
+  const shownLevel = viewLevel ?? level;
+  const shownSkin = viewSkin ?? skin;
+  const levelOpen = shownLevel <= level;
+  const story = heroStory(hero.id);
+
+  const wear = async (next: HeroSkin) => {
+    if (!me) return;
+    setSaving(true);
+    try {
+      await saveHeroSkin(me.id, next);
+      await refreshProfile();
+    } catch (e) {
+      Alert.alert(s.saveFailed, errorText(e));
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <Screen scroll>
-      <View style={styles.head}>
-        <HeroAvatar hero={hero} stage={stage} power={power} size={230} />
-        <Text style={styles.name}>{hero.name[lang] ?? hero.name.ru}</Text>
-        <Text style={styles.years}>{hero.years}</Text>
-        <Text style={styles.tagline}>{hero.tagline[lang] ?? hero.tagline.ru}</Text>
-        <View style={styles.stagePill}>
-          <Text style={styles.stagePillText}>{stageName(stage, lang)}</Text>
-        </View>
-      </View>
+      <Text style={styles.name}>{hero.name[lang] ?? hero.name.ru}</Text>
+      <Text style={styles.years}>
+        {hero.years} · {hero.tagline[lang] ?? hero.tagline.ru}
+      </Text>
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>{s.growth}</Text>
-        <View style={styles.bar}>
-          <View style={[styles.barFill, { width: `${(level / MAX_LEVEL) * 100}%` }]} />
-        </View>
-        <Text style={styles.meta}>{s.level(level, MAX_LEVEL)}</Text>
-        <View style={styles.stages}>
-          {STAGES.map((st) => (
-            <View key={st} style={[styles.stageItem, st > stage && styles.dim]}>
-              <HeroAvatar hero={hero} stage={st} size={56} />
-              <Text style={[styles.stageLabel, st === stage && styles.stageLabelActive]} numberOfLines={2}>
-                {stageName(st, lang)}
-              </Text>
-            </View>
-          ))}
-        </View>
-        <Text style={styles.hint}>{s.levelHint}</Text>
-      </View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.levels}>
+        {LEVELS.map((l) => {
+          const active = l === shownLevel;
+          const locked = l > level;
+          return (
+            <Pressable
+              key={l}
+              onPress={() => setViewLevel(l)}
+              style={[styles.levelChip, active && styles.levelChipActive, l === level && styles.levelChipCurrent]}
+              accessibilityLabel={s.level(l)}
+            >
+              {locked && !active ? (
+                <Ionicons name="lock-closed" size={14} color={colors.textMuted} />
+              ) : (
+                <Text style={[styles.levelText, active && styles.levelTextActive]}>{l}</Text>
+              )}
+            </Pressable>
+          );
+        })}
+      </ScrollView>
 
-      <View style={[styles.card, styles.powerCard]}>
-        <Text style={[styles.cardTitle, styles.powerTitle]}>{s.power}</Text>
-        <Text style={styles.powerPoints}>{s.points(points)}</Text>
-        <View style={styles.stages}>
-          {POWERS.map((p) => (
-            <View key={p} style={[styles.stageItem, p > power && styles.dim]}>
-              <HeroAvatar hero={hero} stage={stage} power={p} size={64} />
-              <Text style={styles.powerLabel} numberOfLines={2}>
-                {powerName(p, lang)}
+      <View style={[styles.figure, !levelOpen && styles.figureLocked]}>
+        <HeroFigure hero={hero} level={shownLevel} skin={shownSkin} art={art} height={330} />
+      </View>
+      <Text style={styles.stage}>
+        {stageName(stageForLevel(shownLevel), lang)} · {s.levelOf(level, MAX_LEVEL)}
+      </Text>
+
+      <Text style={styles.section}>{s.skins}</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.skins}>
+        {HERO_SKINS.map((k) => {
+          const open = unlocked.includes(k);
+          const selected = k === shownSkin;
+          const wearing = k === skin;
+          return (
+            <Pressable
+              key={k}
+              onPress={() => setViewSkin(k)}
+              style={[styles.skinCard, selected && styles.skinCardSelected]}
+            >
+              <View style={[styles.rarity, { backgroundColor: RARITY_COLOR[k] }]}>
+                <Text style={styles.rarityText}>{skinRarity(k, lang)}</Text>
+              </View>
+              <View style={!open && styles.skinLocked}>
+                <HeroFigure hero={hero} level={shownLevel} skin={k} art={art} height={110} />
+              </View>
+              <Text style={styles.skinName} numberOfLines={2}>
+                {skinName(k, lang)}
               </Text>
-              <Text style={styles.powerNeed}>{s.pointsNeeded(POWER_THRESHOLDS[p])}</Text>
-            </View>
-          ))}
+              {wearing ? (
+                <Text style={styles.wearing}>{s.wearing}</Text>
+              ) : open && isOwner ? (
+                <Pressable
+                  style={styles.wearButton}
+                  onPress={() => wear(k)}
+                  disabled={saving}
+                  hitSlop={6}
+                >
+                  <Text style={styles.wearText}>{s.wear}</Text>
+                </Pressable>
+              ) : !open ? (
+                <View style={styles.lockRow}>
+                  <Ionicons name="lock-closed" size={12} color={colors.textMuted} />
+                  <Text style={styles.lockText} numberOfLines={3}>
+                    {skinUnlockText(k, lang)}
+                  </Text>
+                </View>
+              ) : null}
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+      <Text style={styles.hint}>{s.skinsHint}</Text>
+
+      <Text style={styles.section}>{s.level(shownLevel)}.</Text>
+      <Text style={levelOpen ? styles.story : styles.lockedStory}>
+        {levelOpen ? story[shownLevel - 1] : s.lockedLevel(levelGroupName(shownLevel, lang))}
+      </Text>
+
+      <View style={styles.contests}>
+        <Text style={styles.contestsTitle}>{s.contests}</Text>
+        <View style={styles.contestsRow}>
+          <Stat value={progress.participations + progress.achievements} label={s.participations} />
+          <Stat value={progress.prizes} label={s.prizes} />
+          <Stat value={progress.top} label={s.top} />
         </View>
-        <Text style={styles.powerNext}>
-          {nextPower ? s.toNext(POWER_THRESHOLDS[nextPower] - points, powerName(nextPower, lang)) : s.maxPower}
-        </Text>
-        <Text style={styles.powerHint}>{s.powerHint}</Text>
       </View>
 
       {hero.portraits?.length ? (
@@ -186,7 +268,7 @@ export function HeroScreen() {
               </Pressable>
             ))}
           </ScrollView>
-          <Text style={styles.galleryHint}>{s.portraitsHint}</Text>
+          <Text style={styles.hint}>{s.portraitsHint}</Text>
           <Modal visible={openPortrait !== null} transparent animationType="fade" onRequestClose={() => setOpenPortrait(null)}>
             <Pressable style={styles.viewer} onPress={() => setOpenPortrait(null)}>
               {openPortrait !== null ? (
@@ -200,29 +282,6 @@ export function HeroScreen() {
         </>
       ) : null}
 
-      <Text style={styles.section}>{s.story}</Text>
-      {hero.chapters.map((text, i) => {
-        const st = (i + 1) as HeroStage;
-        const open = st <= stage;
-        return (
-          <View key={st} style={[styles.chapter, !open && styles.chapterLocked]}>
-            <View style={styles.chapterHead}>
-              <Ionicons
-                name={open ? 'book' : 'lock-closed'}
-                size={16}
-                color={open ? colors.primary : colors.textMuted}
-              />
-              <Text style={[styles.chapterTitle, !open && styles.lockedText]}>
-                {st}. {stageName(st, lang)}
-              </Text>
-            </View>
-            <Text style={open ? styles.chapterText : styles.lockedText}>
-              {open ? text : s.locked(stageUnlockText(st, lang))}
-            </Text>
-          </View>
-        );
-      })}
-
       {isOwner ? (
         <Pressable style={styles.change} onPress={() => navigation.navigate('HeroPicker')}>
           <Ionicons name="swap-horizontal" size={18} color={colors.primary} />
@@ -234,69 +293,86 @@ export function HeroScreen() {
   );
 }
 
+function Stat({ value, label }: { value: number; label: string }) {
+  return (
+    <View style={styles.stat}>
+      <Text style={styles.statValue}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   empty: { textAlign: 'center', color: colors.textMuted, marginVertical: spacing.lg },
-  head: { alignItems: 'center', marginBottom: spacing.lg },
-  name: { fontSize: 26, fontWeight: '800', color: colors.text, marginTop: spacing.md, textAlign: 'center' },
-  years: { color: colors.textMuted, marginTop: 2 },
-  tagline: { color: colors.text, textAlign: 'center', marginTop: spacing.xs, paddingHorizontal: spacing.lg },
-  stagePill: {
-    marginTop: spacing.sm,
-    backgroundColor: colors.primary,
-    borderRadius: radius.full,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 5,
+  name: { fontSize: 24, fontWeight: '800', color: colors.text, textAlign: 'center' },
+  years: { color: colors.textMuted, textAlign: 'center', marginTop: 2, paddingHorizontal: spacing.md },
+  levels: { gap: spacing.sm, paddingVertical: spacing.md, paddingHorizontal: 2 },
+  levelChip: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.surfaceAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  stagePillText: { color: colors.white, fontWeight: '700' },
-  card: {
+  levelChipCurrent: { borderWidth: 2, borderColor: colors.accent },
+  levelChipActive: { backgroundColor: colors.surface, ...shadow.card },
+  levelText: { fontSize: 16, fontWeight: '600', color: colors.text },
+  levelTextActive: { color: colors.primary, fontWeight: '800' },
+  figure: { alignItems: 'center', minHeight: 330 },
+  figureLocked: { opacity: 0.35 },
+  stage: { textAlign: 'center', color: colors.primary, fontWeight: '700', marginTop: spacing.sm },
+  section: { fontSize: 22, fontWeight: '800', color: colors.text, marginTop: spacing.lg, marginBottom: spacing.sm },
+  skins: { gap: spacing.sm, paddingTop: spacing.sm, paddingBottom: spacing.xs, paddingHorizontal: 2 },
+  skinCard: {
+    width: 132,
+    alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: colors.border,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-    ...shadow.soft,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
+    paddingHorizontal: spacing.xs,
   },
-  cardTitle: { fontSize: 17, fontWeight: '800', color: colors.text },
-  bar: { height: 8, borderRadius: 4, backgroundColor: colors.surfaceAlt, marginTop: spacing.sm, overflow: 'hidden' },
-  barFill: { height: 8, borderRadius: 4, backgroundColor: colors.accent },
-  meta: { color: colors.textMuted, fontSize: 13, marginTop: 4 },
-  stages: { flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.md },
-  stageItem: { alignItems: 'center', flex: 1 },
-  dim: { opacity: 0.35 },
-  stageLabel: { fontSize: 10, color: colors.textMuted, textAlign: 'center', marginTop: 4 },
-  stageLabelActive: { color: colors.primary, fontWeight: '800' },
-  hint: { color: colors.textMuted, fontSize: 13, marginTop: spacing.md },
-  powerCard: { backgroundColor: '#1F2150', borderColor: '#2B2D6E' },
-  powerTitle: { color: colors.white },
-  powerPoints: { color: '#6FE3FF', fontWeight: '700', marginTop: 4 },
-  powerLabel: { fontSize: 10, color: colors.white, textAlign: 'center', marginTop: 4, fontWeight: '700' },
-  powerNeed: { fontSize: 10, color: '#B9BEE8', textAlign: 'center' },
-  powerNext: { color: '#E8C25A', fontWeight: '700', marginTop: spacing.md },
-  powerHint: { color: '#C9CBEF', fontSize: 13, marginTop: spacing.xs },
+  skinCardSelected: { borderColor: '#A98BE8', backgroundColor: '#F3EEFC' },
+  rarity: { position: 'absolute', top: -10, borderRadius: radius.full, paddingHorizontal: spacing.sm, paddingVertical: 2 },
+  rarityText: { color: colors.white, fontSize: 11, fontWeight: '800', textTransform: 'uppercase' },
+  skinLocked: { opacity: 0.35 },
+  skinName: { fontSize: 12, fontWeight: '700', color: colors.text, textAlign: 'center', marginTop: 4 },
+  wearing: { color: '#7B4FD6', fontWeight: '800', marginTop: 4 },
+  wearButton: {
+    marginTop: 4,
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 4,
+  },
+  wearText: { color: colors.primary, fontWeight: '700' },
+  lockRow: { flexDirection: 'row', gap: 3, marginTop: 4, alignItems: 'flex-start' },
+  lockText: { flex: 1, fontSize: 10, color: colors.textMuted },
+  hint: { fontSize: 12, color: colors.textMuted, marginTop: spacing.xs },
+  story: { fontSize: 17, lineHeight: 25, color: colors.text },
+  lockedStory: { fontSize: 15, lineHeight: 22, color: colors.textMuted },
+  contests: {
+    marginTop: spacing.lg,
+    backgroundColor: '#1F2150',
+    borderRadius: radius.lg,
+    padding: spacing.md,
+  },
+  contestsTitle: { color: colors.white, fontWeight: '800', fontSize: 16 },
+  contestsRow: { flexDirection: 'row', marginTop: spacing.sm },
+  stat: { flex: 1, alignItems: 'center' },
+  statValue: { color: '#6FE3FF', fontSize: 24, fontWeight: '800' },
+  statLabel: { color: '#C9CBEF', fontSize: 11, textAlign: 'center' },
   gallery: { gap: spacing.sm, paddingBottom: spacing.xs },
   portrait: { width: 132 },
   portraitFrame: { backgroundColor: colors.accent, padding: 4, borderRadius: radius.md, ...shadow.soft },
   portraitImage: { width: 124, height: 155, borderRadius: radius.sm },
   portraitCaption: { fontSize: 11, color: colors.textMuted, marginTop: 4 },
-  galleryHint: { fontSize: 12, color: colors.textMuted, marginTop: spacing.xs, marginBottom: spacing.md },
   viewer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', alignItems: 'center', justifyContent: 'center', padding: spacing.lg },
   viewerImage: { width: '100%', height: '75%' },
   viewerCaption: { color: colors.white, marginTop: spacing.md, textAlign: 'center' },
-  section: { fontSize: 20, fontWeight: '800', color: colors.text, marginTop: spacing.sm, marginBottom: spacing.sm },
-  chapter: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.accent,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  chapterLocked: { backgroundColor: colors.surfaceAlt, borderLeftColor: colors.border },
-  chapterHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginBottom: spacing.xs },
-  chapterTitle: { fontWeight: '800', color: colors.primary },
-  chapterText: { color: colors.text, lineHeight: 21 },
-  lockedText: { color: colors.textMuted },
   change: {
     flexDirection: 'row',
     alignItems: 'center',

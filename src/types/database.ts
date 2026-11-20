@@ -33,6 +33,7 @@ export interface Profile {
   posts_visibility?: PostsVisibility; // кто видит публикации и сторис ученика
   stories_friends_only?: boolean; // в кружках сторис — только друзья
   hero_id?: string | null; // персонаж ученика — великий художник (0055)
+  hero_skin?: string | null; // надетый скин героя: base, rare, epic, legendary
   created_at: string;
   updated_at: string;
 }

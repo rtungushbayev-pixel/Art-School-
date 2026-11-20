@@ -2,7 +2,8 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { HeroAvatar } from './HeroAvatar';
-import { HEROES, MAX_LEVEL, powerName, stageName } from '../lib/heroes';
+import { HeroFigure } from './HeroFigure';
+import { HEROES, MAX_LEVEL, skinName, stageName } from '../lib/heroes';
 import type { HeroState } from '../hooks/useHero';
 import { useLanguage, useStrings } from '../i18n';
 import { colors, radius, shadow, spacing } from '../theme/colors';
@@ -43,7 +44,7 @@ interface HeroCardProps {
 export function HeroCard({ state, isOwner, onOpen, onChoose }: HeroCardProps) {
   const s = useStrings(STRINGS);
   const { lang } = useLanguage();
-  const { hero, level, stage, power } = state;
+  const { hero, level, stage, skin, art } = state;
 
   if (!hero) {
     if (!isOwner || !onChoose) return null;
@@ -67,7 +68,7 @@ export function HeroCard({ state, isOwner, onOpen, onChoose }: HeroCardProps) {
 
   return (
     <Pressable onPress={onOpen} style={styles.card}>
-      <HeroAvatar hero={hero} stage={stage} power={power} size={92} />
+      <HeroFigure hero={hero} level={level} skin={skin} art={art} height={110} />
       <View style={styles.info}>
         <Text style={styles.kicker}>{isOwner ? s.myHero : s.hero}</Text>
         <Text style={styles.name} numberOfLines={1}>
@@ -78,10 +79,10 @@ export function HeroCard({ state, isOwner, onOpen, onChoose }: HeroCardProps) {
           <View style={[styles.barFill, { width: `${(level / MAX_LEVEL) * 100}%` }]} />
         </View>
         <Text style={styles.meta}>{s.level(level, MAX_LEVEL)}</Text>
-        {power > 0 ? (
+        {skin !== 'base' ? (
           <View style={styles.powerPill}>
             <Ionicons name="sparkles" size={12} color={colors.white} />
-            <Text style={styles.powerText}>{powerName(power, lang)}</Text>
+            <Text style={styles.powerText}>{skinName(skin, lang)}</Text>
           </View>
         ) : null}
       </View>

@@ -8,7 +8,7 @@ import { Button } from '../../components/Button';
 import { HeroAvatar } from '../../components/HeroAvatar';
 import { useAuth } from '../../hooks/useAuth';
 import { useHero } from '../../hooks/useHero';
-import { HEROES, findHero, saveHero, type HeroId } from '../../lib/heroes';
+import { HEROES, findHero, heroStory, saveHero, type HeroId } from '../../lib/heroes';
 import { dismissHeroOnboarding } from '../../lib/heroOnboarding';
 import { errorText } from '../../lib/errors';
 import { useLanguage, useStrings } from '../../i18n';
@@ -113,7 +113,7 @@ export function HeroPickerScreen() {
         <View style={styles.preview}>
           <Text style={styles.previewName}>{hero.name[lang] ?? hero.name.ru}</Text>
           <Text style={styles.previewTagline}>{hero.tagline[lang] ?? hero.tagline.ru}</Text>
-          <Text style={styles.previewStory}>{hero.chapters[0]}</Text>
+          <Text style={styles.previewStory}>{heroStory(hero.id)[0]}</Text>
         </View>
       ) : null}
 
