@@ -4,6 +4,8 @@ import { Image } from 'expo-image';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
+import { HeroCard } from '../../components/HeroCard';
+import { useHero } from '../../hooks/useHero';
 import { Avatar } from '../../components/Avatar';
 import { Button } from '../../components/Button';
 import { FEATURES } from '../../lib/features';
@@ -116,6 +118,7 @@ export function ChildDetailScreen({ route, navigation }: Props) {
   const [attendance, setAttendance] = useState<Attendance[]>([]);
   const [teachers, setTeachers] = useState<ChildTeacher[]>([]);
   const [teachersOpen, setTeachersOpen] = useState(false);
+  const heroState = useHero(child);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -172,6 +175,9 @@ export function ChildDetailScreen({ route, navigation }: Props) {
           <Text style={styles.name}>{child.full_name || s.noName}</Text>
           {groups.length > 0 ? <Text style={styles.groups}>{groups.join(', ')}</Text> : null}
         </View>
+      ) : null}
+      {child && heroState.hero ? (
+        <HeroCard state={heroState} onOpen={() => navigation.navigate('Hero', { userId: child.id })} />
       ) : null}
 
       {FEATURES.payments ? (

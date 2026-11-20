@@ -11,6 +11,7 @@ import { EventsScreen } from '../screens/shared/EventsScreen';
 import { useStrings } from '../i18n';
 import { useAuth } from '../hooks/useAuth';
 import { useQrCheckInAvailable } from '../hooks/useQrCheckIn';
+import { useHeroOnboarding } from '../lib/heroOnboarding';
 
 const STRINGS = {
   ru: {
@@ -55,6 +56,8 @@ export function StudentTabs() {
   const s = useStrings(STRINGS);
   const { profile } = useAuth();
   const showScan = useQrCheckInAvailable(profile);
+  // Первый вход ученика: предлагаем выбрать героя.
+  useHeroOnboarding(profile);
   return (
     <Tab.Navigator initialRouteName="FeedTab" screenOptions={makeTabScreenOptions(TAB_CONFIG, { showFriends: true, showMarket: true })}>
       <Tab.Screen name="ScheduleTab" component={ScheduleScreen} options={{ title: s.schedule }} />

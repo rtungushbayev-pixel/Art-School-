@@ -7,6 +7,8 @@ import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { ProfileHeader } from '../../components/ProfileHeader';
+import { HeroCard } from '../../components/HeroCard';
+import { useHero } from '../../hooks/useHero';
 import { Button } from '../../components/Button';
 import { PortfolioSections } from '../../components/PortfolioSections';
 import { ProfileTabs, type ProfileTab } from '../../components/ProfileTabs';
@@ -261,6 +263,7 @@ export function UserProfileScreen() {
   const userId = route.params.userId;
   const viewerIsStaff = isStaffRole(viewer?.role);
   const { posts, achievements, groups } = useStudentPortfolio(userId, viewer?.id);
+  const heroState = useHero(profile, groups);
 
   const load = useCallback(async () => {
     const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
@@ -406,6 +409,9 @@ export function UserProfileScreen() {
   return (
     <Screen scroll>
       <ProfileHeader profile={profile} groups={groups} />
+      {profile.role === 'student' ? (
+        <HeroCard state={heroState} onOpen={() => navigation.navigate('Hero', { userId: profile.id })} />
+      ) : null}
       {friendState === 'friends' || friendState === 'outgoing' ? (
         // Уже друзья или заявка ждёт ответа — не кнопка, а понятная отметка.
         <View style={[styles.friendBadge, friendState === 'friends' && styles.friendBadgeOk]}>

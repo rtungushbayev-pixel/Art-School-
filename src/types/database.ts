@@ -32,6 +32,7 @@ export interface Profile {
   notify_reminders: boolean; // напоминание за 2 часа до занятия (ученику и родителю)
   posts_visibility?: PostsVisibility; // кто видит публикации и сторис ученика
   stories_friends_only?: boolean; // в кружках сторис — только друзья
+  hero_id?: string | null; // персонаж ученика — великий художник (0055)
   created_at: string;
   updated_at: string;
 }

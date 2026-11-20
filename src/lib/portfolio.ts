@@ -99,15 +99,15 @@ export async function deleteAchievement(id: string) {
   if (error) throw error;
 }
 
-export async function fetchStudentGroups(studentId: string): Promise<Pick<Group, 'id' | 'name'>[]> {
+export async function fetchStudentGroups(studentId: string): Promise<Pick<Group, 'id' | 'name' | 'course'>[]> {
   const { data, error } = await supabase
     .from('group_members')
-    .select('groups:group_id ( id, name )')
+    .select('groups:group_id ( id, name, course )')
     .eq('student_id', studentId);
   if (error) throw error;
   return ((data as any[]) ?? [])
-    .map((row) => row.groups as Pick<Group, 'id' | 'name'> | null)
-    .filter((g): g is Pick<Group, 'id' | 'name'> => !!g)
+    .map((row) => row.groups as Pick<Group, 'id' | 'name' | 'course'> | null)
+    .filter((g): g is Pick<Group, 'id' | 'name' | 'course'> => !!g)
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 

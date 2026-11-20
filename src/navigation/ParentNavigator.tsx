@@ -8,6 +8,7 @@ import { PostDetailScreen } from '../screens/shared/PostDetailScreen';
 import { EditProfileScreen } from '../screens/shared/EditProfileScreen';
 import { NotificationSettingsScreen } from '../screens/shared/NotificationSettingsScreen';
 import { UserProfileScreen } from '../screens/shared/UserProfileScreen';
+import { HeroScreen } from '../screens/shared/HeroScreen';
 import { PhotoViewScreen } from '../screens/shared/PhotoViewScreen';
 import { AnnouncementsScreen } from '../screens/student/AnnouncementsScreen';
 import { ChildrenScreen } from '../screens/parent/ChildrenScreen';
@@ -40,6 +41,7 @@ const STRINGS = {
     editProfile: 'Редактирование профиля',
     notifications: 'Уведомления',
     profile: 'Профиль',
+    hero: 'Герой',
     photo: 'Фото',
     checkIn: 'Отметиться по QR',
     chats: 'Чаты',
@@ -60,6 +62,7 @@ const STRINGS = {
     editProfile: 'Профильді өңдеу',
     notifications: 'Хабарландырулар',
     profile: 'Профиль',
+    hero: 'Кейіпкер',
     photo: 'Фото',
     checkIn: 'QR арқылы белгілену',
     chats: 'Чаттар',
@@ -80,6 +83,7 @@ const STRINGS = {
     editProfile: 'Edit profile',
     notifications: 'Notifications',
     profile: 'Profile',
+    hero: 'Hero',
     photo: 'Photo',
     checkIn: 'Check in with QR',
     chats: 'Chats',
@@ -128,6 +132,7 @@ export function ParentNavigator() {
         options={{ title: s.notifications }}
       />
       <Stack.Screen name="UserProfile" component={UserProfileScreen} options={{ title: s.profile }} />
+      <Stack.Screen name="Hero" component={HeroScreen} options={{ title: s.hero }} />
       <Stack.Screen name="PhotoView" component={PhotoViewScreen} options={{ title: s.photo }} />
     </Stack.Navigator>
   );
