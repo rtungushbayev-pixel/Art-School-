@@ -41,7 +41,11 @@ export type HeroScene =
   | 'lilies'
   | 'curtain'
   | 'fields'
-  | 'pastel';
+  | 'pastel'
+  | 'engraving'
+  | 'fresco'
+  | 'chess'
+  | 'birch';
 
 export interface HeroLook {
   skin: string;
@@ -209,6 +213,53 @@ function scene(kind: HeroScene, id: string): { defs: ArtNode[]; nodes: ArtNode[]
           full(`url(#${id}fl)`),
           el('path', { d: 'M0 140 Q100 120 200 140 L200 200 L0 200 Z', fill: '#E3B861' }),
           el('path', { d: 'M15 150 l4 -14 M30 152 l3 -16 M170 150 l4 -14 M185 152 l3 -15', stroke: '#B88935', strokeWidth: 2, strokeLinecap: 'round' }),
+        ],
+      };
+    case 'engraving':
+      // Лист гравюры: бумага и штриховка.
+      return {
+        defs: [lin(`${id}eg`, [[0, '#F3EFE6'], [1, '#DCD5C6']])],
+        nodes: [
+          full(`url(#${id}eg)`),
+          el('path', { d: 'M0 30 L60 0 M0 60 L120 0 M0 90 L180 0 M140 200 L200 170 M80 200 L200 140 M20 200 L200 110', stroke: '#9A8F7C', strokeWidth: 1, opacity: 0.45 }),
+          el('rect', { x: 14, y: 14, width: 172, height: 172, fill: 'none', stroke: '#6E6455', strokeWidth: 1.2, opacity: 0.5 }),
+        ],
+      };
+    case 'fresco':
+      // Фреска: арка и голубое небо Возрождения.
+      return {
+        defs: [lin(`${id}fr`, [[0, '#E9D3A8'], [1, '#D2AE74']])],
+        nodes: [
+          full(`url(#${id}fr)`),
+          el('path', { d: 'M30 200 L30 90 Q100 10 170 90 L170 200 Z', fill: '#9CC2DE' }),
+          el('path', { d: 'M30 200 L30 90 Q100 10 170 90 L170 200', stroke: '#B8874A', strokeWidth: 6, fill: 'none' }),
+          el('path', { d: 'M50 150 L150 150 M60 170 L140 170', stroke: '#C9A066', strokeWidth: 3, opacity: 0.6 }),
+        ],
+      };
+    case 'chess':
+      // Тёмная стена и шахматный пол.
+      return {
+        defs: [lin(`${id}ch`, [[0, '#3E4A3A'], [1, '#26302A']])],
+        nodes: [
+          full(`url(#${id}ch)`),
+          ...[0, 1, 2, 3, 4, 5, 6, 7].map((i) =>
+            el('rect', { x: i * 25, y: 160 + (i % 2) * 20, width: 25, height: 20, fill: '#E8DFC9', opacity: 0.85 })
+          ),
+          el('rect', { x: 0, y: 158, width: 200, height: 2, fill: '#B89B5E' }),
+        ],
+      };
+    case 'birch':
+      // Русский пейзаж: берёзы и луг.
+      return {
+        defs: [lin(`${id}br`, [[0, '#CFE3EE'], [0.7, '#EEF3E2']])],
+        nodes: [
+          full(`url(#${id}br)`),
+          el('path', { d: 'M0 150 Q100 135 200 150 L200 200 L0 200 Z', fill: '#8DB36A' }),
+          el('rect', { x: 22, y: 20, width: 8, height: 140, fill: '#F7F5EF' }),
+          el('rect', { x: 170, y: 30, width: 7, height: 130, fill: '#F7F5EF' }),
+          el('path', { d: 'M22 50 h5 M25 80 h5 M22 110 h6 M170 60 h5 M172 95 h5 M170 125 h6', stroke: '#333333', strokeWidth: 2 }),
+          el('circle', { cx: 26, cy: 26, r: 18, fill: '#7FAE5A', opacity: 0.85 }),
+          el('circle', { cx: 174, cy: 34, r: 16, fill: '#7FAE5A', opacity: 0.85 }),
         ],
       };
     case 'pastel':

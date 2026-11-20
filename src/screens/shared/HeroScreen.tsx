@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -32,7 +33,9 @@ const STRINGS = {
     growth: 'Путь героя',
     power: 'Сила за конкурсы',
     powerHint:
-      'Участвуй в конкурсах и выставках школы, и твой герой станет сильнее. 1 очко — за участие в прошедшем конкурсе или выставке, 2 очка — за достижение, которое подтвердила школа.',
+      'Участвуй в конкурсах и выставках школы, и твой герой станет сильнее. 1 очко — за участие в прошедшем конкурсе или выставке, 2 очка — за достижение, которое подтвердила школа, и ещё 2 — если это 1–3 место, Гран-при или звание лауреата.',
+    portraits: 'Настоящие автопортреты',
+    portraitsHint: 'Так художник выглядел в разные годы. Картины — общественное достояние (Wikimedia Commons).',
     points: (n: number) => `Очков силы: ${n}`,
     toNext: (n: number, name: string) => `Ещё ${n} — и откроется «${name}»`,
     maxPower: 'Открыта вся сила. Ты — магистр искусств!',
@@ -48,7 +51,9 @@ const STRINGS = {
     growth: 'Кейіпкердің жолы',
     power: 'Байқаулар үшін күш',
     powerHint:
-      'Мектептің байқаулары мен көрмелеріне қатыс — кейіпкерің күшейеді. Өткен байқауға не көрмеге қатысу — 1 ұпай, мектеп растаған жетістік — 2 ұпай.',
+      'Мектептің байқаулары мен көрмелеріне қатыс — кейіпкерің күшейеді. Өткен байқауға не көрмеге қатысу — 1 ұпай, мектеп растаған жетістік — 2 ұпай, ал 1–3 орын, Гран-при немесе лауреат атағы үшін тағы 2 ұпай.',
+    portraits: 'Нағыз автопортреттер',
+    portraitsHint: 'Суретші әр жылдары осындай болған. Суреттер — қоғамдық игілік (Wikimedia Commons).',
     points: (n: number) => `Күш ұпайлары: ${n}`,
     toNext: (n: number, name: string) => `Тағы ${n} — және «${name}» ашылады`,
     maxPower: 'Барлық күш ашылды. Сен — өнер магистрісің!',
@@ -64,7 +69,9 @@ const STRINGS = {
     growth: "Hero's path",
     power: 'Power from competitions',
     powerHint:
-      'Take part in school competitions and exhibitions and your hero gets stronger. 1 point for taking part in a past competition or exhibition, 2 points for an achievement confirmed by the school.',
+      'Take part in school competitions and exhibitions and your hero gets stronger. 1 point for taking part in a past competition or exhibition, 2 points for an achievement confirmed by the school, and 2 more for 1st–3rd place, Grand Prix or laureate.',
+    portraits: 'Real self-portraits',
+    portraitsHint: 'How the artist looked over the years. The paintings are in the public domain (Wikimedia Commons).',
     points: (n: number) => `Power points: ${n}`,
     toNext: (n: number, name: string) => `${n} more to unlock “${name}”`,
     maxPower: 'All power unlocked. You are a master of arts!',
@@ -84,6 +91,7 @@ export function HeroScreen() {
   const { lang } = useLanguage();
   const isOwner = route.params.userId === me?.id;
   const [other, setOther] = useState<Profile | null>(null);
+  const [openPortrait, setOpenPortrait] = useState<number | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -163,6 +171,35 @@ export function HeroScreen() {
         <Text style={styles.powerHint}>{s.powerHint}</Text>
       </View>
 
+      {hero.portraits?.length ? (
+        <>
+          <Text style={styles.section}>{s.portraits}</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.gallery}>
+            {hero.portraits.map((p, i) => (
+              <Pressable key={i} style={styles.portrait} onPress={() => setOpenPortrait(i)}>
+                <View style={styles.portraitFrame}>
+                  <Image source={p.image} style={styles.portraitImage} contentFit="cover" contentPosition="top" />
+                </View>
+                <Text style={styles.portraitCaption} numberOfLines={3}>
+                  {p.caption}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+          <Text style={styles.galleryHint}>{s.portraitsHint}</Text>
+          <Modal visible={openPortrait !== null} transparent animationType="fade" onRequestClose={() => setOpenPortrait(null)}>
+            <Pressable style={styles.viewer} onPress={() => setOpenPortrait(null)}>
+              {openPortrait !== null ? (
+                <>
+                  <Image source={hero.portraits[openPortrait].image} style={styles.viewerImage} contentFit="contain" />
+                  <Text style={styles.viewerCaption}>{hero.portraits[openPortrait].caption}</Text>
+                </>
+              ) : null}
+            </Pressable>
+          </Modal>
+        </>
+      ) : null}
+
       <Text style={styles.section}>{s.story}</Text>
       {hero.chapters.map((text, i) => {
         const st = (i + 1) as HeroStage;
@@ -237,6 +274,15 @@ const styles = StyleSheet.create({
   powerNeed: { fontSize: 10, color: '#B9BEE8', textAlign: 'center' },
   powerNext: { color: '#E8C25A', fontWeight: '700', marginTop: spacing.md },
   powerHint: { color: '#C9CBEF', fontSize: 13, marginTop: spacing.xs },
+  gallery: { gap: spacing.sm, paddingBottom: spacing.xs },
+  portrait: { width: 132 },
+  portraitFrame: { backgroundColor: colors.accent, padding: 4, borderRadius: radius.md, ...shadow.soft },
+  portraitImage: { width: 124, height: 155, borderRadius: radius.sm },
+  portraitCaption: { fontSize: 11, color: colors.textMuted, marginTop: 4 },
+  galleryHint: { fontSize: 12, color: colors.textMuted, marginTop: spacing.xs, marginBottom: spacing.md },
+  viewer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', alignItems: 'center', justifyContent: 'center', padding: spacing.lg },
+  viewerImage: { width: '100%', height: '75%' },
+  viewerCaption: { color: colors.white, marginTop: spacing.md, textAlign: 'center' },
   section: { fontSize: 20, fontWeight: '800', color: colors.text, marginTop: spacing.sm, marginBottom: spacing.sm },
   chapter: {
     backgroundColor: colors.surface,

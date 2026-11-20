@@ -4,7 +4,8 @@
 -- (Младшая → Средняя → Старшая → 0–6 курс), отдельно хранить её не нужно.
 -- hero_power_points — очки силы за конкурсы и выставки:
 --   1 очко за участие в уже прошедшем конкурсе или выставке школы,
---   2 очка за достижение (конкурс, выставка, награда), подтверждённое школой.
+--   2 очка за достижение (конкурс, выставка, награда), подтверждённое школой,
+--   и ещё 2 очка, если это призовое место: 1–3 место, Гран-при, лауреат.
 -- Очки видны всем, кто видит профиль ученика (как и его достижения).
 --
 -- Выполнять после 0052 (от 0053–0054 не зависит). Повторный запуск безопасен.
@@ -15,7 +16,8 @@ alter table public.profiles drop constraint if exists profiles_hero_id_check;
 alter table public.profiles add constraint profiles_hero_id_check check (
   hero_id is null or hero_id in (
     'kasteyev', 'leonardo', 'michelangelo', 'rembrandt', 'aivazovsky',
-    'vangogh', 'monet', 'artemisia', 'serebryakova', 'cassatt'
+    'vangogh', 'monet', 'artemisia', 'serebryakova', 'cassatt',
+    'durer', 'raphael', 'sofonisba', 'repin'
   )
 );
 
@@ -37,7 +39,11 @@ as $$
         where r.student_id = p_student_id
           and e.kind in ('competition', 'exhibition')
           and coalesce(e.ends_on, e.starts_on) < current_date)
-      + 2 * (select count(*)::int
+      + (select coalesce(sum(
+           2 + case
+             when a.result ~* '(^|[^0-9])[123]\s*-?\s*(е|-е)?\s*мест|гран|лауреат|(^|[^0-9])[123]\s*(place|орын)|grand'
+             then 2 else 0 end
+         ), 0)::int
          from public.student_achievements a
         where a.student_id = p_student_id
           and a.verified
