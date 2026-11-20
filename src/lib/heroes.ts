@@ -488,16 +488,18 @@ export function skinUnlocked(skin: HeroSkin, p: HeroProgress): boolean {
 // Пока картинки скина нет, рисуем героя с «силой» нужного уровня.
 export const SKIN_POWER: Record<HeroSkin, HeroPower> = { base: 0, rare: 2, epic: 3, legendary: 4 };
 
+// Названия обликов — по пути работы художника: от эскиза к шедевру.
 const SKIN_NAMES: Translations<Record<HeroSkin, string>> = {
-  ru: { base: 'Обычный', rare: 'Мантия вдохновения', epic: 'Доспех творца', legendary: 'Магистр искусств' },
-  kk: { base: 'Күнделікті', rare: 'Шабыт шапаны', epic: 'Шебер сауыты', legendary: 'Өнер магистрі' },
-  en: { base: 'Everyday', rare: 'Mantle of inspiration', epic: "Creator's armor", legendary: 'Master of arts' },
+  ru: { base: 'Эскиз', rare: 'Этюд', epic: 'Полотно', legendary: 'Шедевр' },
+  kk: { base: 'Эскиз', rare: 'Этюд', epic: 'Кенеп', legendary: 'Шедевр' },
+  en: { base: 'Sketch', rare: 'Study', epic: 'Canvas', legendary: 'Masterpiece' },
 };
 
+// Короткая плашка над обликом: за что он даётся.
 const SKIN_RARITY: Translations<Record<HeroSkin, string>> = {
-  ru: { base: 'Базовый', rare: 'Редкий', epic: 'Эпический', legendary: 'Легендарный' },
-  kk: { base: 'Базалық', rare: 'Сирек', epic: 'Эпикалық', legendary: 'Аңыз' },
-  en: { base: 'Basic', rare: 'Rare', epic: 'Epic', legendary: 'Legendary' },
+  ru: { base: 'Для всех', rare: 'Участие', epic: 'Призёр', legendary: 'Победа' },
+  kk: { base: 'Барлығына', rare: 'Қатысу', epic: 'Жүлдегер', legendary: 'Жеңіс' },
+  en: { base: 'For all', rare: 'Entry', epic: 'Prize', legendary: 'Victory' },
 };
 
 const SKIN_UNLOCK: Translations<Record<HeroSkin, string>> = {
