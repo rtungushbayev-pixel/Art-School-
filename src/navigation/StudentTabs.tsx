@@ -17,7 +17,7 @@ const STRINGS = {
   ru: {
     scan: 'Сканировать QR',
     schedule: 'Расписание',
-    community: 'Комьюнити',
+    community: 'Арт-двор',
     events: 'Конкурсы',
     eventsTitle: 'Выставки и конкурсы',
     profile: 'Профиль',
@@ -25,7 +25,7 @@ const STRINGS = {
   kk: {
     scan: 'QR сканерлеу',
     schedule: 'Кесте',
-    community: 'Қауымдастық',
+    community: 'Арт-аула',
     events: 'Байқаулар',
     eventsTitle: 'Көрмелер мен байқаулар',
     profile: 'Профиль',
@@ -33,7 +33,7 @@ const STRINGS = {
   en: {
     scan: 'Scan QR',
     schedule: 'Schedule',
-    community: 'Community',
+    community: 'Art Yard',
     events: 'Contests',
     eventsTitle: 'Exhibitions and competitions',
     profile: 'Profile',
