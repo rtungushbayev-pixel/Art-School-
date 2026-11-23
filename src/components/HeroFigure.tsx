@@ -14,8 +14,8 @@ interface HeroFigureProps {
   height: number;
 }
 
-// Доля высоты рамки по уровню: малыш ниже, с 8 уровня (взрослый) — во весь рост.
-const LEVEL_SCALE: Record<number, number> = { 1: 0.6, 2: 0.66, 3: 0.72, 4: 0.78, 5: 0.84, 6: 0.88, 7: 0.93 };
+// Доля высоты рамки по образу: ребёнок ниже, с 5 образа (взрослый) — во весь рост.
+const LEVEL_SCALE: Record<number, number> = { 1: 0.6, 2: 0.72, 3: 0.84, 4: 0.93 };
 
 export function heroScale(level: number): number {
   return LEVEL_SCALE[level] ?? 1;

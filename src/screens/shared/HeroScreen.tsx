@@ -14,7 +14,7 @@ import { errorText } from '../../lib/errors';
 import {
   HERO_SKINS,
   MAX_LEVEL,
-  heroStory,
+  heroChapter,
   levelGroupName,
   saveHeroSkin,
   skinName,
@@ -143,7 +143,6 @@ export function HeroScreen() {
   const shownLevel = viewLevel ?? level;
   const shownSkin = viewSkin ?? skin;
   const levelOpen = shownLevel <= level;
-  const story = heroStory(hero.id);
 
   const wear = async (next: HeroSkin) => {
     if (!me) return;
@@ -241,7 +240,7 @@ export function HeroScreen() {
 
       <Text style={styles.section}>{s.level(shownLevel)}.</Text>
       <Text style={levelOpen ? styles.story : styles.lockedStory}>
-        {levelOpen ? story[shownLevel - 1] : s.lockedLevel(levelGroupName(shownLevel, lang))}
+        {levelOpen ? heroChapter(hero.id, shownLevel) : s.lockedLevel(levelGroupName(shownLevel, lang))}
       </Text>
 
       <View style={styles.contests}>

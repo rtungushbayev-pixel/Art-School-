@@ -400,30 +400,41 @@ export function stageName(stage: HeroStage, lang?: Lang): string {
 
 // Где в школе открывается стадия — подпись для закрытых глав.
 const STAGE_UNLOCK: Translations<Record<HeroStage, string>> = {
-  ru: { 1: 'с первого дня', 2: 'в Старшей группе или на 0 курсе', 3: 'на 1–2 курсе', 4: 'на 3–4 курсе', 5: 'на 5–6 курсе' },
-  kk: { 1: 'алғашқы күннен', 2: 'Ересек топта немесе 0 курста', 3: '1–2 курста', 4: '3–4 курста', 5: '5–6 курста' },
-  en: { 1: 'from day one', 2: 'in the Senior group or course 0', 3: 'in courses 1–2', 4: 'in courses 3–4', 5: 'in courses 5–6' },
+  ru: { 1: 'с первого дня', 2: 'в Средней группе', 3: 'на 0–2 курсе', 4: 'на 3–4 курсе', 5: 'на 5–6 курсе и в мастерских' },
+  kk: { 1: 'алғашқы күннен', 2: 'Ортаңғы топта', 3: '0–2 курста', 4: '3–4 курста', 5: '5–6 курста және шеберханаларда' },
+  en: { 1: 'from day one', 2: 'in the Middle group', 3: 'in courses 0–2', 4: 'in courses 3–4', 5: 'in courses 5–6 and workshops' },
 };
 
 export function stageUnlockText(stage: HeroStage, lang?: Lang): string {
   return pick(STAGE_UNLOCK, lang)[stage];
 }
 
-// Шаг ученика в школе (1–10) по одной группе:
-// Младшая 1, Средняя 2, Старшая 3, 0 курс 4, 1 курс 5 … 6 курс 10.
+// Образ героя (1–7) повторяет путь ученика в школе (kasteyev.kz).
+// Возраст героя на картинке: 5, 9, 13, 16, 30, 40, 50 лет.
+// 1 — Младшая, Junior и другие группы 5–6 лет; 2 — Средняя, Бояу, Палитра,
+// Middle (7–10 лет); 3 — 0–2 курс; 4 — 3–4 курс (диплом);
+// 5 — 5 курс и мастерские; 6 — 6 курс и продвинутые мастерские; 7 — Арт-карьера.
+const YOUNG_GROUP = /младш|junior|радуг|орнек|өрнек/;
+const PREP_GROUP = /средн|старш|middle|бояу|палитр|семицвет|гвд/;
+
 function groupLevel(g: { name: string; course?: number | null }): number | null {
-  if (g.course !== null && g.course !== undefined) return Math.min(10, 4 + g.course);
   const n = g.name.toLowerCase();
-  if (n.includes('младш')) return 1;
-  if (n.includes('средн')) return 2;
-  if (n.includes('старш')) return 3;
+  if (n.includes('арт-карьер')) return 7;
+  if (g.course !== null && g.course !== undefined) {
+    if (g.course <= 2) return 3;
+    if (g.course <= 4) return 4;
+    return g.course === 5 ? 5 : 6;
+  }
+  if (n.includes('мастерск') || n.includes('архитект')) return n.includes('продвин') ? 6 : 5;
+  if (YOUNG_GROUP.test(n)) return 1;
+  if (PREP_GROUP.test(n)) return 2;
   return null;
 }
 
-export const MAX_LEVEL = 10;
+export const MAX_LEVEL = 7;
 
 // Уровень по группам (берём самую старшую). Если группа не подходит под
-// шкалу (например, взрослая), считаем по годам в школе.
+// шкалу (например, Digital Art), считаем по годам в школе: образ раз в два года.
 export function heroLevel(
   groups: { name: string; course?: number | null }[],
   studySince: number | null | undefined,
@@ -434,22 +445,32 @@ export function heroLevel(
   if (studySince) {
     // Учебный год начинается в сентябре.
     const schoolYear = now.getMonth() >= 8 ? now.getFullYear() : now.getFullYear() - 1;
-    return Math.max(1, Math.min(MAX_LEVEL, schoolYear - studySince + 1));
+    const years = schoolYear - studySince + 1;
+    return Math.max(1, Math.min(MAX_LEVEL, Math.ceil(years / 2)));
   }
   return 1;
 }
 
+// Стадия (для нарисованного портрета и названия): 1–4 по образам, взрослые образы — Мастер.
 export function stageForLevel(level: number): HeroStage {
-  return Math.max(1, Math.min(5, Math.ceil(level / 2))) as HeroStage;
+  return Math.max(1, Math.min(5, level)) as HeroStage;
+}
+
+// Какие эпизоды биографии (из 10) открывает каждый образ.
+const LEVEL_CHAPTERS: number[][] = [[0], [1, 2], [3, 4], [5, 6], [7], [8], [9]];
+
+export function heroChapter(id: HeroId, level: number): string {
+  const story = HERO_STORIES[id];
+  return LEVEL_CHAPTERS[Math.max(1, Math.min(MAX_LEVEL, level)) - 1].map((i) => story[i]).join('\n\n');
 }
 
 // ---------- Уровни ----------
 
-// Где в школе открывается уровень — подпись для закрытых уровней.
+// Где в школе открывается образ — подпись для закрытых образов.
 const LEVEL_GROUP: Translations<string[]> = {
-  ru: ['Младшая группа', 'Средняя группа', 'Старшая группа', '0 курс', '1 курс', '2 курс', '3 курс', '4 курс', '5 курс', '6 курс'],
-  kk: ['Кіші топ', 'Ортаңғы топ', 'Ересек топ', '0 курс', '1 курс', '2 курс', '3 курс', '4 курс', '5 курс', '6 курс'],
-  en: ['Junior group', 'Middle group', 'Senior group', 'Course 0', 'Course 1', 'Course 2', 'Course 3', 'Course 4', 'Course 5', 'Course 6'],
+  ru: ['Младшая группа', 'Средняя группа', '0–2 курс', '3–4 курс', '5 курс и мастерские', '6 курс и продвинутые мастерские', 'Арт-карьера'],
+  kk: ['Кіші топ', 'Ортаңғы топ', '0–2 курс', '3–4 курс', '5 курс және шеберханалар', '6 курс және жетілдірілген шеберханалар', 'Арт-мансап'],
+  en: ['Junior group', 'Middle group', 'Courses 0–2', 'Courses 3–4', 'Course 5 and workshops', 'Course 6 and advanced workshops', 'Art Career'],
 };
 
 export function levelGroupName(level: number, lang?: Lang): string {
