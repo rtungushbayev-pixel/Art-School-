@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
   cardActive: { borderColor: colors.primary },
   cardFuture: { backgroundColor: colors.surfaceAlt },
   figureFuture: { opacity: 0.45 },
-  cardText: { flex: 1, paddingVertical: spacing.sm },
+  cardText: { flex: 1, paddingVertical: 12 },
   group: { fontFamily: fonts.hand, fontSize: 24, lineHeight: 28, color: colors.text },
   textFuture: { color: colors.textMuted },
   age: { fontFamily: fonts.round, fontSize: 12, color: colors.textMuted, marginTop: 2 },
