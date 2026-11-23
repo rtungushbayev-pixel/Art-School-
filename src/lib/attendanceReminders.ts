@@ -12,7 +12,7 @@ import {
 import { pick, type Translations } from '../i18n';
 import type { Profile } from '../types/database';
 
-// Напоминание преподавателю: через час после конца занятия телефон
+// Напоминание преподавателю: через 15 минут после начала занятия телефон
 // показывает «Отметьте посещаемость», если группа за этот день отмечена не
 // полностью. Родители узнают о пропуске только после отметки «Нет», поэтому
 // без отметки они не узнают ничего.
@@ -21,7 +21,7 @@ import type { Profile } from '../types/database';
 // не нужен. Когда все ученики группы отмечены, напоминание на этот день
 // снимается. Пересчёт — при каждом открытии приложения.
 const PREFIX = 'attendance-reminder:';
-const MINUTES_AFTER_END = 60;
+const MINUTES_AFTER_START = 15;
 const DAYS_AHEAD = 7;
 // На iOS не больше 64 запланированных уведомлений на приложение; часть
 // оставляем напоминаниям о занятиях.
@@ -124,20 +124,20 @@ export async function syncAttendanceReminders(profile: Profile | null): Promise<
     for (let offset = 0; offset <= DAYS_AHEAD; offset++) {
       const day = addDays(today, offset);
       const dateKey = toDateKey(day);
-      // Одно напоминание на группу в день — после последнего её занятия.
-      const latest = new Map<string, { at: Date; groupName: string }>();
+      // Одно напоминание на группу в день — после начала первого её занятия.
+      const first = new Map<string, { at: Date; groupName: string }>();
       for (const lesson of lessons) {
         if (lesson.day_of_week !== isoDayOfWeek(day)) continue;
         if (offset === 0 && markedToday.has(lesson.group_id)) continue;
         const change = byKey.get(changeKey(lesson.id, dateKey));
         if (change?.cancelled) continue;
-        const end = formatTime(change?.end_time ?? lesson.end_time);
-        const [h, m] = end.split(':').map(Number);
-        const at = new Date(day.getFullYear(), day.getMonth(), day.getDate(), h, m + MINUTES_AFTER_END);
-        const prev = latest.get(lesson.group_id);
-        if (!prev || prev.at < at) latest.set(lesson.group_id, { at, groupName: lesson.group_name });
+        const start = formatTime(change?.start_time ?? lesson.start_time);
+        const [h, m] = start.split(':').map(Number);
+        const at = new Date(day.getFullYear(), day.getMonth(), day.getDate(), h, m + MINUTES_AFTER_START);
+        const prev = first.get(lesson.group_id);
+        if (!prev || prev.at > at) first.set(lesson.group_id, { at, groupName: lesson.group_name });
       }
-      for (const [groupId, { at, groupName }] of latest) {
+      for (const [groupId, { at, groupName }] of first) {
         if (at.getTime() <= now + 60 * 1000) continue;
         if (count >= MAX_SCHEDULED) return;
         count++;

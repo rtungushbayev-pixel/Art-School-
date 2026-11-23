@@ -68,7 +68,7 @@ const STRINGS = {
     sendNotifications: 'Присылать уведомления',
     staffReminders: {
       title: 'Напоминание о посещаемости',
-      description: 'Через час после занятия, если группа ещё не отмечена',
+      description: 'Через 15 минут после начала занятия, если группа ещё не отмечена',
     },
   },
   kk: {
@@ -107,7 +107,7 @@ const STRINGS = {
     sendNotifications: 'Хабарландыру жіберу',
     staffReminders: {
       title: 'Қатысу туралы еске салу',
-      description: 'Сабақтан бір сағат өткен соң, егер топ әлі белгіленбесе',
+      description: 'Сабақ басталғаннан 15 минут өткен соң, егер топ әлі белгіленбесе',
     },
   },
   en: {
@@ -146,7 +146,7 @@ const STRINGS = {
     sendNotifications: 'Send me notifications',
     staffReminders: {
       title: 'Attendance reminder',
-      description: 'An hour after class, if the group is not marked yet',
+      description: '15 minutes after class starts, if the group is not marked yet',
     },
   },
 };
