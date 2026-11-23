@@ -17,7 +17,8 @@ type NotificationTarget =
   | { screen: 'ChildDetail'; childId: string }
   | { screen: 'Chat'; chatId: string }
   | { screen: 'EventDetail'; eventId: string }
-  | { screen: 'GroupDetail'; groupId: string };
+  | { screen: 'GroupDetail'; groupId: string }
+  | { screen: 'Attendance'; groupId: string; groupName: string; date: string | null };
 
 function asId(value: unknown): string | null {
   return typeof value === 'string' && value.length > 0 ? value : null;
@@ -52,6 +53,12 @@ export function resolveNotificationTarget(data: Record<string, unknown> | undefi
     case 'group_request': {
       const groupId = asId(data.groupId);
       return groupId ? { screen: 'GroupDetail', groupId } : null;
+    }
+    case 'attendance_reminder': {
+      const groupId = asId(data.groupId);
+      const date = typeof data.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(data.date) ? data.date : null;
+      const groupName = typeof data.groupName === 'string' ? data.groupName : '';
+      return groupId ? { screen: 'Attendance', groupId, groupName, date } : null;
     }
     case 'attendance': {
       const childId = asId(data.studentId);
@@ -97,6 +104,16 @@ function navigateToTarget(navigation: AppNavigationRef, role: UserRole, target: 
       // Запросы на замену преподавателя — только у сотрудников.
       if (role === 'staff' || role === 'admin') {
         navigation.navigate('GroupDetail', { groupId: target.groupId });
+      }
+      break;
+    case 'Attendance':
+      // Напоминание отметить посещаемость — только преподавателям.
+      if (role === 'staff' || role === 'admin') {
+        navigation.navigate('Attendance', {
+          groupId: target.groupId,
+          groupName: target.groupName,
+          ...(target.date ? { date: target.date } : {}),
+        });
       }
       break;
     case 'ChildDetail':
