@@ -44,6 +44,10 @@ export type StudentStackParamList = {
   CreateListing: undefined;
   Payments: { studentId?: string } | undefined;
   Support: undefined;
+  ArtHistory: undefined;
+  ArtEra: { eraId: string };
+  ArtArtist: { heroId: string };
+  AskGuide: { eraId?: string; heroId?: string } | undefined;
   NewSupportTicket: { category: SupportCategory };
   SupportTicket: { ticketId: string };
 };
@@ -96,6 +100,10 @@ export type StaffStackParamList = {
   AddStudentPhoto: { studentId: string; studentName: string };
   PhotoView: { uri: string; caption?: string | null };
   Support: undefined;
+  ArtHistory: undefined;
+  ArtEra: { eraId: string };
+  ArtArtist: { heroId: string };
+  AskGuide: { eraId?: string; heroId?: string } | undefined;
   NewSupportTicket: { category: SupportCategory };
   SupportTicket: { ticketId: string };
   Attendance: { groupId: string; groupName: string; date?: string };
@@ -151,6 +159,10 @@ export type ParentStackParamList = {
   Hero: { userId: string };
   HeroPicker: { onboarding?: boolean } | undefined;
   Support: undefined;
+  ArtHistory: undefined;
+  ArtEra: { eraId: string };
+  ArtArtist: { heroId: string };
+  AskGuide: { eraId?: string; heroId?: string } | undefined;
   NewSupportTicket: { category: SupportCategory };
   SupportTicket: { ticketId: string };
 };

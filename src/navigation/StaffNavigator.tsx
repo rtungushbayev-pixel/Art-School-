@@ -34,6 +34,10 @@ import { AddProgressNoteScreen } from '../screens/staff/AddProgressNoteScreen';
 import { AddStudentPhotoScreen } from '../screens/staff/AddStudentPhotoScreen';
 import { PhotoViewScreen } from '../screens/shared/PhotoViewScreen';
 import { SupportScreen } from '../screens/shared/SupportScreen';
+import { ArtHistoryScreen } from '../screens/shared/ArtHistoryScreen';
+import { ArtEraScreen } from '../screens/shared/ArtEraScreen';
+import { ArtArtistScreen } from '../screens/shared/ArtArtistScreen';
+import { AskGuideScreen } from '../screens/shared/AskGuideScreen';
 import { NewSupportTicketScreen } from '../screens/shared/NewSupportTicketScreen';
 import { SupportTicketScreen } from '../screens/shared/SupportTicketScreen';
 import { AttendanceScreen } from '../screens/staff/AttendanceScreen';
@@ -267,6 +271,20 @@ export function StaffNavigator() {
       <Stack.Screen name="EditEvent" component={EditEventScreen} options={{ title: s.editEvent }} />
       <Stack.Screen name="KaspiSettings" component={KaspiSettingsScreen} options={{ title: s.kaspi }} />
       <Stack.Screen name="Support" component={SupportScreen} options={{ title: s.tickets }} />
+      <Stack.Screen name="ArtHistory" component={ArtHistoryScreen} options={{ title: '' }} />
+      <Stack.Screen name="ArtEra" component={ArtEraScreen} options={{ title: '' }} />
+      <Stack.Screen name="ArtArtist" component={ArtArtistScreen} options={{ title: '' }} />
+      <Stack.Screen
+        name="AskGuide"
+        component={AskGuideScreen}
+        options={{
+          title: '',
+          headerStyle: { backgroundColor: '#0B1B1E' },
+          headerTintColor: '#5FF2E6',
+          headerTitleStyle: { color: '#5FF2E6' },
+          contentStyle: { backgroundColor: '#0B1B1E' },
+        }}
+      />
       <Stack.Screen
         name="NewSupportTicket"
         component={NewSupportTicketScreen}

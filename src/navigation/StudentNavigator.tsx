@@ -21,6 +21,10 @@ import { AnnouncementsScreen } from '../screens/student/AnnouncementsScreen';
 import { MarketplaceScreen } from '../screens/shared/MarketplaceScreen';
 import { FriendsScreen } from '../screens/shared/FriendsScreen';
 import { SupportScreen } from '../screens/shared/SupportScreen';
+import { ArtHistoryScreen } from '../screens/shared/ArtHistoryScreen';
+import { ArtEraScreen } from '../screens/shared/ArtEraScreen';
+import { ArtArtistScreen } from '../screens/shared/ArtArtistScreen';
+import { AskGuideScreen } from '../screens/shared/AskGuideScreen';
 import { NewSupportTicketScreen } from '../screens/shared/NewSupportTicketScreen';
 import { SupportTicketScreen } from '../screens/shared/SupportTicketScreen';
 import { CheckInScreen } from '../screens/shared/CheckInScreen';
@@ -151,6 +155,20 @@ export function StudentNavigator() {
       <Stack.Screen name="Events" component={EventsScreen} options={{ title: s.events }} />
       <Stack.Screen name="EventDetail" component={EventDetailScreen} options={{ title: s.event }} />
       <Stack.Screen name="Support" component={SupportScreen} options={{ title: s.help }} />
+      <Stack.Screen name="ArtHistory" component={ArtHistoryScreen} options={{ title: '' }} />
+      <Stack.Screen name="ArtEra" component={ArtEraScreen} options={{ title: '' }} />
+      <Stack.Screen name="ArtArtist" component={ArtArtistScreen} options={{ title: '' }} />
+      <Stack.Screen
+        name="AskGuide"
+        component={AskGuideScreen}
+        options={{
+          title: '',
+          headerStyle: { backgroundColor: '#0B1B1E' },
+          headerTintColor: '#5FF2E6',
+          headerTitleStyle: { color: '#5FF2E6' },
+          contentStyle: { backgroundColor: '#0B1B1E' },
+        }}
+      />
       <Stack.Screen
         name="NewSupportTicket"
         component={NewSupportTicketScreen}
