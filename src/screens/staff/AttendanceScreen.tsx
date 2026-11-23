@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useRoute, type RouteProp } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
@@ -14,6 +14,8 @@ import {
   syncFacePasses,
 } from '../../lib/attendance';
 import { errorText } from '../../lib/errors';
+import { cancelAttendanceReminder } from '../../lib/attendanceReminders';
+import { parseDateKey } from '../../lib/schedule';
 import { useStrings } from '../../i18n';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { AttendanceStatus, Profile } from '../../types/database';
@@ -67,9 +69,13 @@ const STRINGS = {
 // в пределах 30 дней). «Нет» — пуш родителям.
 export function AttendanceScreen() {
   const route = useRoute<RouteProp<StaffStackParamList, 'Attendance'>>();
-  const { groupId, groupName } = route.params;
+  const { groupId, groupName, date: dateParam } = route.params;
   const s = useStrings(STRINGS);
-  const [date, setDate] = useState(() => new Date());
+  // Из напоминания «Отметьте посещаемость» приходит день занятия.
+  const [date, setDate] = useState(() => (dateParam ? parseDateKey(dateParam) : new Date()));
+  useEffect(() => {
+    if (dateParam) setDate(parseDateKey(dateParam));
+  }, [dateParam]);
   const [students, setStudents] = useState<Profile[]>([]);
   const [statuses, setStatuses] = useState<Record<string, AttendanceStatus>>({});
   const [passes, setPasses] = useState<Record<string, string>>({});
@@ -118,6 +124,13 @@ export function AttendanceScreen() {
       load();
     }, [load])
   );
+
+  // Все ученики отмечены — напоминание преподавателю на этот день не нужно.
+  useEffect(() => {
+    if (students.length > 0 && students.every((st) => statuses[st.id])) {
+      cancelAttendanceReminder(groupId, dateKey);
+    }
+  }, [students, statuses, groupId, dateKey]);
 
   const mark = async (studentId: string, status: AttendanceStatus) => {
     const previous = statuses[studentId];

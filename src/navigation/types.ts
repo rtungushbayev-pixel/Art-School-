@@ -98,7 +98,7 @@ export type StaffStackParamList = {
   Support: undefined;
   NewSupportTicket: { category: SupportCategory };
   SupportTicket: { ticketId: string };
-  Attendance: { groupId: string; groupName: string };
+  Attendance: { groupId: string; groupName: string; date?: string };
   AttendanceSummary: undefined;
   BranchQr: undefined;
   Chats: undefined;

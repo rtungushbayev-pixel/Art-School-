@@ -4,6 +4,7 @@ import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { clearPushToken, syncPushToken } from '../lib/notifications';
 import { syncLessonReminders } from '../lib/lessonReminders';
+import { syncAttendanceReminders } from '../lib/attendanceReminders';
 import { AUTH_REDIRECT_URL, PASSWORD_RESET_URL, listenForAuthLinks } from '../lib/authLinks';
 import type { Profile } from '../types/database';
 
@@ -95,12 +96,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [profile?.id]);
 
-  // Напоминания о занятиях пересчитываются при входе, смене настройки и
+  // Напоминания о занятиях (и преподавателю — отметить посещаемость) пересчитываются при входе, смене настройки и
   // каждом возвращении в приложение (расписание могли изменить).
   useEffect(() => {
-    syncLessonReminders(profile);
+    // Оба синка снимают только «свои» уведомления (по префиксу), поэтому
+    // идут по очереди, чтобы не превысить лимит iOS.
+    const sync = async () => {
+      await syncLessonReminders(profile);
+      await syncAttendanceReminders(profile);
+    };
+    sync();
     const sub = AppState.addEventListener('change', (state) => {
-      if (state === 'active') syncLessonReminders(profile);
+      if (state === 'active') sync();
     });
     return () => sub.remove();
   }, [profile?.id, profile?.notify_reminders]);

@@ -66,6 +66,10 @@ const STRINGS = {
     allow: 'Разрешить уведомления',
     openSettings: 'Открыть настройки',
     sendNotifications: 'Присылать уведомления',
+    staffReminders: {
+      title: 'Напоминание о посещаемости',
+      description: 'Через 15 минут после начала занятия, если группа ещё не отмечена',
+    },
   },
   kk: {
     settings: {
@@ -101,6 +105,10 @@ const STRINGS = {
     allow: 'Хабарландыруларға рұқсат беру',
     openSettings: 'Баптауларды ашу',
     sendNotifications: 'Хабарландыру жіберу',
+    staffReminders: {
+      title: 'Қатысу туралы еске салу',
+      description: 'Сабақ басталғаннан 15 минут өткен соң, егер топ әлі белгіленбесе',
+    },
   },
   en: {
     settings: {
@@ -136,6 +144,10 @@ const STRINGS = {
     allow: 'Allow notifications',
     openSettings: 'Open settings',
     sendNotifications: 'Send me notifications',
+    staffReminders: {
+      title: 'Attendance reminder',
+      description: '15 minutes after class starts, if the group is not marked yet',
+    },
   },
 };
 
@@ -176,6 +188,7 @@ export function NotificationSettingsScreen() {
   );
 
   if (!profile || !values) return null;
+  const isStaff = profile.role === 'staff' || profile.role === 'admin';
 
   const toggle = async (key: SettingKey, value: boolean) => {
     // Функциональные обновления: быстрые переключения разных пунктов подряд
@@ -226,12 +239,20 @@ export function NotificationSettingsScreen() {
         {SETTING_KEYS.filter(
           (key) =>
             (key !== 'notify_attendance' || profile.role === 'parent') &&
-            (key !== 'notify_reminders' || profile.role === 'parent' || profile.role === 'student')
+            (key !== 'notify_reminders' ||
+              profile.role === 'parent' ||
+              profile.role === 'student' ||
+              profile.role === 'staff' ||
+              profile.role === 'admin')
         ).map((key, index) => (
           <View key={key} style={[styles.row, index > 0 && styles.rowDivider]}>
             <View style={styles.rowText}>
-              <Text style={styles.rowTitle}>{s.settings[key].title}</Text>
-              <Text style={styles.rowDescription}>{s.settings[key].description}</Text>
+              <Text style={styles.rowTitle}>
+                {key === 'notify_reminders' && isStaff ? s.staffReminders.title : s.settings[key].title}
+              </Text>
+              <Text style={styles.rowDescription}>
+                {key === 'notify_reminders' && isStaff ? s.staffReminders.description : s.settings[key].description}
+              </Text>
             </View>
             <Switch
               value={values[key]}
