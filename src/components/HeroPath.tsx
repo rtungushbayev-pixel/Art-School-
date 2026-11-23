@@ -5,6 +5,7 @@ import { HeroFigure } from './HeroFigure';
 import { LEVEL_AGE, MAX_LEVEL, levelGroupName, type Hero, type HeroSkin } from '../lib/heroes';
 import { useLanguage, useStrings } from '../i18n';
 import { colors, radius, spacing } from '../theme/colors';
+import { fonts } from '../theme/fonts';
 
 interface Props {
   hero: Hero;
@@ -119,8 +120,8 @@ export function HeroPath({ hero, level, skin, art, selected, onSelect }: Props) 
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 22, fontWeight: '800', color: colors.text, marginTop: spacing.lg },
-  hint: { color: colors.textMuted, fontSize: 13, marginTop: spacing.xs, marginBottom: spacing.sm },
+  title: { fontFamily: fonts.hand, fontSize: 34, lineHeight: 40, color: colors.text, marginTop: spacing.lg },
+  hint: { fontFamily: fonts.round, color: colors.textMuted, fontSize: 13, lineHeight: 19, marginTop: spacing.xs, marginBottom: spacing.sm },
   step: { flexDirection: 'row', alignItems: 'stretch' },
   lineCol: { width: 32, alignItems: 'center' },
   line: { flex: 1, width: 4, backgroundColor: colors.border, borderRadius: 2 },
@@ -158,9 +159,9 @@ const styles = StyleSheet.create({
   cardFuture: { backgroundColor: colors.surfaceAlt },
   figureFuture: { opacity: 0.45 },
   cardText: { flex: 1, paddingVertical: spacing.sm },
-  group: { fontSize: 15, fontWeight: '700', color: colors.text },
+  group: { fontFamily: fonts.hand, fontSize: 24, lineHeight: 28, color: colors.text },
   textFuture: { color: colors.textMuted },
-  age: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
+  age: { fontFamily: fonts.round, fontSize: 12, color: colors.textMuted, marginTop: 2 },
   hereBadge: {
     alignSelf: 'flex-start',
     marginTop: spacing.xs,
@@ -169,8 +170,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     backgroundColor: colors.primary,
   },
-  hereText: { color: colors.white, fontSize: 12, fontWeight: '700' },
-  doneText: { color: colors.success, fontSize: 12, fontWeight: '600', marginTop: spacing.xs },
+  hereText: { fontFamily: fonts.roundBold, color: colors.white, fontSize: 12 },
+  doneText: { fontFamily: fonts.roundBold, color: colors.success, fontSize: 12, marginTop: spacing.xs },
   finish: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -180,5 +181,5 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     backgroundColor: colors.surfaceAlt,
   },
-  finishText: { flex: 1, color: colors.text, fontSize: 14 },
+  finishText: { flex: 1, fontFamily: fonts.round, color: colors.text, fontSize: 14, lineHeight: 20 },
 });

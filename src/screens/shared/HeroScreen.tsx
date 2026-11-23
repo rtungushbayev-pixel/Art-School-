@@ -27,6 +27,7 @@ import {
 } from '../../lib/heroes';
 import { useLanguage, useStrings } from '../../i18n';
 import { colors, radius, shadow, spacing } from '../../theme/colors';
+import { fonts } from '../../theme/fonts';
 import type { Profile } from '../../types/database';
 import type { StudentStackParamList } from '../../navigation/types';
 
@@ -318,8 +319,8 @@ function Stat({ value, label }: { value: number; label: string }) {
 
 const styles = StyleSheet.create({
   empty: { textAlign: 'center', color: colors.textMuted, marginVertical: spacing.lg },
-  name: { fontSize: 24, fontWeight: '800', color: colors.text, textAlign: 'center' },
-  years: { color: colors.textMuted, textAlign: 'center', marginTop: 2, paddingHorizontal: spacing.md },
+  name: { fontFamily: fonts.hand, fontSize: 38, lineHeight: 44, color: colors.text, textAlign: 'center' },
+  years: { fontFamily: fonts.round, color: colors.textMuted, textAlign: 'center', marginTop: 2, paddingHorizontal: spacing.md },
   levels: { gap: spacing.sm, paddingVertical: spacing.md, paddingHorizontal: 2 },
   levelChip: {
     width: 40,
@@ -335,8 +336,8 @@ const styles = StyleSheet.create({
   levelTextActive: { color: colors.primary, fontWeight: '800' },
   figure: { alignItems: 'center', minHeight: 330 },
   figureLocked: { opacity: 0.35 },
-  stage: { textAlign: 'center', color: colors.primary, fontWeight: '700', marginTop: spacing.sm },
-  section: { fontSize: 22, fontWeight: '800', color: colors.text, marginTop: spacing.lg, marginBottom: spacing.sm },
+  stage: { fontFamily: fonts.roundBold, textAlign: 'center', color: colors.primary, marginTop: spacing.sm },
+  section: { fontFamily: fonts.hand, fontSize: 32, lineHeight: 38, color: colors.text, marginTop: spacing.lg, marginBottom: spacing.sm },
   skins: { gap: spacing.sm, paddingTop: spacing.sm, paddingBottom: spacing.xs, paddingHorizontal: 2 },
   skinCard: {
     width: 132,
@@ -353,7 +354,7 @@ const styles = StyleSheet.create({
   rarity: { position: 'absolute', top: -10, borderRadius: radius.full, paddingHorizontal: spacing.sm, paddingVertical: 2 },
   rarityText: { color: colors.white, fontSize: 11, fontWeight: '800', textTransform: 'uppercase' },
   skinLocked: { opacity: 0.35 },
-  skinName: { fontSize: 12, fontWeight: '700', color: colors.text, textAlign: 'center', marginTop: 4 },
+  skinName: { fontFamily: fonts.hand, fontSize: 20, color: colors.text, textAlign: 'center', marginTop: 4 },
   wearing: { color: '#7B4FD6', fontWeight: '800', marginTop: 4 },
   wearButton: {
     marginTop: 4,
@@ -374,7 +375,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     padding: spacing.md,
   },
-  contestsTitle: { color: colors.white, fontWeight: '800', fontSize: 16 },
+  contestsTitle: { fontFamily: fonts.hand, color: colors.white, fontSize: 26 },
   contestsRow: { flexDirection: 'row', marginTop: spacing.sm },
   stat: { flex: 1, alignItems: 'center' },
   statValue: { color: '#6FE3FF', fontSize: 24, fontWeight: '800' },
