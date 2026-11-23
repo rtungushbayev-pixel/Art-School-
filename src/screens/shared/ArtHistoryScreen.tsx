@@ -9,6 +9,7 @@ import { HeroAvatar } from '../../components/HeroAvatar';
 import { useAuth } from '../../hooks/useAuth';
 import { ERAS, ONLINE_COURSE_URL } from '../../lib/artHistory';
 import { HEROES } from '../../lib/heroes';
+import { FEATURES } from '../../lib/features';
 import { pick, useLanguage, useStrings } from '../../i18n';
 import { colors, radius, shadow, spacing } from '../../theme/colors';
 import { fonts } from '../../theme/fonts';
@@ -18,6 +19,7 @@ const STRINGS = {
     title: 'История искусств',
     guideTitle: 'Гид по искусству',
     guideText: 'Задай любой вопрос про художников, картины и эпохи. Гид ответит голосом.',
+    guideTextFaq: 'Выбери вопрос про художников, краски и картины, и гид расскажет ответ голосом.',
     ask: 'Спросить гида',
     eras: 'Путешествие во времени',
     artists: 'Великие художники',
@@ -31,6 +33,7 @@ const STRINGS = {
     title: 'Өнер тарихы',
     guideTitle: 'Өнер бойынша гид',
     guideText: 'Суретшілер, суреттер мен дәуірлер туралы кез келген сұрақ қой. Гид дауыспен жауап береді.',
+    guideTextFaq: 'Суретшілер, бояулар мен суреттер туралы сұрақты таңда, гид жауабын дауыспен айтады.',
     ask: 'Гидтен сұрау',
     eras: 'Уақыт бойынша саяхат',
     artists: 'Ұлы суретшілер',
@@ -44,6 +47,7 @@ const STRINGS = {
     title: 'Art history',
     guideTitle: 'Art guide',
     guideText: 'Ask anything about artists, paintings and eras. The guide answers out loud.',
+    guideTextFaq: 'Pick a question about artists, colours and paintings, and the guide will answer out loud.',
     ask: 'Ask the guide',
     eras: 'Journey through time',
     artists: 'Great artists',
@@ -73,7 +77,7 @@ export function ArtHistoryScreen() {
         <GuideAvatar size={120} />
         <View style={styles.guideBody}>
           <Text style={styles.guideTitle}>{s.guideTitle}</Text>
-          <Text style={styles.guideText}>{s.guideText}</Text>
+          <Text style={styles.guideText}>{FEATURES.aiGuide ? s.guideText : s.guideTextFaq}</Text>
           <View style={styles.guideButton}>
             <Ionicons name="mic-outline" size={18} color="#0E2226" />
             <Text style={styles.guideButtonText}>{s.ask}</Text>
