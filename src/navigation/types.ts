@@ -35,6 +35,8 @@ export type StudentStackParamList = {
   EditProfile: undefined;
   NotificationSettings: undefined;
   UserProfile: { userId: string };
+  Hero: { userId: string };
+  HeroPicker: { onboarding?: boolean } | undefined;
   Portfolio: { userId: string };
   EditArtwork: { postId: string };
   EditAchievement: { studentId: string; achievementId?: string };
@@ -70,6 +72,8 @@ export type StaffStackParamList = {
   EditProfile: undefined;
   NotificationSettings: undefined;
   UserProfile: { userId: string };
+  Hero: { userId: string };
+  HeroPicker: { onboarding?: boolean } | undefined;
   Portfolio: { userId: string };
   EditArtwork: { postId: string };
   EditAchievement: { studentId: string; achievementId?: string };
@@ -144,6 +148,8 @@ export type ParentStackParamList = {
   EditProfile: undefined;
   NotificationSettings: undefined;
   UserProfile: { userId: string };
+  Hero: { userId: string };
+  HeroPicker: { onboarding?: boolean } | undefined;
   Support: undefined;
   NewSupportTicket: { category: SupportCategory };
   SupportTicket: { ticketId: string };

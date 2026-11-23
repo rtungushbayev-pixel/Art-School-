@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
+import { useFonts } from 'expo-font';
+import { Caveat_700Bold } from '@expo-google-fonts/caveat';
+import { Comfortaa_500Medium, Comfortaa_700Bold } from '@expo-google-fonts/comfortaa';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/hooks/useAuth';
 import { LanguageProvider } from './src/i18n';
@@ -12,6 +15,8 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
+  // Шрифты экрана героя. Не ждём их: пока грузятся, текст в системном шрифте.
+  useFonts({ Caveat_700Bold, Comfortaa_500Medium, Comfortaa_700Bold });
 
   return (
     <SafeAreaProvider>

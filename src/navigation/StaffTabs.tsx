@@ -15,7 +15,7 @@ const STRINGS = {
   ru: {
     schedule: 'Расписание',
     groups: 'Группы',
-    community: 'Комьюнити',
+    community: 'Арт-двор',
     review: 'Проверка',
     events: 'Конкурсы',
     eventsTitle: 'Выставки и конкурсы',
@@ -24,7 +24,7 @@ const STRINGS = {
   kk: {
     schedule: 'Кесте',
     groups: 'Топтар',
-    community: 'Қауымдастық',
+    community: 'Арт-аула',
     review: 'Тексеру',
     events: 'Байқаулар',
     eventsTitle: 'Көрмелер мен байқаулар',
@@ -33,7 +33,7 @@ const STRINGS = {
   en: {
     schedule: 'Schedule',
     groups: 'Groups',
-    community: 'Community',
+    community: 'Art Yard',
     review: 'Review',
     events: 'Contests',
     eventsTitle: 'Exhibitions and competitions',

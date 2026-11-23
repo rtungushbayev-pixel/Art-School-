@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "main": "index.ts",
   "dependencies": {
+    "@expo-google-fonts/caveat": "^0.4.2",
+    "@expo-google-fonts/comfortaa": "^0.4.2",
     "@expo/vector-icons": "^15.1.1",
     "@react-native-async-storage/async-storage": "^3.1.1",
     "@react-navigation/bottom-tabs": "^7.19.2",
@@ -12,6 +14,7 @@
     "expo": "~57.0.24",
     "expo-build-properties": "~57.0.22",
     "expo-camera": "~57.0.6",
+    "expo-font": "~57.0.4",
     "expo-image": "^57.0.5",
     "expo-image-manipulator": "~57.0.19",
     "expo-image-picker": "^57.0.19",

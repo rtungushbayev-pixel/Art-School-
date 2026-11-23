@@ -10,7 +10,7 @@ import type { Group, StudentAchievement } from '../types/database';
 export function useStudentPortfolio(userId: string | undefined, viewerId: string | undefined) {
   const [posts, setPosts] = useState<PostCardData[]>([]);
   const [achievements, setAchievements] = useState<StudentAchievement[]>([]);
-  const [groups, setGroups] = useState<Pick<Group, 'id' | 'name'>[]>([]);
+  const [groups, setGroups] = useState<Pick<Group, 'id' | 'name' | 'course'>[]>([]);
 
   const reload = useCallback(async () => {
     if (!userId) return;
