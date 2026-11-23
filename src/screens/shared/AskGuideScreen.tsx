@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -23,6 +23,8 @@ import {
   type GuideMessage,
 } from '../../lib/artGuide';
 import { findEra } from '../../lib/artHistory';
+import { FEATURES } from '../../lib/features';
+import { GENERAL_FAQ, eraFaq, heroFaq, type GuideFaq } from '../../lib/guideFaq';
 import { findHero } from '../../lib/heroes';
 import { pick, useLanguage, useStrings } from '../../i18n';
 import { radius, spacing } from '../../theme/colors';
@@ -31,6 +33,10 @@ import { fonts } from '../../theme/fonts';
 // «Спроси гида»: ребёнок задаёт вопрос текстом (или голосом через микрофон
 // на клавиатуре телефона), гид отвечает текстом и вслух.
 // Разговор нигде не сохраняется: закрыл экран — он исчез.
+//
+// Пока живое общение выключено (FEATURES.aiGuide), гид отвечает на
+// заготовленные вопросы (lib/guideFaq): ребёнок выбирает вопрос из списка,
+// ничего не уходит в интернет.
 
 const HOLO = '#5FF2E6';
 const BG = '#0B1B1E';
@@ -38,6 +44,8 @@ const BG = '#0B1B1E';
 const STRINGS = {
   ru: {
     title: 'Спроси гида',
+    pickQuestion: 'Выбери вопрос:',
+    helloFaq: "Привет! Я гид по искусству. Выбери вопрос, и я расскажу ответ.",
     hello: 'Привет! Я гид по искусству. Спроси меня про художников, картины, краски или любую эпоху.',
     helloEra: (t: string) => `Привет! Давай поговорим про эпоху «${t}». Что тебе интересно?`,
     helloHero: (n: string) => `Привет! Хочешь узнать больше про художника ${n}? Спрашивай!`,
@@ -53,6 +61,8 @@ const STRINGS = {
   },
   kk: {
     title: 'Гидтен сұра',
+    pickQuestion: 'Сұрақты таңда:',
+    helloFaq: "Сәлем! Мен өнер бойынша гидпін. Сұрақты таңда, мен жауабын айтып беремін.",
     hello: 'Сәлем! Мен өнер бойынша гидпін. Суретшілер, суреттер, бояулар немесе кез келген дәуір туралы сұра.',
     helloEra: (t: string) => `Сәлем! «${t}» дәуірі туралы сөйлесейік. Саған не қызық?`,
     helloHero: (n: string) => `Сәлем! ${n} туралы көбірек білгің келе ме? Сұра!`,
@@ -68,6 +78,8 @@ const STRINGS = {
   },
   en: {
     title: 'Ask the guide',
+    pickQuestion: 'Pick a question:',
+    helloFaq: "Hi! I am your art guide. Pick a question and I'll tell you the answer.",
     hello: 'Hi! I am your art guide. Ask me about artists, paintings, colours or any era.',
     helloEra: (t: string) => `Hi! Let's talk about ${t}. What would you like to know?`,
     helloHero: (n: string) => `Hi! Want to know more about ${n}? Ask away!`,
@@ -91,11 +103,14 @@ export function AskGuideScreen() {
   const era = findEra(route.params?.eraId);
   const hero = findHero(route.params?.heroId);
 
+  const live = FEATURES.aiGuide;
   const greeting = era
     ? s.helloEra(pick(era.title, lang))
     : hero
       ? s.helloHero(pick(hero.name, lang))
-      : s.hello;
+      : live
+        ? s.hello
+        : s.helloFaq;
 
   const [messages, setMessages] = useState<GuideMessage[]>([]);
   const [input, setInput] = useState('');
@@ -105,6 +120,14 @@ export function AskGuideScreen() {
   const [remaining, setRemaining] = useState<number | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const scrollRef = useRef<ScrollView>(null);
+
+  // Заготовленные вопросы: сначала про эпоху или художника, потом общие.
+  const faqs = useMemo<GuideFaq[]>(
+    () => [...(era ? eraFaq(era.id, lang) : []), ...(hero ? heroFaq(hero.id, lang) : []), ...GENERAL_FAQ],
+    [era, hero, lang]
+  );
+  const asked = new Set(messages.filter((m) => m.role === 'user').map((m) => m.content));
+  const openFaqs = faqs.filter((f) => !asked.has(f.question));
 
   useEffect(() => {
     navigation.setOptions({ title: s.title });
@@ -151,6 +174,12 @@ export function AskGuideScreen() {
     }
   };
 
+  const askFaq = (faq: GuideFaq) => {
+    stopSpeaking();
+    setMessages((prev) => [...prev, { role: 'user', content: faq.question }, { role: 'assistant', content: faq.answer }]);
+    say(faq.answer);
+  };
+
   const toggleVoice = () => {
     if (voice) {
       stopSpeaking();
@@ -182,7 +211,18 @@ export function AskGuideScreen() {
           ))}
           {busy ? <ActivityIndicator color={HOLO} style={styles.busy} /> : null}
           {notice ? <Text style={styles.notice}>{notice}</Text> : null}
-          {messages.length === 0 && !busy ? (
+          {!live ? (
+            <>
+              {openFaqs.length ? <Text style={styles.pick}>{s.pickQuestion}</Text> : null}
+              <View style={styles.ideas}>
+                {openFaqs.map((faq) => (
+                  <Pressable key={faq.question} style={styles.idea} onPress={() => askFaq(faq)}>
+                    <Text style={styles.ideaText}>{faq.question}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </>
+          ) : messages.length === 0 && !busy ? (
             <View style={styles.ideas}>
               {s.ideas.map((idea) => (
                 <Pressable key={idea} style={styles.idea} onPress={() => send(idea)}>
@@ -193,6 +233,7 @@ export function AskGuideScreen() {
           ) : null}
         </ScrollView>
 
+        {live ? (
         <View style={styles.bottom}>
           <Text style={styles.privacy}>{s.privacy}</Text>
           {remaining !== null ? <Text style={styles.left}>{s.left(remaining)}</Text> : null}
@@ -216,6 +257,7 @@ export function AskGuideScreen() {
             </Pressable>
           </View>
         </View>
+        ) : null}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -250,6 +292,7 @@ const styles = StyleSheet.create({
   replay: { alignSelf: 'flex-end', marginTop: 4 },
   busy: { alignSelf: 'flex-start', marginLeft: spacing.md },
   notice: { color: '#FFD38A', fontSize: 14, textAlign: 'center', marginTop: spacing.sm },
+  pick: { color: '#7FA9A5', fontSize: 13, marginTop: spacing.sm },
   ideas: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.sm },
   idea: { borderWidth: 1, borderColor: HOLO, borderRadius: radius.full, paddingHorizontal: 12, paddingVertical: 7 },
   ideaText: { color: HOLO, fontSize: 14 },
