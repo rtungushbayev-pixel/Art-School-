@@ -470,6 +470,9 @@ const LEVEL_GROUP: Translations<string[]> = {
   en: ['Junior group', 'Middle group', 'Senior group', 'Course 0', 'Courses 1–2', 'Course 3', 'Course 4', 'Course 5 and workshops', 'Course 6 and advanced workshops', 'Art Career'],
 };
 
+// Возраст героя на картинке каждого образа.
+export const LEVEL_AGE = [5, 7, 9, 11, 13, 14, 16, 30, 40, 50];
+
 export function levelGroupName(level: number, lang?: Lang): string {
   return pick(LEVEL_GROUP, lang)[Math.max(1, Math.min(MAX_LEVEL, level)) - 1];
 }

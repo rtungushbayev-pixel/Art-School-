@@ -7,6 +7,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { Button } from '../../components/Button';
 import { HeroFigure } from '../../components/HeroFigure';
+import { HeroPath } from '../../components/HeroPath';
 import { useAuth } from '../../hooks/useAuth';
 import { useHero } from '../../hooks/useHero';
 import { supabase } from '../../lib/supabase';
@@ -108,6 +109,7 @@ export function HeroScreen() {
   const [viewLevel, setViewLevel] = useState<number | null>(null);
   const [viewSkin, setViewSkin] = useState<HeroSkin | null>(null);
   const [saving, setSaving] = useState(false);
+  const [scrollTop, setScrollTop] = useState(0);
 
   useFocusEffect(
     useCallback(() => {
@@ -158,7 +160,7 @@ export function HeroScreen() {
   };
 
   return (
-    <Screen scroll>
+    <Screen scroll scrollToTopSignal={scrollTop}>
       <Text style={styles.name}>{hero.name[lang] ?? hero.name.ru}</Text>
       <Text style={styles.years}>
         {hero.years} · {hero.tagline[lang] ?? hero.tagline.ru}
@@ -242,6 +244,19 @@ export function HeroScreen() {
       <Text style={levelOpen ? styles.story : styles.lockedStory}>
         {levelOpen ? heroChapter(hero.id, shownLevel) : s.lockedLevel(levelGroupName(shownLevel, lang))}
       </Text>
+
+      <HeroPath
+        hero={hero}
+        level={level}
+        skin={shownSkin}
+        art={art}
+        selected={shownLevel}
+        onSelect={(l) => {
+          // Показываем выбранный шаг наверху экрана: героя и его главу.
+          setViewLevel(l);
+          setScrollTop((n) => n + 1);
+        }}
+      />
 
       <View style={styles.contests}>
         <Text style={styles.contestsTitle}>{s.contests}</Text>
