@@ -41,3 +41,6 @@ yarn-error.*
 /ios
 /android
 Art-School-/
+
+# отчёты проверки безопасности STRIX
+strix_runs/

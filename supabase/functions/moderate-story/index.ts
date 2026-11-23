@@ -98,8 +98,16 @@ Deno.serve(async (req) => {
     const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
     if (!apiKey) return json(200, { skipped: true, reason: 'no api key' });
 
-    // Отмечаем сразу: повторный вызов не запустит вторую проверку.
-    await admin.from('stories').update({ ai_checked_at: new Date().toISOString() }).eq('id', storyId);
+    // Отмечаем сразу и одним запросом: из параллельных вызовов проверку
+    // запустит только тот, кто первым поставил отметку.
+    const { data: claimed } = await admin
+      .from('stories')
+      .update({ ai_checked_at: new Date().toISOString() })
+      .eq('id', storyId)
+      .eq('status', 'pending')
+      .is('ai_checked_at', null)
+      .select('id');
+    if (!claimed || claimed.length === 0) return json(200, { skipped: true });
 
     let decision: 'approve' | 'reject' | 'review' = 'review';
     let reason = 'Не получилось проверить фото. Попробуйте выложить его ещё раз.';

@@ -14,6 +14,7 @@ import {
   deleteEvent,
   eventDates,
   eventKindLabel,
+  eventLevelLabel,
   fetchEvent,
   fetchParticipantCounts,
   fetchRegistrations,
@@ -177,7 +178,10 @@ export function EventDetailScreen() {
     <Screen scroll refreshing={loading} onRefresh={load}>
       <View style={styles.head}>
         <View style={styles.headInfo}>
-          <Text style={styles.kind}>{eventKindLabel(event.kind)}</Text>
+          <Text style={styles.kind}>
+            {eventKindLabel(event.kind)}
+            {event.level ? ` · ${eventLevelLabel(event.level)}` : ''}
+          </Text>
           <Text style={styles.title}>{event.title}</Text>
           <DeadlineLine event={event} />
         </View>
