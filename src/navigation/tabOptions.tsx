@@ -12,18 +12,21 @@ const STRINGS = {
     market: 'Продажа работ',
     messages: 'Сообщения',
     help: 'Помощь',
+    art: 'История искусств',
   },
   kk: {
     friends: 'Достар',
     market: 'Жұмыстарды сату',
     messages: 'Хабарламалар',
     help: 'Көмек',
+    art: 'Өнер тарихы',
   },
   en: {
     friends: 'Friends',
     market: 'Artwork sale',
     messages: 'Messages',
     help: 'Help',
+    art: 'Art history',
   },
 };
 
@@ -41,14 +44,26 @@ const ACTION_ICON = 26;
 interface HeaderActionsProps {
   showFriends: boolean;
   showMarket: boolean;
+  // «История искусств» — у всех, кроме администрации школы (office).
+  showArt?: boolean;
 }
 
-function HeaderActions({ showFriends, showMarket }: HeaderActionsProps) {
-  // Экраны Friends, Market, Messages и Support есть в стеке каждой роли, у которой показана иконка.
+function HeaderActions({ showFriends, showMarket, showArt = true }: HeaderActionsProps) {
+  // Экраны ArtHistory, Friends, Market, Messages и Support есть в стеке каждой роли, у которой показана иконка.
   const navigation = useNavigation<any>();
   const s = useStrings(STRINGS);
   return (
     <View style={styles.actions}>
+      {showArt ? (
+        <Pressable
+          hitSlop={8}
+          onPress={() => navigation.navigate('ArtHistory')}
+          accessibilityLabel={s.art}
+          style={styles.action}
+        >
+          <Ionicons name="book-outline" size={ACTION_ICON} color={colors.primary} />
+        </Pressable>
+      ) : null}
       {showFriends ? (
         <Pressable
           hitSlop={8}

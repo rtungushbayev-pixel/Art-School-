@@ -69,7 +69,7 @@ function OfficeTabs() {
   return (
     <Tab.Navigator
       initialRouteName="MaterialsTab"
-      screenOptions={makeTabScreenOptions(TAB_CONFIG, { showFriends: false, showMarket: false })}
+      screenOptions={makeTabScreenOptions(TAB_CONFIG, { showFriends: false, showMarket: false, showArt: false })}
     >
       <Tab.Screen name="MaterialsTab" component={MaterialRequestsScreen} options={{ title: s.materials }} />
       <Tab.Screen name="ProfileTab" component={ProfileScreen} options={{ title: s.profile }} />
