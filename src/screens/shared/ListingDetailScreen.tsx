@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { storagePathFromUrl } from '../../lib/posts';
-import { isStaffRole } from '../../lib/roles';
+import { isAdminRole } from '../../lib/roles';
 import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
@@ -107,7 +107,8 @@ export function ListingDetailScreen() {
   );
 
   const isOwner = profile?.id === listing?.seller_id;
-  const isStaff = isStaffRole(profile?.role);
+  // Проверка объявлений — только у администратора.
+  const isStaff = isAdminRole(profile?.role);
 
   const moderate = async (status: 'approved' | 'rejected') => {
     if (!profile || !listing) return;
