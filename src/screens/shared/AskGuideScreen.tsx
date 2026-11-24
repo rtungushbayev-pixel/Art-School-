@@ -121,9 +121,10 @@ export function AskGuideScreen() {
   const [notice, setNotice] = useState<string | null>(null);
   const scrollRef = useRef<ScrollView>(null);
 
-  // Заготовленные вопросы: сначала про эпоху или художника, потом общие.
+  // Заготовленные вопросы: со страницы эпохи или художника — только про
+  // них, из общего раздела — общие вопросы об искусстве.
   const faqs = useMemo<GuideFaq[]>(
-    () => [...(era ? eraFaq(era.id, lang) : []), ...(hero ? heroFaq(hero.id, lang) : []), ...GENERAL_FAQ],
+    () => (era ? eraFaq(era.id, lang) : hero ? heroFaq(hero.id, lang) : GENERAL_FAQ),
     [era, hero, lang]
   );
   const asked = new Set(messages.filter((m) => m.role === 'user').map((m) => m.content));

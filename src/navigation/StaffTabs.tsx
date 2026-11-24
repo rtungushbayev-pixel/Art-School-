@@ -10,6 +10,8 @@ import { FeedScreen } from '../screens/shared/FeedScreen';
 import { ProfileScreen } from '../screens/shared/ProfileScreen';
 import { EventsScreen } from '../screens/shared/EventsScreen';
 import { useStrings } from '../i18n';
+import { useAuth } from '../hooks/useAuth';
+import { isAdminRole } from '../lib/roles';
 
 const STRINGS = {
   ru: {
@@ -57,12 +59,15 @@ const TAB_CONFIG: Record<keyof StaffTabParamList, TabConfig> = {
 
 export function StaffTabs() {
   const s = useStrings(STRINGS);
+  const { profile } = useAuth();
+  // «Проверка» (модерация постов и объявлений) — только у администратора.
+  const showReview = isAdminRole(profile?.role);
   return (
     <Tab.Navigator initialRouteName="FeedTab" screenOptions={makeTabScreenOptions(TAB_CONFIG, { showFriends: true, showMarket: true })}>
       <Tab.Screen name="ScheduleTab" component={ScheduleScreen} options={{ title: s.schedule }} />
       <Tab.Screen name="GroupsTab" component={GroupsScreen} options={{ title: s.groups }} />
       <Tab.Screen name="FeedTab" component={FeedScreen} options={{ title: s.community }} />
-      <Tab.Screen name="ModerationTab" component={ModerationScreen} options={{ title: s.review }} />
+      {showReview ? <Tab.Screen name="ModerationTab" component={ModerationScreen} options={{ title: s.review }} /> : null}
       <Tab.Screen name="EventsTab" component={EventsScreen} options={{ title: s.eventsTitle, tabBarLabel: s.events }} />
       <Tab.Screen name="ProfileTab" component={ProfileScreen} options={{ title: s.profile }} />
     </Tab.Navigator>

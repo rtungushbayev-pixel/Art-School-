@@ -54,14 +54,50 @@ const STRINGS = {
   },
 };
 
+type Scope = 'all' | 'mine' | 'site';
+
+// Запоминаем загруженные списки и выбранную вкладку между переходами по
+// приложению: экран создаётся заново, а объявления не должны пропадать.
+const cache: {
+  userId: string | null;
+  scope: Scope;
+  shop: ShopListing[];
+  all: ListingCardData[];
+  mine: ListingCardData[];
+} = {
+  userId: null,
+  scope: 'all',
+  shop: [],
+  all: [],
+  mine: [],
+};
+
 export function MarketplaceScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<NavParamList>>();
   const { profile } = useAuth();
   const s = useStrings(STRINGS);
-  const [scope, setScope] = useState<'all' | 'mine' | 'site'>('all');
-  const [shop, setShop] = useState<ShopListing[]>([]);
-  const [listings, setListings] = useState<ListingCardData[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Другой вход в приложение — чужие «Мои объявления» не показываем.
+  if (profile && cache.userId !== profile.id) {
+    cache.userId = profile.id;
+    cache.scope = 'all';
+    cache.all = [];
+    cache.mine = [];
+  }
+  const [scope, setScopeState] = useState<Scope>(cache.scope);
+  const [shop, setShopState] = useState<ShopListing[]>(cache.shop);
+  const [listings, setListingsState] = useState<ListingCardData[]>(cache[cache.scope === 'mine' ? 'mine' : 'all']);
+  const [loading, setLoading] = useState(false);
+
+  const setScope = (next: Scope) => {
+    cache.scope = next;
+    setScopeState(next);
+    // Сразу показываем то, что уже загружали, пока приходит свежий список.
+    if (next !== 'site') setListingsState(cache[next]);
+  };
+  const setShop = (items: ShopListing[]) => {
+    cache.shop = items;
+    setShopState(items);
+  };
 
   const load = useCallback(async () => {
     if (!profile) return;
@@ -72,7 +108,9 @@ export function MarketplaceScreen() {
         // Раз в неделю сервер забирает свежие объявления с сайта.
         if (await refreshShopIfStale()) setShop(await fetchShopListings());
       } else {
-        setListings(scope === 'all' ? await fetchApprovedListings() : await fetchMyListings(profile.id));
+        const items = scope === 'all' ? await fetchApprovedListings() : await fetchMyListings(profile.id);
+        cache[scope] = items;
+        setListingsState(items);
       }
     } catch {
       // Нет сети — оставляем то, что уже показано.

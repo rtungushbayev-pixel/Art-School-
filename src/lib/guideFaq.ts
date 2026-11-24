@@ -89,6 +89,15 @@ export function eraFaq(eraId: EraId, lang: Lang): GuideFaq[] {
       question: `Что за работа «${w.title}»?`,
       answer: `Это «${w.title}». Автор: ${w.author}, ${w.year}. ${w.note}`,
     })),
+    ...(era.localArtists ?? []).map((a) => ({
+      question: `Расскажи о художнике: ${a.name}`,
+      answer: `${a.name}, ${a.years}. ${a.text}`,
+    })),
+    // Вопросы викторины эпохи с объяснением ответа.
+    ...era.quiz.map((q) => ({
+      question: q.question,
+      answer: `${q.options[q.answer]}. ${q.explain}`,
+    })),
   ];
 }
 
