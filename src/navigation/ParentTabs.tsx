@@ -14,7 +14,7 @@ import { useQrCheckInAvailable } from '../hooks/useQrCheckIn';
 
 const STRINGS = {
   ru: {
-    scan: 'Сканировать QR',
+    scan: 'Scan-QR',
     schedule: 'Расписание',
     community: 'Арт-двор',
     events: 'Конкурсы',
@@ -22,7 +22,7 @@ const STRINGS = {
     profile: 'Профиль',
   },
   kk: {
-    scan: 'QR сканерлеу',
+    scan: 'Scan-QR',
     schedule: 'Кесте',
     community: 'Арт-аула',
     events: 'Байқаулар',
@@ -30,7 +30,7 @@ const STRINGS = {
     profile: 'Профиль',
   },
   en: {
-    scan: 'Scan QR',
+    scan: 'Scan-QR',
     schedule: 'Schedule',
     community: 'Art Yard',
     events: 'Contests',
@@ -58,7 +58,7 @@ export function ParentTabs() {
     <Tab.Navigator initialRouteName="FeedTab" screenOptions={makeTabScreenOptions(TAB_CONFIG, { showFriends: false, showMarket: false })}>
       <Tab.Screen name="ScheduleTab" component={ScheduleScreen} options={{ title: s.schedule }} />
       <Tab.Screen name="FeedTab" component={FeedScreen} options={{ title: s.community }} />
-      {showScan ? <Tab.Screen name="ScanTab" component={CheckInScreen} options={{ title: s.scan, tabBarLabel: 'Scan-QR' }} /> : null}
+      {showScan ? <Tab.Screen name="ScanTab" component={CheckInScreen} options={{ title: s.scan }} /> : null}
       <Tab.Screen name="EventsTab" component={EventsScreen} options={{ title: s.eventsTitle, tabBarLabel: s.events }} />
       <Tab.Screen name="ProfileTab" component={ParentProfileScreen} options={{ title: s.profile }} />
     </Tab.Navigator>
