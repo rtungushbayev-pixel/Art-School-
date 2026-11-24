@@ -9,7 +9,7 @@ import { Button } from '../../components/Button';
 import { HeroFigure } from '../../components/HeroFigure';
 import { HeroPath } from '../../components/HeroPath';
 import { HeroWorksGallery } from '../../components/HeroWorksGallery';
-import { XP_DAILY, XP_LESSON, XP_PER_STAR, XP_STREAK_30, XP_STREAK_7, xpStars, type HeroXp } from '../../lib/dailyDrawing';
+import { XP_LESSON, XP_PER_STAR, XP_STREAK_12, XP_STREAK_4, XP_WEEKLY, xpStars, type HeroXp } from '../../lib/weeklyDrawing';
 import { useAuth } from '../../hooks/useAuth';
 import { useHero } from '../../hooks/useHero';
 import { supabase } from '../../lib/supabase';
@@ -320,34 +320,34 @@ const XP_STRINGS = {
     title: 'Опыт героя',
     stars: (n: number) => `${n} ★`,
     toNext: (left: number) => `${left} опыта до следующей звезды`,
-    daily: 'рисунков дня',
+    daily: 'рисунков недели',
     lessons: 'занятий',
-    streak: 'огонёк сейчас',
-    how: `Опыт: +${XP_DAILY} за рисунок дня, +${XP_LESSON} за каждое занятие, где ты был. Каждые ${XP_PER_STAR} опыта — звезда.`,
-    badge7: `7 дней подряд · +${XP_STREAK_7}`,
-    badge30: `30 дней подряд · +${XP_STREAK_30}`,
+    streak: 'недель подряд',
+    how: `Опыт: +${XP_WEEKLY} за рисунок недели, +${XP_LESSON} за каждое занятие, где ты был. Каждые ${XP_PER_STAR} опыта — звезда.`,
+    badge7: `4 недели подряд · +${XP_STREAK_4}`,
+    badge30: `12 недель подряд · +${XP_STREAK_12}`,
   },
   kk: {
     title: 'Кейіпкер тәжірибесі',
     stars: (n: number) => `${n} ★`,
     toNext: (left: number) => `Келесі жұлдызға дейін ${left} тәжірибе`,
-    daily: 'күн суреті',
+    daily: 'апта суреті',
     lessons: 'сабақ',
-    streak: 'қазіргі от',
-    how: `Тәжірибе: күн суреті үшін +${XP_DAILY}, қатысқан әр сабақ үшін +${XP_LESSON}. Әр ${XP_PER_STAR} тәжірибе — бір жұлдыз.`,
-    badge7: `7 күн қатарынан · +${XP_STREAK_7}`,
-    badge30: `30 күн қатарынан · +${XP_STREAK_30}`,
+    streak: 'апта қатарынан',
+    how: `Тәжірибе: апта суреті үшін +${XP_WEEKLY}, қатысқан әр сабақ үшін +${XP_LESSON}. Әр ${XP_PER_STAR} тәжірибе — бір жұлдыз.`,
+    badge7: `4 апта қатарынан · +${XP_STREAK_4}`,
+    badge30: `12 апта қатарынан · +${XP_STREAK_12}`,
   },
   en: {
     title: 'Hero XP',
     stars: (n: number) => `${n} ★`,
     toNext: (left: number) => `${left} XP to the next star`,
-    daily: 'daily drawings',
+    daily: 'weekly drawings',
     lessons: 'lessons',
-    streak: 'current streak',
-    how: `XP: +${XP_DAILY} for a drawing of the day, +${XP_LESSON} for every lesson you attend. Every ${XP_PER_STAR} XP is a star.`,
-    badge7: `7 days in a row · +${XP_STREAK_7}`,
-    badge30: `30 days in a row · +${XP_STREAK_30}`,
+    streak: 'weeks in a row',
+    how: `XP: +${XP_WEEKLY} for a drawing of the week, +${XP_LESSON} for every lesson you attend. Every ${XP_PER_STAR} XP is a star.`,
+    badge7: `4 weeks in a row · +${XP_STREAK_4}`,
+    badge30: `12 weeks in a row · +${XP_STREAK_12}`,
   },
 };
 
@@ -368,14 +368,14 @@ function XpPanel({ xp }: { xp: HeroXp }) {
         {xp.xp} XP · {s.toNext(XP_PER_STAR - into)}
       </Text>
       <View style={styles.contestsRow}>
-        <Stat value={xp.dailyDays} label={s.daily} />
+        <Stat value={xp.weeks} label={s.daily} />
         <Stat value={xp.attended} label={s.lessons} />
         <Stat value={xp.streak} label={s.streak} />
       </View>
       <View style={styles.badges}>
         {[
-          [7, s.badge7],
-          [30, s.badge30],
+          [4, s.badge7],
+          [12, s.badge30],
         ].map(([n, label]) => {
           const got = xp.bestStreak >= (n as number);
           return (

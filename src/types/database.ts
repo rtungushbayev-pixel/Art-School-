@@ -119,7 +119,7 @@ export interface Post {
   technique: string | null; // техника и материалы
   artwork_year: number | null;
   featured: boolean; // закреплена в начале портфолио
-  daily_theme_on?: string | null; // «Рисунок дня»: дата темы (0060)
+  weekly_theme_week?: string | null; // «Рисунок недели»: понедельник недели (0060)
   status: PostStatus;
   moderated_by: string | null;
   moderated_at: string | null;

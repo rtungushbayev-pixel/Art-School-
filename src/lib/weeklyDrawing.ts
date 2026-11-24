@@ -1,16 +1,19 @@
-// «Рисунок дня», огонёк серии и опыт героя.
-// Опыт считает сервер (hero_xp в 0060), здесь — темы и подписи.
+// «Рисунок недели», огонёк серии недель и опыт героя.
+// Ученики параллельно учатся в обычной школе, поэтому тема — на неделю
+// (понедельник – воскресенье по Алматы). Опыт считает сервер (hero_xp в 0060),
+// здесь — темы и подписи.
 import { supabase } from './supabase';
 import { pick, type Lang, type Translations } from '../i18n';
 
-// Сколько опыта за что (те же числа, что в 0060_daily_drawing_xp.sql).
-export const XP_DAILY = 20;
+// Сколько опыта за что (те же числа, что в 0060_weekly_drawing_xp.sql).
+export const XP_WEEKLY = 50;
 export const XP_LESSON = 10;
-export const XP_STREAK_7 = 50;
-export const XP_STREAK_30 = 200;
+export const XP_STREAK_4 = 100;
+export const XP_STREAK_12 = 300;
 // Каждые 100 опыта — новая звезда у героя.
 export const XP_PER_STAR = 100;
-export const STREAK_GOALS = [7, 30] as const;
+// Награды за серию недель подряд (каждая — один раз).
+export const STREAK_GOALS = [4, 12] as const;
 
 type Theme = { ru: string; kk: string; en: string; hint: { ru: string; kk: string; en: string } };
 
@@ -63,12 +66,19 @@ export function schoolToday(now = new Date()): string {
   return d.toISOString().slice(0, 10);
 }
 
-function dayNumber(isoDate: string): number {
-  return Math.floor(Date.parse(`${isoDate}T00:00:00Z`) / 86_400_000);
+const DAY = 86_400_000;
+
+// Понедельник недели (как school_week в 0060) и сколько дней до конца недели.
+export function schoolWeek(now = new Date()): { monday: string; daysLeft: number } {
+  const today = Date.parse(`${schoolToday(now)}T00:00:00Z`);
+  const dow = (new Date(today).getUTCDay() + 6) % 7; // 0 — понедельник
+  const monday = new Date(today - dow * DAY).toISOString().slice(0, 10);
+  return { monday, daysLeft: 7 - dow };
 }
 
-export function dailyTheme(isoDate: string = schoolToday(), lang?: Lang): { title: string; hint: string } {
-  const t = THEMES[((dayNumber(isoDate) % THEMES.length) + THEMES.length) % THEMES.length];
+export function weeklyTheme(monday: string = schoolWeek().monday, lang?: Lang): { title: string; hint: string } {
+  const n = Math.floor(Date.parse(`${monday}T00:00:00Z`) / (7 * DAY));
+  const t = THEMES[((n % THEMES.length) + THEMES.length) % THEMES.length];
   const title = pick({ ru: t.ru, kk: t.kk, en: t.en } as Translations<string>, lang);
   const hint = pick(t.hint as Translations<string>, lang);
   return { title, hint };
@@ -76,14 +86,14 @@ export function dailyTheme(isoDate: string = schoolToday(), lang?: Lang): { titl
 
 export interface HeroXp {
   xp: number;
-  dailyDays: number; // дней с рисунком дня
+  weeks: number; // недель с рисунком недели
   attended: number; // занятий, где ученик был
-  streak: number; // огонёк: дней подряд сейчас
+  streak: number; // огонёк: недель подряд сейчас
   bestStreak: number;
-  drewToday: boolean;
+  drewThisWeek: boolean;
 }
 
-export const EMPTY_XP: HeroXp = { xp: 0, dailyDays: 0, attended: 0, streak: 0, bestStreak: 0, drewToday: false };
+export const EMPTY_XP: HeroXp = { xp: 0, weeks: 0, attended: 0, streak: 0, bestStreak: 0, drewThisWeek: false };
 
 export async function fetchHeroXp(studentId: string): Promise<HeroXp> {
   const { data, error } = await supabase.rpc('hero_xp', { p_student_id: studentId });
@@ -91,11 +101,11 @@ export async function fetchHeroXp(studentId: string): Promise<HeroXp> {
   const d = (data ?? {}) as Record<string, unknown>;
   return {
     xp: Number(d.xp ?? 0),
-    dailyDays: Number(d.daily_days ?? 0),
+    weeks: Number(d.weeks ?? 0),
     attended: Number(d.attended ?? 0),
     streak: Number(d.streak ?? 0),
     bestStreak: Number(d.best_streak ?? 0),
-    drewToday: Boolean(d.drew_today),
+    drewThisWeek: Boolean(d.drew_this_week),
   };
 }
 
@@ -104,7 +114,7 @@ export function xpStars(xp: number): { stars: number; into: number } {
   return { stars: Math.floor(xp / XP_PER_STAR), into: xp % XP_PER_STAR };
 }
 
-// Следующая цель серии: 7, потом 30 дней.
-export function nextStreakGoal(streak: number): number | null {
-  return STREAK_GOALS.find((g) => streak < g) ?? null;
+// Следующая награда за серию, которую ещё не получал.
+export function nextStreakGoal(best: number): number | null {
+  return STREAK_GOALS.find((g) => best < g) ?? null;
 }

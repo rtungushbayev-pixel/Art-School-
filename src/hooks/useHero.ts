@@ -15,7 +15,7 @@ import {
   type HeroSkin,
 } from '../lib/heroes';
 import type { HeroStage } from '../lib/heroArt';
-import { EMPTY_XP, fetchHeroXp, type HeroXp } from '../lib/dailyDrawing';
+import { EMPTY_XP, fetchHeroXp, type HeroXp } from '../lib/weeklyDrawing';
 import type { Group, Profile } from '../types/database';
 
 export interface HeroState {
@@ -28,7 +28,7 @@ export interface HeroState {
   unlocked: HeroSkin[];
   // Загруженные картинки в полный рост: ключ «{уровень}_{скин}» → адрес.
   art: Map<string, string>;
-  // Опыт: рисунок дня, огонёк серии, посещения (0060).
+  // Опыт: рисунок недели, огонёк серии, посещения (0060).
   xp: HeroXp;
 }
 

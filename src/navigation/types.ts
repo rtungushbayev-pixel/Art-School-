@@ -30,7 +30,7 @@ export type StudentStackParamList = {
   Market: undefined;
   Friends: { focusSearch?: boolean; showBlocked?: boolean } | undefined;
   PostDetail: { postId: string };
-  CreatePost: { daily?: boolean } | undefined;
+  CreatePost: { weekly?: boolean } | undefined;
   NewCommunityPost: undefined;
   EditProfile: undefined;
   NotificationSettings: undefined;
@@ -71,7 +71,7 @@ export type StaffStackParamList = {
   Friends: { focusSearch?: boolean; showBlocked?: boolean } | undefined;
   ComposeAnnouncement: { announcementId?: string } | undefined;
   PostDetail: { postId: string };
-  CreatePost: { daily?: boolean } | undefined;
+  CreatePost: { weekly?: boolean } | undefined;
   NewCommunityPost: undefined;
   EditProfile: undefined;
   NotificationSettings: undefined;

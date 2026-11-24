@@ -11,7 +11,7 @@ import { Button } from '../../components/Button';
 import { TextField } from '../../components/TextField';
 import { publishPost, requestAiModeration } from '../../lib/posts';
 import { parseYear } from '../../lib/portfolio';
-import { XP_DAILY, dailyTheme, fetchHeroXp, schoolToday } from '../../lib/dailyDrawing';
+import { XP_WEEKLY, fetchHeroXp, schoolWeek, weeklyTheme } from '../../lib/weeklyDrawing';
 import { useAuth } from '../../hooks/useAuth';
 import { useLanguage, useStrings } from '../../i18n';
 import { colors, radius, spacing } from '../../theme/colors';
@@ -38,10 +38,10 @@ const STRINGS = {
     caption: 'Подпись',
     captionPlaceholder: 'Расскажите о своей работе…',
     publish: 'Опубликовать',
-    dailyKicker: 'Рисунок дня',
-    dailyDone: 'Рисунок дня готов!',
+    dailyKicker: 'Рисунок недели',
+    dailyDone: 'Рисунок недели готов!',
     dailyReward: (xp: number, streak: number) =>
-      `Твой герой получил +${xp} опыта.${streak > 1 ? ` Огонёк горит ${streak} дн. подряд!` : ' Завтра будет новая тема.'}`,
+      `Твой герой получил +${xp} опыта.${streak > 1 ? ` Огонёк горит ${streak} нед. подряд!` : ' В понедельник будет новая тема.'}`,
   },
   kk: {
     photoTitle: 'Жұмыстың фотосы',
@@ -61,10 +61,10 @@ const STRINGS = {
     caption: 'Сипаттама',
     captionPlaceholder: 'Жұмысыңыз туралы айтып беріңіз…',
     publish: 'Жариялау',
-    dailyKicker: 'Күн суреті',
-    dailyDone: 'Күн суреті дайын!',
+    dailyKicker: 'Апта суреті',
+    dailyDone: 'Апта суреті дайын!',
     dailyReward: (xp: number, streak: number) =>
-      `Кейіпкерің +${xp} тәжірибе алды.${streak > 1 ? ` Отың ${streak} күн қатарынан жанып тұр!` : ' Ертең жаңа тақырып болады.'}`,
+      `Кейіпкерің +${xp} тәжірибе алды.${streak > 1 ? ` Отың ${streak} апта қатарынан жанып тұр!` : ' Дүйсенбіде жаңа тақырып болады.'}`,
   },
   en: {
     photoTitle: 'Artwork photo',
@@ -84,10 +84,10 @@ const STRINGS = {
     caption: 'Caption',
     captionPlaceholder: 'Tell us about your work…',
     publish: 'Publish',
-    dailyKicker: 'Drawing of the day',
-    dailyDone: 'Drawing of the day is done!',
+    dailyKicker: 'Drawing of the week',
+    dailyDone: 'Drawing of the week is done!',
     dailyReward: (xp: number, streak: number) =>
-      `Your hero got +${xp} XP.${streak > 1 ? ` Your streak is ${streak} days in a row!` : ' A new theme comes tomorrow.'}`,
+      `Your hero got +${xp} XP.${streak > 1 ? ` Your streak is ${streak} weeks in a row!` : ' A new theme comes on Monday.'}`,
   },
 };
 
@@ -97,9 +97,10 @@ export function CreatePostScreen() {
   const { profile } = useAuth();
   const s = useStrings(STRINGS);
   const { lang } = useLanguage();
-  // «Рисунок дня»: тема на сегодня, работа засчитывается герою.
-  const daily = !!route.params?.daily && profile?.role === 'student';
-  const theme = daily ? dailyTheme(schoolToday(), lang) : null;
+  // «Рисунок недели»: тема на эту неделю, работа засчитывается герою.
+  const daily = !!route.params?.weekly && profile?.role === 'student';
+  const week = schoolWeek().monday;
+  const theme = daily ? weeklyTheme(week, lang) : null;
   const [asset, setAsset] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [caption, setCaption] = useState('');
   const [title, setTitle] = useState('');
@@ -134,13 +135,13 @@ export function CreatePostScreen() {
         title: title.trim() || theme?.title || '',
         technique,
         artworkYear,
-        dailyThemeOn: daily ? schoolToday() : null,
+        weeklyThemeWeek: daily ? week : null,
       });
       // Проверка идёт в фоне; результат будет виден в «Мои публикации».
       requestAiModeration(postId);
       if (daily) {
         const xp = await fetchHeroXp(profile.id).catch(() => null);
-        Alert.alert(s.dailyDone, s.dailyReward(XP_DAILY, xp?.streak ?? 1));
+        Alert.alert(s.dailyDone, s.dailyReward(XP_WEEKLY, xp?.streak ?? 1));
       }
       navigation.goBack();
     } catch (e) {

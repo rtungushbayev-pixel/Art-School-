@@ -4,57 +4,61 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   EMPTY_XP,
-  XP_DAILY,
-  XP_STREAK_30,
-  XP_STREAK_7,
-  dailyTheme,
+  XP_STREAK_12,
+  XP_STREAK_4,
+  XP_WEEKLY,
   fetchHeroXp,
   nextStreakGoal,
-  schoolToday,
+  schoolWeek,
+  weeklyTheme,
   type HeroXp,
-} from '../lib/dailyDrawing';
+} from '../lib/weeklyDrawing';
 import { useLanguage, useStrings } from '../i18n';
 import { colors, radius, shadow, spacing } from '../theme/colors';
 
 const STRINGS = {
   ru: {
-    kicker: 'Рисунок дня',
-    draw: (xp: number) => `Нарисовать · +${xp} опыта`,
-    done: 'Сегодня нарисовано',
-    streak: (n: number) => `${n} дн. подряд`,
-    noStreak: 'Огонёк не горит',
-    goal: (n: number, goal: number, xp: number) => `${n} из ${goal} дней до награды +${xp}`,
-    allGoals: 'Все награды за серию получены!',
-    keep: 'Нарисуй сегодня, чтобы огонёк не погас',
+    kicker: 'Рисунок недели',
+    daysLeft: (n: number) => (n === 1 ? 'Последний день недели' : `До воскресенья: ${n} дн.`),
+    upload: (xp: number) => `Загрузить работу · +${xp} опыта`,
+    done: 'На этой неделе готово!',
+    streak: (n: number) => `${n} нед. подряд`,
+    noStreak: 'Огонёк пока не горит',
+    goal: (n: number, goal: number, xp: number) => `${n} из ${goal} недель до подарка +${xp}`,
+    allGoals: 'Все подарки за серию получены!',
+    keep: 'Нарисуй до воскресенья, чтобы огонёк не погас',
   },
   kk: {
-    kicker: 'Күн суреті',
-    draw: (xp: number) => `Салу · +${xp} тәжірибе`,
-    done: 'Бүгін салынды',
-    streak: (n: number) => `${n} күн қатарынан`,
-    noStreak: 'От жанбай тұр',
-    goal: (n: number, goal: number, xp: number) => `Сыйлыққа дейін ${goal} күннің ${n}-і · +${xp}`,
+    kicker: 'Апта суреті',
+    daysLeft: (n: number) => (n === 1 ? 'Аптаның соңғы күні' : `Жексенбіге дейін: ${n} күн`),
+    upload: (xp: number) => `Жұмысты жүктеу · +${xp} тәжірибе`,
+    done: 'Бұл аптада дайын!',
+    streak: (n: number) => `${n} апта қатарынан`,
+    noStreak: 'От әлі жанбай тұр',
+    goal: (n: number, goal: number, xp: number) => `Сыйлыққа дейін ${goal} аптаның ${n}-і · +${xp}`,
     allGoals: 'Сериядағы барлық сыйлық алынды!',
-    keep: 'От сөнбеуі үшін бүгін сал',
+    keep: 'От сөнбеуі үшін жексенбіге дейін сал',
   },
   en: {
-    kicker: 'Drawing of the day',
-    draw: (xp: number) => `Draw · +${xp} XP`,
-    done: 'Done for today',
-    streak: (n: number) => `${n}-day streak`,
+    kicker: 'Drawing of the week',
+    daysLeft: (n: number) => (n === 1 ? 'Last day of the week' : `${n} days until Sunday`),
+    upload: (xp: number) => `Upload your work · +${xp} XP`,
+    done: 'Done for this week!',
+    streak: (n: number) => `${n}-week streak`,
     noStreak: 'No streak yet',
-    goal: (n: number, goal: number, xp: number) => `${n} of ${goal} days to a +${xp} reward`,
-    allGoals: 'All streak rewards collected!',
-    keep: 'Draw today to keep your streak alive',
+    goal: (n: number, goal: number, xp: number) => `${n} of ${goal} weeks to a +${xp} gift`,
+    allGoals: 'All streak gifts collected!',
+    keep: 'Draw by Sunday to keep your streak alive',
   },
 };
 
-// Карточка «Рисунок дня» в Арт-дворе ученика: тема, огонёк серии, кнопка.
-export function DailyDrawingCard({ studentId, onDraw }: { studentId: string; onDraw: () => void }) {
+// Карточка «Рисунок недели» в Арт-дворе ученика: тема, огонёк серии, кнопка.
+export function WeeklyDrawingCard({ studentId, onUpload }: { studentId: string; onUpload: () => void }) {
   const s = useStrings(STRINGS);
   const { lang } = useLanguage();
   const [xp, setXp] = useState<HeroXp>(EMPTY_XP);
-  const theme = dailyTheme(schoolToday(), lang);
+  const { monday, daysLeft } = schoolWeek();
+  const theme = weeklyTheme(monday, lang);
 
   useFocusEffect(
     useCallback(() => {
@@ -64,9 +68,9 @@ export function DailyDrawingCard({ studentId, onDraw }: { studentId: string; onD
     }, [studentId])
   );
 
-  // Следующая награда, которую ещё не получал (каждая — один раз).
+  // Следующий подарок, который ещё не получал (каждый — один раз).
   const goal = nextStreakGoal(xp.bestStreak);
-  const goalXp = goal === 7 ? XP_STREAK_7 : XP_STREAK_30;
+  const goalXp = goal === 4 ? XP_STREAK_4 : XP_STREAK_12;
   const lit = xp.streak > 0;
 
   return (
@@ -76,6 +80,7 @@ export function DailyDrawingCard({ studentId, onDraw }: { studentId: string; onD
           <Text style={styles.kicker}>{s.kicker}</Text>
           <Text style={styles.title}>{theme.title}</Text>
           <Text style={styles.hint}>{theme.hint}</Text>
+          <Text style={styles.days}>{s.daysLeft(daysLeft)}</Text>
         </View>
         <View style={[styles.flame, !lit && styles.flameOff]}>
           <Ionicons name="flame" size={26} color={lit ? '#FF7A1A' : '#B8B0CC'} />
@@ -85,28 +90,28 @@ export function DailyDrawingCard({ studentId, onDraw }: { studentId: string; onD
 
       <Text style={styles.streak}>
         {lit ? s.streak(xp.streak) : s.noStreak}
-        {lit && !xp.drewToday ? ` · ${s.keep}` : ''}
+        {lit && !xp.drewThisWeek ? ` · ${s.keep}` : ''}
       </Text>
       {goal ? (
         <>
           <View style={styles.bar}>
             <View style={[styles.barFill, { width: `${Math.min(100, (xp.streak / goal) * 100)}%` }]} />
           </View>
-          <Text style={styles.goal}>{s.goal(xp.streak, goal, goalXp)}</Text>
+          <Text style={styles.goal}>{s.goal(Math.min(xp.streak, goal), goal, goalXp)}</Text>
         </>
       ) : (
         <Text style={styles.goal}>{s.allGoals}</Text>
       )}
 
-      {xp.drewToday ? (
+      {xp.drewThisWeek ? (
         <View style={styles.doneRow}>
           <Ionicons name="checkmark-circle" size={20} color="#3DB874" />
           <Text style={styles.doneText}>{s.done}</Text>
         </View>
       ) : (
-        <Pressable style={styles.button} onPress={onDraw}>
-          <Ionicons name="brush" size={18} color="#4A2F91" />
-          <Text style={styles.buttonText}>{s.draw(XP_DAILY)}</Text>
+        <Pressable style={styles.button} onPress={onUpload}>
+          <Ionicons name="cloud-upload" size={18} color="#4A2F91" />
+          <Text style={styles.buttonText}>{s.upload(XP_WEEKLY)}</Text>
         </Pressable>
       )}
     </View>
@@ -125,6 +130,7 @@ const styles = StyleSheet.create({
   kicker: { color: '#FBB31F', fontSize: 11, fontWeight: '800', textTransform: 'uppercase' },
   title: { color: colors.white, fontSize: 22, fontWeight: '800', marginTop: 2 },
   hint: { color: '#E3DAF7', fontSize: 13, marginTop: 2 },
+  days: { color: '#FBB31F', fontSize: 12, fontWeight: '700', marginTop: 4 },
   flame: {
     width: 58,
     height: 58,

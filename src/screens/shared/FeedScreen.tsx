@@ -12,7 +12,7 @@ import { fetchFeedPosts, fetchUserPosts, toggleLike } from '../../lib/posts';
 import { useAuth } from '../../hooks/useAuth';
 import { StoriesRow } from '../../components/StoriesRow';
 import { StoryViewer } from '../../components/StoryViewer';
-import { DailyDrawingCard } from '../../components/DailyDrawingCard';
+import { WeeklyDrawingCard } from '../../components/WeeklyDrawingCard';
 import { fetchStoryGroups, publishStory, type StoryGroup } from '../../lib/stories';
 import { askImageSource, pickImage } from '../../lib/pickImage';
 import { errorText } from '../../lib/errors';
@@ -209,7 +209,7 @@ export function FeedScreen() {
         ) : null}
 
         {profile?.role === 'student' ? (
-          <DailyDrawingCard studentId={profile.id} onDraw={() => navigation.navigate('CreatePost', { daily: true })} />
+          <WeeklyDrawingCard studentId={profile.id} onUpload={() => navigation.navigate('CreatePost', { weekly: true })} />
         ) : null}
 
         <View style={styles.feedHeader}>

@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { HeroAvatar } from './HeroAvatar';
 import { HeroFigure } from './HeroFigure';
 import { HEROES, MAX_LEVEL, skinName, stageName } from '../lib/heroes';
-import { xpStars } from '../lib/dailyDrawing';
+import { xpStars } from '../lib/weeklyDrawing';
 import type { HeroState } from '../hooks/useHero';
 import { useLanguage, useStrings } from '../i18n';
 import { colors, radius, shadow, spacing } from '../theme/colors';
