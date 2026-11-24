@@ -77,6 +77,7 @@ export const HEROES: Hero[] = [
     id: 'leonardo',
     name: { ru: 'Леонардо да Винчи', kk: 'Леонардо да Винчи', en: 'Leonardo da Vinci' },
     years: '1452–1519',
+    avatar: require('../../assets/heroes/leonardo_avatar.jpg'),
     tagline: {
       ru: 'Художник, изобретатель и учёный эпохи Возрождения',
       kk: 'Қайта өрлеу дәуірінің суретшісі, өнертапқышы және ғалымы',
@@ -99,6 +100,7 @@ export const HEROES: Hero[] = [
     id: 'michelangelo',
     name: { ru: 'Микеланджело', kk: 'Микеланджело', en: 'Michelangelo' },
     years: '1475–1564',
+    avatar: require('../../assets/heroes/michelangelo_avatar.jpg'),
     tagline: {
       ru: 'Скульптор «Давида» и автор росписи Сикстинской капеллы',
       kk: '«Давид» мүсінінің және Сикстин капелласы суреттерінің авторы',
@@ -148,6 +150,7 @@ export const HEROES: Hero[] = [
     id: 'aivazovsky',
     name: { ru: 'Иван Айвазовский', kk: 'Иван Айвазовский', en: 'Ivan Aivazovsky' },
     years: '1817–1900',
+    avatar: require('../../assets/heroes/aivazovsky_avatar.jpg'),
     tagline: {
       ru: 'Великий художник моря, автор «Девятого вала»',
       kk: 'Теңізді бейнелеген ұлы суретші, «Тоғызыншы толқынның» авторы',
@@ -196,6 +199,7 @@ export const HEROES: Hero[] = [
     id: 'monet',
     name: { ru: 'Клод Моне', kk: 'Клод Моне', en: 'Claude Monet' },
     years: '1840–1926',
+    avatar: require('../../assets/heroes/monet_avatar.jpg'),
     tagline: {
       ru: 'Основатель импрессионизма, автор «Кувшинок»',
       kk: 'Импрессионизмнің негізін салушы, «Су лалаларының» авторы',
@@ -217,6 +221,7 @@ export const HEROES: Hero[] = [
     id: 'artemisia',
     name: { ru: 'Артемизия Джентилески', kk: 'Артемизия Джентилески', en: 'Artemisia Gentileschi' },
     years: '1593 — около 1656',
+    avatar: require('../../assets/heroes/artemisia_avatar.jpg'),
     tagline: {
       ru: 'Первая женщина в Академии рисунка Флоренции',
       kk: 'Флоренция сурет академиясына қабылданған тұңғыш әйел',
@@ -257,6 +262,7 @@ export const HEROES: Hero[] = [
     id: 'cassatt',
     name: { ru: 'Мэри Кассат', kk: 'Мэри Кассат', en: 'Mary Cassatt' },
     years: '1844–1926',
+    avatar: require('../../assets/heroes/cassatt_avatar.jpg'),
     tagline: {
       ru: 'Американская художница-импрессионистка',
       kk: 'Америкалық импрессионист суретші',
