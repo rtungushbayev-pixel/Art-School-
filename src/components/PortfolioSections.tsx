@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { AchievementList } from './AchievementList';
+import { BeforeAfter } from './BeforeAfter';
 import { PortfolioGrid } from './PortfolioGrid';
 import { ProfileStats } from './ProfileStats';
 import { portfolioStats, sortPortfolio } from '../lib/portfolio';
@@ -104,6 +105,7 @@ export function PortfolioSections({
               {isOwner ? s.addAchievementsHint : s.noAchievements}
             </Text>
           )}
+          <BeforeAfter posts={posts} onOpenPost={onOpenPost} />
         </>
       ) : null}
 

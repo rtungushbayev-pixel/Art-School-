@@ -7,7 +7,7 @@ import { Screen } from '../../components/Screen';
 import { GuideAvatar } from '../../components/GuideAvatar';
 import { HeroAvatar } from '../../components/HeroAvatar';
 import { useAuth } from '../../hooks/useAuth';
-import { ERAS, ONLINE_COURSE_URL } from '../../lib/artHistory';
+import { ONLINE_COURSE_URL, erasFor } from '../../lib/artHistory';
 import { HEROES } from '../../lib/heroes';
 import { FEATURES } from '../../lib/features';
 import { pick, useLanguage, useStrings } from '../../i18n';
@@ -86,7 +86,7 @@ export function ArtHistoryScreen() {
       </Pressable>
 
       <Text style={styles.section}>{s.eras}</Text>
-      {ERAS.map((era, i) => (
+      {erasFor(lang).map((era, i) => (
         <Pressable
           key={era.id}
           style={({ pressed }) => [styles.era, pressed && styles.pressed]}
@@ -116,7 +116,7 @@ export function ArtHistoryScreen() {
                 <HeroAvatar hero={hero} stage={5} size={72} />
               </View>
             )}
-            <Text style={styles.artistName} numberOfLines={2}>
+            <Text style={styles.artistName} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.75}>
               {pick(hero.name, lang)}
             </Text>
             <Text style={styles.artistYears}>{hero.years}</Text>

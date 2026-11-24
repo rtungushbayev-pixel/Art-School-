@@ -12,6 +12,7 @@ import { pick, type Lang, type Translations } from '../i18n';
 import { supabase } from './supabase';
 import type { HeroLook, HeroPower, HeroStage } from './heroArt';
 import { HERO_STORIES } from './heroStories';
+import { HERO_STORIES_KK } from './heroStories.kk';
 
 export type HeroId =
   | 'kasteyev'
@@ -378,8 +379,8 @@ export const HEROES: Hero[] = [
   },
 ];
 
-export function heroStory(id: HeroId): readonly string[] {
-  return HERO_STORIES[id];
+export function heroStory(id: HeroId, lang?: Lang): readonly string[] {
+  return (lang === 'kk' ? HERO_STORIES_KK[id] : undefined) ?? HERO_STORIES[id];
 }
 
 export function findHero(id: string | null | undefined): Hero | null {
@@ -456,8 +457,8 @@ export function stageForLevel(level: number): HeroStage {
 }
 
 // Глава биографии для образа: по одному эпизоду на каждый из 10 образов.
-export function heroChapter(id: HeroId, level: number): string {
-  return HERO_STORIES[id][Math.max(1, Math.min(MAX_LEVEL, level)) - 1];
+export function heroChapter(id: HeroId, level: number, lang?: Lang): string {
+  return heroStory(id, lang)[Math.max(1, Math.min(MAX_LEVEL, level)) - 1];
 }
 
 // ---------- Уровни ----------

@@ -28,7 +28,7 @@ const STRINGS = {
   },
   kk: {
     months: KK_MONTHS,
-    deadline: 'Соңғы мерзім',
+    deadline: 'Мерзімі',
     worksUntil: (d: string) => `Жұмыстар ${d} дейін қабылданады`,
     signupUntil: (d: string) => `${d} дейін жазылу`,
     left: (n: number) => (n === 0 ? 'Бүгін соңғы күн!' : `${n} күн қалды`),

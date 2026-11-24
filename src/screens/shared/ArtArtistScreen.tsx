@@ -4,10 +4,12 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
+import { HeroWorksGallery } from '../../components/HeroWorksGallery';
 import { HeroAvatar } from '../../components/HeroAvatar';
 import { findHero, heroStory } from '../../lib/heroes';
 import { speak, stopSpeaking } from '../../lib/artGuide';
 import { pick, useLanguage, useStrings } from '../../i18n';
+import { portraitCaption } from '../../lib/contentI18n';
 import { colors, radius, spacing } from '../../theme/colors';
 import { fonts } from '../../theme/fonts';
 
@@ -71,14 +73,14 @@ export function ArtArtistScreen() {
     );
   }
 
-  const story = heroStory(hero.id);
+  const story = heroStory(hero.id, lang);
   const toggle = () => {
     if (speaking) {
       stopSpeaking();
       setSpeaking(false);
       return;
     }
-    speak(story.join(' '), 'ru', { onStart: () => setSpeaking(true), onEnd: () => setSpeaking(false) });
+    speak(story.join(' '), lang === 'kk' ? 'kk' : 'ru', { onStart: () => setSpeaking(true), onEnd: () => setSpeaking(false) });
   };
 
   return (
@@ -98,7 +100,7 @@ export function ArtArtistScreen() {
             {hero.portraits.map((p, i) => (
               <View key={i} style={styles.portraitBox}>
                 <Image source={p.image} style={styles.portrait} contentFit="cover" />
-                <Text style={styles.caption}>{p.caption}</Text>
+                <Text style={styles.caption}>{portraitCaption(p.caption, lang)}</Text>
               </View>
             ))}
           </ScrollView>
@@ -106,6 +108,7 @@ export function ArtArtistScreen() {
         </>
       ) : null}
       {hero.id === 'kasteyev' ? <Text style={styles.note}>{s.kasteyev}</Text> : null}
+      <HeroWorksGallery heroId={hero.id} />
 
       <View style={styles.lifeHead}>
         <Text style={styles.section}>{s.life}</Text>

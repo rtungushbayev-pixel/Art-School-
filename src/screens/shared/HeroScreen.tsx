@@ -8,6 +8,8 @@ import { Screen } from '../../components/Screen';
 import { Button } from '../../components/Button';
 import { HeroFigure } from '../../components/HeroFigure';
 import { HeroPath } from '../../components/HeroPath';
+import { HeroWorksGallery } from '../../components/HeroWorksGallery';
+import { XP_LESSON, XP_PER_STAR, XP_STREAK_12, XP_STREAK_4, XP_WEEKLY, xpStars, type HeroXp } from '../../lib/weeklyDrawing';
 import { useAuth } from '../../hooks/useAuth';
 import { useHero } from '../../hooks/useHero';
 import { supabase } from '../../lib/supabase';
@@ -26,6 +28,7 @@ import {
   type HeroSkin,
 } from '../../lib/heroes';
 import { useLanguage, useStrings } from '../../i18n';
+import { portraitCaption } from '../../lib/contentI18n';
 import { colors, radius, shadow, spacing } from '../../theme/colors';
 import { fonts } from '../../theme/fonts';
 import type { Profile } from '../../types/database';
@@ -125,7 +128,7 @@ export function HeroScreen() {
   );
 
   const profile = isOwner ? me : other;
-  const { hero, level, progress, skin, unlocked, art } = useHero(profile);
+  const { hero, level, progress, skin, unlocked, art, xp } = useHero(profile);
 
   // По умолчанию показываем текущий уровень и надетый скин.
   useEffect(() => {
@@ -243,7 +246,7 @@ export function HeroScreen() {
 
       <Text style={styles.section}>{s.level(shownLevel)}.</Text>
       <Text style={levelOpen ? styles.story : styles.lockedStory}>
-        {levelOpen ? heroChapter(hero.id, shownLevel) : s.lockedLevel(levelGroupName(shownLevel, lang))}
+        {levelOpen ? heroChapter(hero.id, shownLevel, lang) : s.lockedLevel(levelGroupName(shownLevel, lang))}
       </Text>
 
       <HeroPath
@@ -258,6 +261,8 @@ export function HeroScreen() {
           setScrollTop((n) => n + 1);
         }}
       />
+
+      <XpPanel xp={xp} />
 
       <View style={styles.contests}>
         <Text style={styles.contestsTitle}>{s.contests}</Text>
@@ -278,7 +283,7 @@ export function HeroScreen() {
                   <Image source={p.image} style={styles.portraitImage} contentFit="cover" contentPosition="top" />
                 </View>
                 <Text style={styles.portraitCaption} numberOfLines={3}>
-                  {p.caption}
+                  {portraitCaption(p.caption, lang)}
                 </Text>
               </Pressable>
             ))}
@@ -289,13 +294,15 @@ export function HeroScreen() {
               {openPortrait !== null ? (
                 <>
                   <Image source={hero.portraits[openPortrait].image} style={styles.viewerImage} contentFit="contain" />
-                  <Text style={styles.viewerCaption}>{hero.portraits[openPortrait].caption}</Text>
+                  <Text style={styles.viewerCaption}>{portraitCaption(hero.portraits[openPortrait].caption, lang)}</Text>
                 </>
               ) : null}
             </Pressable>
           </Modal>
         </>
       ) : null}
+
+      <HeroWorksGallery heroId={hero.id} />
 
       {isOwner ? (
         <Pressable style={styles.change} onPress={() => navigation.navigate('HeroPicker')}>
@@ -305,6 +312,82 @@ export function HeroScreen() {
       ) : null}
       <View style={{ height: spacing.xl }} />
     </Screen>
+  );
+}
+
+const XP_STRINGS = {
+  ru: {
+    title: 'Опыт героя',
+    stars: (n: number) => `${n} ★`,
+    toNext: (left: number) => `${left} опыта до следующей звезды`,
+    daily: 'рисунков недели',
+    lessons: 'занятий',
+    streak: 'недель подряд',
+    how: `Опыт: +${XP_WEEKLY} за рисунок недели, +${XP_LESSON} за каждое занятие, где ты был. Каждые ${XP_PER_STAR} опыта — звезда.`,
+    badge7: `4 недели подряд · +${XP_STREAK_4}`,
+    badge30: `12 недель подряд · +${XP_STREAK_12}`,
+  },
+  kk: {
+    title: 'Кейіпкер тәжірибесі',
+    stars: (n: number) => `${n} ★`,
+    toNext: (left: number) => `Келесі жұлдызға дейін ${left} тәжірибе`,
+    daily: 'апта суреті',
+    lessons: 'сабақ',
+    streak: 'апта қатарынан',
+    how: `Тәжірибе: апта суреті үшін +${XP_WEEKLY}, қатысқан әр сабақ үшін +${XP_LESSON}. Әр ${XP_PER_STAR} тәжірибе — бір жұлдыз.`,
+    badge7: `4 апта қатарынан · +${XP_STREAK_4}`,
+    badge30: `12 апта қатарынан · +${XP_STREAK_12}`,
+  },
+  en: {
+    title: 'Hero XP',
+    stars: (n: number) => `${n} ★`,
+    toNext: (left: number) => `${left} XP to the next star`,
+    daily: 'weekly drawings',
+    lessons: 'lessons',
+    streak: 'weeks in a row',
+    how: `XP: +${XP_WEEKLY} for a drawing of the week, +${XP_LESSON} for every lesson you attend. Every ${XP_PER_STAR} XP is a star.`,
+    badge7: `4 weeks in a row · +${XP_STREAK_4}`,
+    badge30: `12 weeks in a row · +${XP_STREAK_12}`,
+  },
+};
+
+// Опыт героя: звёзды, огонёк серии, рисунки дня и посещения.
+function XpPanel({ xp }: { xp: HeroXp }) {
+  const s = useStrings(XP_STRINGS);
+  const { stars, into } = xpStars(xp.xp);
+  return (
+    <View style={styles.xp}>
+      <View style={styles.xpHead}>
+        <Text style={styles.xpTitle}>{s.title}</Text>
+        <Text style={styles.xpStars}>{s.stars(stars)}</Text>
+      </View>
+      <View style={styles.xpBar}>
+        <View style={[styles.xpFill, { width: `${(into / XP_PER_STAR) * 100}%` }]} />
+      </View>
+      <Text style={styles.xpMeta}>
+        {xp.xp} XP · {s.toNext(XP_PER_STAR - into)}
+      </Text>
+      <View style={styles.contestsRow}>
+        <Stat value={xp.weeks} label={s.daily} />
+        <Stat value={xp.attended} label={s.lessons} />
+        <Stat value={xp.streak} label={s.streak} />
+      </View>
+      <View style={styles.badges}>
+        {[
+          [4, s.badge7],
+          [12, s.badge30],
+        ].map(([n, label]) => {
+          const got = xp.bestStreak >= (n as number);
+          return (
+            <View key={n as number} style={[styles.badge, !got && styles.badgeOff]}>
+              <Ionicons name={got ? 'flame' : 'lock-closed'} size={14} color={got ? '#FF7A1A' : '#8E86B5'} />
+              <Text style={[styles.badgeText, !got && styles.badgeTextOff]}>{label as string}</Text>
+            </View>
+          );
+        })}
+      </View>
+      <Text style={styles.xpHow}>{s.how}</Text>
+    </View>
   );
 }
 
@@ -369,6 +452,27 @@ const styles = StyleSheet.create({
   hint: { fontSize: 12, color: colors.textMuted, marginTop: spacing.xs },
   story: { fontSize: 17, lineHeight: 25, color: colors.text },
   lockedStory: { fontSize: 15, lineHeight: 22, color: colors.textMuted },
+  xp: { marginTop: spacing.lg, backgroundColor: '#4A2F91', borderRadius: radius.lg, padding: spacing.md },
+  xpHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  xpTitle: { fontFamily: fonts.hand, color: colors.white, fontSize: 26 },
+  xpStars: { color: '#FBB31F', fontSize: 20, fontWeight: '800' },
+  xpBar: { height: 8, borderRadius: 4, backgroundColor: '#6B55B0', marginTop: spacing.xs, overflow: 'hidden' },
+  xpFill: { height: 8, borderRadius: 4, backgroundColor: '#FBB31F' },
+  xpMeta: { color: '#E3DAF7', fontSize: 12, marginTop: 4 },
+  badges: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginTop: spacing.sm },
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#FFF1E0',
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+  },
+  badgeOff: { backgroundColor: '#5E46A3' },
+  badgeText: { color: '#C2410C', fontWeight: '700', fontSize: 12 },
+  badgeTextOff: { color: '#D6CCF0' },
+  xpHow: { color: '#D6CCF0', fontSize: 11, marginTop: spacing.sm },
   contests: {
     marginTop: spacing.lg,
     backgroundColor: '#1F2150',
