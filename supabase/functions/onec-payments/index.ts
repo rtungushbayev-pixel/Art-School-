@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
 
   let query = admin
     .from('billing_entries')
-    .select('id, export_id, kind, student_id, amount, currency, description, method, entry_date, created_at, student:student_id ( full_name )')
+    .select('id, export_id, kind, student_id, amount, currency, description, method, entry_date, created_at, student_name, student:student_id ( full_name )')
     .gt('export_id', since)
     .order('export_id')
     .limit(limit);
@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
     return json(500, { error: 'internal error' });
   }
 
-  const studentIds = [...new Set((entries ?? []).map((e) => e.student_id as string))];
+  const studentIds = [...new Set((entries ?? []).map((e) => e.student_id as string | null).filter((id): id is string => !!id))];
   const codes = new Map<string, { onec_code: string | null; group: string | null }>();
   if (studentIds.length > 0) {
     const { data: roster } = await admin
@@ -78,13 +78,13 @@ Deno.serve(async (req) => {
 
   const items = (entries ?? []).map((e) => {
     const student = e.student as unknown as { full_name: string } | null;
-    const extra = codes.get(e.student_id as string);
+    const extra = e.student_id ? codes.get(e.student_id as string) : undefined;
     return {
       id: Number(e.export_id),
       entryId: e.id,
       kind: e.kind, // payment — оплата, charge — начисление
       studentId: e.student_id,
-      studentName: student?.full_name ?? '',
+      studentName: student?.full_name ?? (e.student_name as string | null) ?? '',
       onecCode: extra?.onec_code ?? null,
       group: extra?.group ?? null,
       amount: Number(e.amount),
