@@ -110,6 +110,8 @@ export async function publishPost(params: {
   title?: string | null;
   technique?: string | null;
   artworkYear?: number | null;
+  // Работа на тему «Рисунок дня»: дату на сервере ставит триггер (0060).
+  dailyThemeOn?: string | null;
 }) {
   const { authorId } = params;
   const assets = params.assets.slice(0, MAX_POST_PHOTOS);
@@ -128,6 +130,7 @@ export async function publishPost(params: {
       title: params.title?.trim() || null,
       technique: params.technique?.trim() || null,
       artwork_year: params.artworkYear ?? null,
+      ...(params.dailyThemeOn ? { daily_theme_on: params.dailyThemeOn } : {}),
     })
     .select()
     .single();

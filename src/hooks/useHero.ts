@@ -15,6 +15,7 @@ import {
   type HeroSkin,
 } from '../lib/heroes';
 import type { HeroStage } from '../lib/heroArt';
+import { EMPTY_XP, fetchHeroXp, type HeroXp } from '../lib/dailyDrawing';
 import type { Group, Profile } from '../types/database';
 
 export interface HeroState {
@@ -27,6 +28,8 @@ export interface HeroState {
   unlocked: HeroSkin[];
   // Загруженные картинки в полный рост: ключ «{уровень}_{скин}» → адрес.
   art: Map<string, string>;
+  // Опыт: рисунок дня, огонёк серии, посещения (0060).
+  xp: HeroXp;
 }
 
 // Герой ученика: уровень по группам, скины за конкурсы. Если группы уже
@@ -38,6 +41,7 @@ export function useHero(
   const [groups, setGroups] = useState<Pick<Group, 'name' | 'course'>[]>(knownGroups ?? []);
   const [progress, setProgress] = useState<HeroProgress>(EMPTY_PROGRESS);
   const [art, setArt] = useState<Map<string, string>>(new Map());
+  const [xp, setXp] = useState<HeroXp>(EMPTY_XP);
   const studentId = profile?.role === 'student' ? profile.id : null;
   const hero = findHero(profile?.hero_id);
 
@@ -61,6 +65,9 @@ export function useHero(
     fetchHeroProgress(studentId)
       .then(setProgress)
       .catch(() => setProgress(EMPTY_PROGRESS));
+    fetchHeroXp(studentId)
+      .then(setXp)
+      .catch(() => setXp(EMPTY_XP));
     if (!knownGroups) {
       fetchStudentGroups(studentId)
         .then(setGroups)
@@ -85,6 +92,7 @@ export function useHero(
     skin: unlocked.includes(wanted) ? wanted : 'base',
     unlocked,
     art,
+    xp,
     reload,
   };
 }

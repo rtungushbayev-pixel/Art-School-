@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { HeroAvatar } from './HeroAvatar';
 import { HeroFigure } from './HeroFigure';
 import { HEROES, MAX_LEVEL, skinName, stageName } from '../lib/heroes';
+import { xpStars } from '../lib/dailyDrawing';
 import type { HeroState } from '../hooks/useHero';
 import { useLanguage, useStrings } from '../i18n';
 import { colors, radius, shadow, spacing } from '../theme/colors';
@@ -45,7 +46,7 @@ interface HeroCardProps {
 export function HeroCard({ state, isOwner, onOpen, onChoose }: HeroCardProps) {
   const s = useStrings(STRINGS);
   const { lang } = useLanguage();
-  const { hero, level, stage, skin, art } = state;
+  const { hero, level, stage, skin, art, xp } = state;
 
   if (!hero) {
     if (!isOwner || !onChoose) return null;
@@ -93,6 +94,18 @@ export function HeroCard({ state, isOwner, onOpen, onChoose }: HeroCardProps) {
           <View style={[styles.barFill, { width: `${(level / MAX_LEVEL) * 100}%` }]} />
         </View>
         <Text style={styles.meta}>{s.level(level, MAX_LEVEL)}</Text>
+        {xp.xp > 0 || xp.streak > 0 ? (
+          <View style={styles.xpRow}>
+            <Text style={styles.xpStar}>★ {xpStars(xp.xp).stars}</Text>
+            <Text style={styles.xpText}>{xp.xp} XP</Text>
+            {xp.streak > 0 ? (
+              <View style={styles.flame}>
+                <Ionicons name="flame" size={13} color="#FF7A1A" />
+                <Text style={styles.flameText}>{xp.streak}</Text>
+              </View>
+            ) : null}
+          </View>
+        ) : null}
         {skin !== 'base' ? (
           <View style={styles.powerPill}>
             <Ionicons name="sparkles" size={12} color={colors.white} />
@@ -131,6 +144,11 @@ const styles = StyleSheet.create({
   bar: { height: 6, borderRadius: 3, backgroundColor: colors.surfaceAlt, marginTop: spacing.sm, overflow: 'hidden' },
   barFill: { height: 6, borderRadius: 3, backgroundColor: colors.accent },
   meta: { color: colors.textMuted, fontSize: 12, marginTop: 3 },
+  xpRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginTop: 4 },
+  xpStar: { color: '#D9A441', fontWeight: '800', fontSize: 13 },
+  xpText: { color: colors.textMuted, fontSize: 12 },
+  flame: { flexDirection: 'row', alignItems: 'center', gap: 1 },
+  flameText: { color: '#C2410C', fontWeight: '800', fontSize: 12 },
   powerPill: {
     flexDirection: 'row',
     alignItems: 'center',

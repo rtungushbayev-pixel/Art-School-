@@ -3,15 +3,17 @@ import { errorText } from '../../lib/errors';
 import { Alert, Image, StyleSheet, Text, View } from 'react-native';
 import type * as ImagePicker from 'expo-image-picker';
 import { askImageSource, pickImage } from '../../lib/pickImage';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { Button } from '../../components/Button';
 import { TextField } from '../../components/TextField';
 import { publishPost, requestAiModeration } from '../../lib/posts';
 import { parseYear } from '../../lib/portfolio';
+import { XP_DAILY, dailyTheme, fetchHeroXp, schoolToday } from '../../lib/dailyDrawing';
 import { useAuth } from '../../hooks/useAuth';
-import { useStrings } from '../../i18n';
+import { useLanguage, useStrings } from '../../i18n';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { StaffStackParamList, StudentStackParamList } from '../../navigation/types';
 
@@ -36,6 +38,10 @@ const STRINGS = {
     caption: 'Подпись',
     captionPlaceholder: 'Расскажите о своей работе…',
     publish: 'Опубликовать',
+    dailyKicker: 'Рисунок дня',
+    dailyDone: 'Рисунок дня готов!',
+    dailyReward: (xp: number, streak: number) =>
+      `Твой герой получил +${xp} опыта.${streak > 1 ? ` Огонёк горит ${streak} дн. подряд!` : ' Завтра будет новая тема.'}`,
   },
   kk: {
     photoTitle: 'Жұмыстың фотосы',
@@ -55,6 +61,10 @@ const STRINGS = {
     caption: 'Сипаттама',
     captionPlaceholder: 'Жұмысыңыз туралы айтып беріңіз…',
     publish: 'Жариялау',
+    dailyKicker: 'Күн суреті',
+    dailyDone: 'Күн суреті дайын!',
+    dailyReward: (xp: number, streak: number) =>
+      `Кейіпкерің +${xp} тәжірибе алды.${streak > 1 ? ` Отың ${streak} күн қатарынан жанып тұр!` : ' Ертең жаңа тақырып болады.'}`,
   },
   en: {
     photoTitle: 'Artwork photo',
@@ -74,13 +84,22 @@ const STRINGS = {
     caption: 'Caption',
     captionPlaceholder: 'Tell us about your work…',
     publish: 'Publish',
+    dailyKicker: 'Drawing of the day',
+    dailyDone: 'Drawing of the day is done!',
+    dailyReward: (xp: number, streak: number) =>
+      `Your hero got +${xp} XP.${streak > 1 ? ` Your streak is ${streak} days in a row!` : ' A new theme comes tomorrow.'}`,
   },
 };
 
 export function CreatePostScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<NavParamList>>();
+  const route = useRoute<RouteProp<NavParamList, 'CreatePost'>>();
   const { profile } = useAuth();
   const s = useStrings(STRINGS);
+  const { lang } = useLanguage();
+  // «Рисунок дня»: тема на сегодня, работа засчитывается герою.
+  const daily = !!route.params?.daily && profile?.role === 'student';
+  const theme = daily ? dailyTheme(schoolToday(), lang) : null;
   const [asset, setAsset] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [caption, setCaption] = useState('');
   const [title, setTitle] = useState('');
@@ -108,9 +127,21 @@ export function CreatePostScreen() {
     }
     setUploading(true);
     try {
-      const postId = await publishPost({ authorId: profile.id, assets: [asset], caption, title, technique, artworkYear });
+      const postId = await publishPost({
+        authorId: profile.id,
+        assets: [asset],
+        caption,
+        title: title.trim() || theme?.title || '',
+        technique,
+        artworkYear,
+        dailyThemeOn: daily ? schoolToday() : null,
+      });
       // Проверка идёт в фоне; результат будет виден в «Мои публикации».
       requestAiModeration(postId);
+      if (daily) {
+        const xp = await fetchHeroXp(profile.id).catch(() => null);
+        Alert.alert(s.dailyDone, s.dailyReward(XP_DAILY, xp?.streak ?? 1));
+      }
       navigation.goBack();
     } catch (e) {
       const message = errorText(e) ?? s.publishFailed;
@@ -122,7 +153,18 @@ export function CreatePostScreen() {
 
   return (
     <Screen scroll>
-      <Text style={styles.title}>{s.heading}</Text>
+      {theme ? (
+        <View style={styles.daily}>
+          <Ionicons name="color-palette" size={22} color={colors.white} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.dailyKicker}>{s.dailyKicker}</Text>
+            <Text style={styles.dailyTitle}>{theme.title}</Text>
+            <Text style={styles.dailyHint}>{theme.hint}</Text>
+          </View>
+        </View>
+      ) : (
+        <Text style={styles.title}>{s.heading}</Text>
+      )}
 
       <View style={styles.imagePicker}>
         {asset ? (
@@ -139,7 +181,7 @@ export function CreatePostScreen() {
         </Text>
       ) : null}
 
-      <TextField label={s.titleLabel} placeholder={s.titlePlaceholder} value={title} onChangeText={setTitle} />
+      <TextField label={s.titleLabel} placeholder={theme?.title ?? s.titlePlaceholder} value={title} onChangeText={setTitle} />
       <View style={styles.row}>
         <View style={styles.rowWide}>
           <TextField
@@ -175,6 +217,17 @@ export function CreatePostScreen() {
 
 const styles = StyleSheet.create({
   title: { fontSize: 20, fontWeight: '700', color: colors.text, marginBottom: spacing.md },
+  daily: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    backgroundColor: '#4A2F91',
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+  },
+  dailyKicker: { color: '#FBB31F', fontSize: 11, fontWeight: '800', textTransform: 'uppercase' },
+  dailyTitle: { color: colors.white, fontSize: 20, fontWeight: '800', marginTop: 2 },
+  dailyHint: { color: '#E3DAF7', fontSize: 13, marginTop: 2 },
   imagePicker: {
     aspectRatio: 1,
     borderRadius: radius.md,
