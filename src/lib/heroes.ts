@@ -608,6 +608,16 @@ export function heroFinalArtUrl(heroId: HeroId): string {
   return supabase.storage.from('heroes').getPublicUrl(`${heroId}/10_base.webp`).data.publicUrl;
 }
 
+// Сменить героя можно не больше 3 раз за календарный год (0061).
+// Первый выбор сменой не считается.
+export const HERO_CHANGES_PER_YEAR = 3;
+
+export async function fetchHeroChangesLeft(): Promise<number> {
+  const { data, error } = await supabase.rpc('hero_changes_left');
+  if (error) return HERO_CHANGES_PER_YEAR;
+  return Number(data ?? HERO_CHANGES_PER_YEAR);
+}
+
 export async function saveHero(userId: string, heroId: HeroId): Promise<void> {
   const { error } = await supabase.from('profiles').update({ hero_id: heroId, hero_skin: 'base' }).eq('id', userId);
   if (error) throw error;
