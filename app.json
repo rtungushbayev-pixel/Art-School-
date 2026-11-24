@@ -17,7 +17,7 @@
     "android": {
       "package": "kz.kasteyev.artschool",
       "adaptiveIcon": {
-        "backgroundColor": "#740B22",
+        "backgroundColor": "#4A2F91",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
