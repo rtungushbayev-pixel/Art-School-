@@ -10,7 +10,11 @@
 //   200 { answer, remaining } — ответ гида и сколько вопросов осталось сегодня;
 //   429 — дневной лимит исчерпан; 503 — гид выключен (нет ключа).
 //
-// Секреты (Supabase → Edge Functions → Secrets): ANTHROPIC_API_KEY.
+// Функция выключена, пока в секретах нет GUIDE_ENABLED=true: флаг в
+// приложении (FEATURES.aiGuide) можно обойти прямым запросом к API, а
+// каждый ответ стоит денег. Включать вместе с FEATURES.aiGuide.
+//
+// Секреты (Supabase → Edge Functions → Secrets): ANTHROPIC_API_KEY, GUIDE_ENABLED=true.
 // Необязательно: GUIDE_MODEL (по умолчанию claude-opus-5-5; дешевле —
 // claude-haiku-5-5), GUIDE_DAILY_LIMIT (по умолчанию 10).
 
@@ -19,6 +23,7 @@ import Anthropic from 'npm:@anthropic-ai/sdk@0.131.0';
 
 const MODEL = Deno.env.get('GUIDE_MODEL') ?? 'claude-opus-5-5';
 const DAILY_LIMIT = Math.max(1, Number(Deno.env.get('GUIDE_DAILY_LIMIT') ?? '10') || 10);
+const ENABLED = Deno.env.get('GUIDE_ENABLED') === 'true';
 const MAX_MESSAGES = 10;
 const MAX_CHARS = 1200;
 
@@ -118,6 +123,7 @@ function cleanMessages(raw: unknown): Msg[] | null {
 
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return json(405, { error: 'Method not allowed' });
+  if (!ENABLED) return json(503, { error: 'Guide is off' });
   try {
     const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
