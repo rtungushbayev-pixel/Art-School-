@@ -69,7 +69,7 @@ export function ArtEraScreen() {
   const navigation = useNavigation<any>();
   const s = useStrings(STRINGS);
   const { lang } = useLanguage();
-  const era = findEra(route.params?.eraId);
+  const era = findEra(route.params?.eraId, lang);
   const [speaking, setSpeaking] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
@@ -107,8 +107,7 @@ export function ArtEraScreen() {
       setSpeaking(false);
       return;
     }
-    // Рассказ всегда на русском: тексты эпох пока только на нём.
-    speak(era.story.join(' '), 'ru', { onStart: () => setSpeaking(true), onEnd: () => setSpeaking(false) });
+    speak(era.story.join(' '), lang === 'kk' ? 'kk' : 'ru', { onStart: () => setSpeaking(true), onEnd: () => setSpeaking(false) });
   };
 
   return (

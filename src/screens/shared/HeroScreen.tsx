@@ -28,6 +28,7 @@ import {
   type HeroSkin,
 } from '../../lib/heroes';
 import { useLanguage, useStrings } from '../../i18n';
+import { portraitCaption } from '../../lib/contentI18n';
 import { colors, radius, shadow, spacing } from '../../theme/colors';
 import { fonts } from '../../theme/fonts';
 import type { Profile } from '../../types/database';
@@ -245,7 +246,7 @@ export function HeroScreen() {
 
       <Text style={styles.section}>{s.level(shownLevel)}.</Text>
       <Text style={levelOpen ? styles.story : styles.lockedStory}>
-        {levelOpen ? heroChapter(hero.id, shownLevel) : s.lockedLevel(levelGroupName(shownLevel, lang))}
+        {levelOpen ? heroChapter(hero.id, shownLevel, lang) : s.lockedLevel(levelGroupName(shownLevel, lang))}
       </Text>
 
       <HeroPath
@@ -282,7 +283,7 @@ export function HeroScreen() {
                   <Image source={p.image} style={styles.portraitImage} contentFit="cover" contentPosition="top" />
                 </View>
                 <Text style={styles.portraitCaption} numberOfLines={3}>
-                  {p.caption}
+                  {portraitCaption(p.caption, lang)}
                 </Text>
               </Pressable>
             ))}
@@ -293,7 +294,7 @@ export function HeroScreen() {
               {openPortrait !== null ? (
                 <>
                   <Image source={hero.portraits[openPortrait].image} style={styles.viewerImage} contentFit="contain" />
-                  <Text style={styles.viewerCaption}>{hero.portraits[openPortrait].caption}</Text>
+                  <Text style={styles.viewerCaption}>{portraitCaption(hero.portraits[openPortrait].caption, lang)}</Text>
                 </>
               ) : null}
             </Pressable>

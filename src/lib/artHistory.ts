@@ -11,7 +11,8 @@
 // Работы Кастеева ещё охраняются авторским правом (он умер в 1973 году),
 // поэтому в разделе их нет: только рассказ и переход к герою.
 
-import type { Translations } from '../i18n';
+import type { Lang, Translations } from '../i18n';
+import { ERAS_KK } from './artHistory.kk';
 import type { HeroId } from './heroes';
 import { ART_IMAGES, type ArtImageId } from './artImages';
 
@@ -601,8 +602,29 @@ export const ERAS: Era[] = [
   },
 ];
 
-export function findEra(id: string | null | undefined): Era | null {
-  return ERAS.find((e) => e.id === id) ?? null;
+// Эпоха на нужном языке: тексты из artHistory.kk.ts, картинки и цвета — отсюда.
+export function localizeEra(era: Era, lang?: Lang): Era {
+  const kk = lang === 'kk' ? ERAS_KK[era.id] : undefined;
+  if (!kk) return era;
+  return {
+    ...era,
+    years: kk.years,
+    intro: kk.intro,
+    story: kk.story,
+    works: era.works.map((w, i) => ({ ...w, ...(kk.works[i] ?? {}) })),
+    fact: kk.fact,
+    quiz: kk.quiz,
+    localArtists: kk.localArtists ?? era.localArtists,
+  };
+}
+
+export function erasFor(lang?: Lang): Era[] {
+  return ERAS.map((e) => localizeEra(e, lang));
+}
+
+export function findEra(id: string | null | undefined, lang?: Lang): Era | null {
+  const era = ERAS.find((e) => e.id === id);
+  return era ? localizeEra(era, lang) : null;
 }
 
 export function artImage(id: ArtImageId) {

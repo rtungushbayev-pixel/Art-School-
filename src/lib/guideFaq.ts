@@ -8,6 +8,7 @@
 import { findEra, type EraId } from './artHistory';
 import { findHero, heroStory, type HeroId } from './heroes';
 import { pick, type Lang } from '../i18n';
+import { FAQ_TEMPLATES, GENERAL_FAQ_KK } from './contentI18n';
 
 export interface GuideFaq {
   question: string;
@@ -77,20 +78,25 @@ export const GENERAL_FAQ: GuideFaq[] = [
   },
 ];
 
+export function generalFaq(lang: Lang): GuideFaq[] {
+  return lang === 'kk' ? GENERAL_FAQ_KK : GENERAL_FAQ;
+}
+
 // Вопросы на странице эпохи: рассказ, факт и главные работы.
 export function eraFaq(eraId: EraId, lang: Lang): GuideFaq[] {
-  const era = findEra(eraId);
+  const era = findEra(eraId, lang);
   if (!era) return [];
+  const t = pick(FAQ_TEMPLATES, lang);
   const title = pick(era.title, lang);
   return [
-    { question: `Расскажи про эпоху «${title}»`, answer: era.story.join(' ') },
-    { question: 'Расскажи интересный факт', answer: era.fact },
+    { question: t.aboutEra(title), answer: era.story.join(' ') },
+    { question: t.fact, answer: era.fact },
     ...era.works.map((w) => ({
-      question: `Что за работа «${w.title}»?`,
-      answer: `Это «${w.title}». Автор: ${w.author}, ${w.year}. ${w.note}`,
+      question: t.work(w.title),
+      answer: t.workAnswer(w.title, w.author, w.year, w.note),
     })),
     ...(era.localArtists ?? []).map((a) => ({
-      question: `Расскажи о художнике: ${a.name}`,
+      question: t.artist(a.name),
       answer: `${a.name}, ${a.years}. ${a.text}`,
     })),
     // Вопросы викторины эпохи с объяснением ответа.
@@ -105,12 +111,13 @@ export function eraFaq(eraId: EraId, lang: Lang): GuideFaq[] {
 export function heroFaq(heroId: HeroId, lang: Lang): GuideFaq[] {
   const hero = findHero(heroId);
   if (!hero) return [];
-  const story = heroStory(hero.id);
+  const t = pick(FAQ_TEMPLATES, lang);
+  const story = heroStory(hero.id, lang);
   const name = pick(hero.name, lang);
   return [
-    { question: `Расскажи главное: ${name}`, answer: `${pick(hero.tagline, lang)}. ${story[8] ?? ''}`.trim() },
-    { question: 'Какое детство было у художника?', answer: story.slice(0, 3).join(' ') },
-    { question: 'Как художник учился рисовать?', answer: story.slice(3, 6).join(' ') },
-    { question: 'Чего художник добился?', answer: story.slice(6).join(' ') },
+    { question: t.main(name), answer: `${pick(hero.tagline, lang)}. ${story[8] ?? ''}`.trim() },
+    { question: t.childhood, answer: story.slice(0, 3).join(' ') },
+    { question: t.study, answer: story.slice(3, 6).join(' ') },
+    { question: t.success, answer: story.slice(6).join(' ') },
   ];
 }

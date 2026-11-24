@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
-import { useStrings } from '../i18n';
+import { useLanguage, useStrings } from '../i18n';
 import { heroWorks } from '../lib/heroWorks';
 import type { HeroId } from '../lib/heroes';
 import { colors, radius, shadow, spacing } from '../theme/colors';
@@ -16,7 +16,8 @@ const STRINGS = {
 // Горизонтальная лента знаменитых картин героя с просмотром на весь экран.
 export function HeroWorksGallery({ heroId, titleStyle }: { heroId: HeroId; titleStyle?: object }) {
   const s = useStrings(STRINGS);
-  const works = heroWorks(heroId);
+  const { lang } = useLanguage();
+  const works = heroWorks(heroId, lang);
   const [open, setOpen] = useState<number | null>(null);
   if (works.length === 0) return null;
   const current = open !== null ? works[open] : null;

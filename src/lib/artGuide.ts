@@ -110,13 +110,21 @@ export function speak(text: string, lang: Lang, handlers: { onStart?: () => void
   Speech.stop();
   const token = ++speakToken;
   handlers.onStart?.();
-  bestVoice(lang).then((voice) => {
+  // Казахского голоса на многих телефонах нет: тогда читает русский голос,
+  // он справляется с казахской кириллицей лучше, чем голос по умолчанию.
+  const pickVoice = (): Promise<{ voice?: string; speechLang: Lang }> =>
+    bestVoice(lang).then((voice) =>
+      voice || lang !== 'kk'
+        ? { voice, speechLang: lang }
+        : bestVoice('ru').then((ru) => ({ voice: ru, speechLang: 'ru' as Lang }))
+    );
+  pickVoice().then(({ voice, speechLang }) => {
     if (token !== speakToken) {
       handlers.onEnd?.();
       return;
     }
     Speech.speak(text, {
-      language: SPEECH_LANG[lang],
+      language: SPEECH_LANG[speechLang],
       voice,
       // Чуть медленнее обычного, естественной высоты: так говорит экскурсовод.
       rate: 0.9,

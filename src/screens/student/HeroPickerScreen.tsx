@@ -115,7 +115,7 @@ export function HeroPickerScreen() {
         <View style={styles.preview}>
           <Text style={styles.previewName}>{hero.name[lang] ?? hero.name.ru}</Text>
           <Text style={styles.previewTagline}>{hero.tagline[lang] ?? hero.tagline.ru}</Text>
-          <Text style={styles.previewStory}>{heroStory(hero.id)[0]}</Text>
+          <Text style={styles.previewStory}>{heroStory(hero.id, lang)[0]}</Text>
         </View>
       ) : null}
 

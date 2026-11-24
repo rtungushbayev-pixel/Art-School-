@@ -4,6 +4,8 @@
 // поэтому для него картин нет, пока музей не даст разрешение.
 
 import type { HeroId } from './heroes';
+import type { Lang } from '../i18n';
+import { workTitle, yearText } from './contentI18n';
 
 export interface HeroWork {
   image: number; // require(...)
@@ -67,6 +69,8 @@ export const HERO_WORKS: Partial<Record<HeroId, HeroWork[]>> = {
   ],
 };
 
-export function heroWorks(id: HeroId): HeroWork[] {
-  return HERO_WORKS[id] ?? [];
+export function heroWorks(id: HeroId, lang?: Lang): HeroWork[] {
+  const works = HERO_WORKS[id] ?? [];
+  if (lang !== 'kk') return works;
+  return works.map((w) => ({ ...w, title: workTitle(w.title, lang), year: yearText(w.year, lang) }));
 }

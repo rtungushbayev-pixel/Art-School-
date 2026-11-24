@@ -24,7 +24,7 @@ import {
 } from '../../lib/artGuide';
 import { findEra } from '../../lib/artHistory';
 import { FEATURES } from '../../lib/features';
-import { GENERAL_FAQ, eraFaq, heroFaq, type GuideFaq } from '../../lib/guideFaq';
+import { eraFaq, generalFaq, heroFaq, type GuideFaq } from '../../lib/guideFaq';
 import { findHero } from '../../lib/heroes';
 import { pick, useLanguage, useStrings } from '../../i18n';
 import { radius, spacing } from '../../theme/colors';
@@ -100,7 +100,7 @@ export function AskGuideScreen() {
   const navigation = useNavigation<any>();
   const s = useStrings(STRINGS);
   const { lang } = useLanguage();
-  const era = findEra(route.params?.eraId);
+  const era = findEra(route.params?.eraId, lang);
   const hero = findHero(route.params?.heroId);
 
   const live = FEATURES.aiGuide;
@@ -124,7 +124,7 @@ export function AskGuideScreen() {
   // Заготовленные вопросы: со страницы эпохи или художника — только про
   // них, из общего раздела — общие вопросы об искусстве.
   const faqs = useMemo<GuideFaq[]>(
-    () => (era ? eraFaq(era.id, lang) : hero ? heroFaq(hero.id, lang) : GENERAL_FAQ),
+    () => (era ? eraFaq(era.id, lang) : hero ? heroFaq(hero.id, lang) : generalFaq(lang)),
     [era, hero, lang]
   );
   const asked = new Set(messages.filter((m) => m.role === 'user').map((m) => m.content));
