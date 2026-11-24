@@ -602,9 +602,9 @@ export function heroArtFiles(heroId: HeroId): Promise<Map<string, string>> {
   return cached;
 }
 
-// Герой в конце пути: 10 уровень, облик «Шедевр». Для экрана выбора героя.
+// Герой в конце пути: 10 уровень, обычный облик «Эскиз». Для экрана выбора героя.
 export function heroFinalArtUrl(heroId: HeroId): string {
-  return supabase.storage.from('heroes').getPublicUrl(`${heroId}/10_legendary.webp`).data.publicUrl;
+  return supabase.storage.from('heroes').getPublicUrl(`${heroId}/10_base.webp`).data.publicUrl;
 }
 
 export async function saveHero(userId: string, heroId: HeroId): Promise<void> {

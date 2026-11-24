@@ -135,7 +135,7 @@ export function HeroPickerScreen() {
   );
 }
 
-// Герой на последнем этапе (10 уровень, облик «Шедевр») из Storage.
+// Герой на последнем этапе (10 уровень, обычный облик) из Storage.
 // Пока картинка не загрузилась или её нет — рисованный аватар.
 function MasterArt({ hero, stage }: { hero: Hero; stage: HeroStage }) {
   const [failed, setFailed] = useState(false);
