@@ -97,7 +97,7 @@ export function HeroPickerScreen() {
               accessibilityState={{ selected: active }}
             >
               <MasterArt hero={h} stage={stage} />
-              <Text style={styles.tileName} numberOfLines={2}>
+              <Text style={styles.tileName} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}>
                 {h.name[lang] ?? h.name.ru}
               </Text>
               <Text style={styles.tileYears}>{h.years}</Text>

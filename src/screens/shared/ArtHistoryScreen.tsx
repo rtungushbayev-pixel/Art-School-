@@ -116,7 +116,7 @@ export function ArtHistoryScreen() {
                 <HeroAvatar hero={hero} stage={5} size={72} />
               </View>
             )}
-            <Text style={styles.artistName} numberOfLines={2}>
+            <Text style={styles.artistName} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.75}>
               {pick(hero.name, lang)}
             </Text>
             <Text style={styles.artistYears}>{hero.years}</Text>
