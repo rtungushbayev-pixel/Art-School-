@@ -45,6 +45,8 @@ export interface Hero {
   look: HeroLook;
   // Настоящие автопортреты разных лет, если они есть в общественном достоянии.
   portraits?: HeroPortrait[];
+  // Реалистичный портрет для списка «Великие художники» (если нет автопортретов).
+  avatar?: number;
 }
 
 export const HEROES: Hero[] = [
@@ -52,6 +54,8 @@ export const HEROES: Hero[] = [
     id: 'kasteyev',
     name: { ru: 'Абылхан Кастеев', kk: 'Әбілхан Қастеев', en: 'Abylkhan Kasteyev' },
     years: '1904–1973',
+    // Портрет из логотипа школы.
+    avatar: require('../../assets/heroes/kasteyev_avatar.jpg'),
     tagline: {
       ru: 'Первый профессиональный художник Казахстана',
       kk: 'Қазақстанның тұңғыш кәсіби суретшісі',
@@ -73,6 +77,7 @@ export const HEROES: Hero[] = [
     id: 'leonardo',
     name: { ru: 'Леонардо да Винчи', kk: 'Леонардо да Винчи', en: 'Leonardo da Vinci' },
     years: '1452–1519',
+    avatar: require('../../assets/heroes/leonardo_avatar.jpg'),
     tagline: {
       ru: 'Художник, изобретатель и учёный эпохи Возрождения',
       kk: 'Қайта өрлеу дәуірінің суретшісі, өнертапқышы және ғалымы',
@@ -95,6 +100,7 @@ export const HEROES: Hero[] = [
     id: 'michelangelo',
     name: { ru: 'Микеланджело', kk: 'Микеланджело', en: 'Michelangelo' },
     years: '1475–1564',
+    avatar: require('../../assets/heroes/michelangelo_avatar.jpg'),
     tagline: {
       ru: 'Скульптор «Давида» и автор росписи Сикстинской капеллы',
       kk: '«Давид» мүсінінің және Сикстин капелласы суреттерінің авторы',
@@ -144,6 +150,7 @@ export const HEROES: Hero[] = [
     id: 'aivazovsky',
     name: { ru: 'Иван Айвазовский', kk: 'Иван Айвазовский', en: 'Ivan Aivazovsky' },
     years: '1817–1900',
+    avatar: require('../../assets/heroes/aivazovsky_avatar.jpg'),
     tagline: {
       ru: 'Великий художник моря, автор «Девятого вала»',
       kk: 'Теңізді бейнелеген ұлы суретші, «Тоғызыншы толқынның» авторы',
@@ -192,6 +199,7 @@ export const HEROES: Hero[] = [
     id: 'monet',
     name: { ru: 'Клод Моне', kk: 'Клод Моне', en: 'Claude Monet' },
     years: '1840–1926',
+    avatar: require('../../assets/heroes/monet_avatar.jpg'),
     tagline: {
       ru: 'Основатель импрессионизма, автор «Кувшинок»',
       kk: 'Импрессионизмнің негізін салушы, «Су лалаларының» авторы',
@@ -213,6 +221,7 @@ export const HEROES: Hero[] = [
     id: 'artemisia',
     name: { ru: 'Артемизия Джентилески', kk: 'Артемизия Джентилески', en: 'Artemisia Gentileschi' },
     years: '1593 — около 1656',
+    avatar: require('../../assets/heroes/artemisia_avatar.jpg'),
     tagline: {
       ru: 'Первая женщина в Академии рисунка Флоренции',
       kk: 'Флоренция сурет академиясына қабылданған тұңғыш әйел',
@@ -253,6 +262,7 @@ export const HEROES: Hero[] = [
     id: 'cassatt',
     name: { ru: 'Мэри Кассат', kk: 'Мэри Кассат', en: 'Mary Cassatt' },
     years: '1844–1926',
+    avatar: require('../../assets/heroes/cassatt_avatar.jpg'),
     tagline: {
       ru: 'Американская художница-импрессионистка',
       kk: 'Америкалық импрессионист суретші',
@@ -381,6 +391,11 @@ export const HEROES: Hero[] = [
 
 export function heroStory(id: HeroId, lang?: Lang): readonly string[] {
   return (lang === 'kk' ? HERO_STORIES_KK[id] : undefined) ?? HERO_STORIES[id];
+}
+
+// Настоящий портрет художника: отдельный аватар или первый автопортрет.
+export function heroPhoto(hero: Hero): number | undefined {
+  return hero.avatar ?? hero.portraits?.[0]?.image;
 }
 
 export function findHero(id: string | null | undefined): Hero | null {
@@ -606,6 +621,16 @@ export function heroArtFiles(heroId: HeroId): Promise<Map<string, string>> {
 // Герой в конце пути: 10 уровень, обычный облик «Эскиз». Для экрана выбора героя.
 export function heroFinalArtUrl(heroId: HeroId): string {
   return supabase.storage.from('heroes').getPublicUrl(`${heroId}/10_base.webp`).data.publicUrl;
+}
+
+// Сменить героя можно не больше 3 раз за календарный год (0061).
+// Первый выбор сменой не считается.
+export const HERO_CHANGES_PER_YEAR = 3;
+
+export async function fetchHeroChangesLeft(): Promise<number> {
+  const { data, error } = await supabase.rpc('hero_changes_left');
+  if (error) return HERO_CHANGES_PER_YEAR;
+  return Number(data ?? HERO_CHANGES_PER_YEAR);
 }
 
 export async function saveHero(userId: string, heroId: HeroId): Promise<void> {

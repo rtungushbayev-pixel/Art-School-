@@ -10,7 +10,7 @@ import { colors, spacing } from '../../theme/colors';
 const STRINGS = {
   ru: {
     scan: 'Отметьтесь на занятии',
-    hint: 'Откройте приложение KasteyevSchool → «Сканировать QR» и наведите камеру на код',
+    hint: 'Откройте приложение KasteyevSchool → «Scan-QR» и наведите камеру на код',
     refresh: (s: number) => `Код обновится через ${s} с`,
     offline: 'Нет связи с сервером. Проверьте интернет на планшете.',
     unpaired: 'Планшет отключён администратором.',
@@ -21,7 +21,7 @@ const STRINGS = {
   },
   kk: {
     scan: 'Сабаққа белгіленіңіз',
-    hint: 'KasteyevSchool қолданбасын ашып → «QR сканерлеу», камераны кодқа бағыттаңыз',
+    hint: 'KasteyevSchool қолданбасын ашып → «Scan-QR», камераны кодқа бағыттаңыз',
     refresh: (s: number) => `Код ${s} с кейін жаңарады`,
     offline: 'Сервермен байланыс жоқ. Планшеттегі интернетті тексеріңіз.',
     unpaired: 'Планшетті әкімші ажыратты.',
@@ -32,7 +32,7 @@ const STRINGS = {
   },
   en: {
     scan: 'Check in for your class',
-    hint: 'Open the KasteyevSchool app → “Scan QR” and point the camera at the code',
+    hint: 'Open the KasteyevSchool app → “Scan-QR” and point the camera at the code',
     refresh: (s: number) => `Code refreshes in ${s} s`,
     offline: 'No connection to the server. Check the tablet’s internet.',
     unpaired: 'This tablet was disconnected by the administrator.',

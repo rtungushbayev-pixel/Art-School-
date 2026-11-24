@@ -6,7 +6,7 @@ import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/nativ
 import { Screen } from '../../components/Screen';
 import { HeroWorksGallery } from '../../components/HeroWorksGallery';
 import { HeroAvatar } from '../../components/HeroAvatar';
-import { findHero, heroStory } from '../../lib/heroes';
+import { findHero, heroPhoto, heroStory } from '../../lib/heroes';
 import { speak, stopSpeaking } from '../../lib/artGuide';
 import { pick, useLanguage, useStrings } from '../../i18n';
 import { portraitCaption } from '../../lib/contentI18n';
@@ -86,7 +86,11 @@ export function ArtArtistScreen() {
   return (
     <Screen scroll>
       <View style={styles.head}>
-        <HeroAvatar hero={hero} stage={5} size={96} />
+        {heroPhoto(hero) ? (
+          <Image source={heroPhoto(hero)} style={styles.headPhoto} contentFit="cover" contentPosition="top" />
+        ) : (
+          <HeroAvatar hero={hero} stage={5} size={96} />
+        )}
         <View style={styles.headBody}>
           <Text style={styles.name}>{pick(hero.name, lang)}</Text>
           <Text style={styles.years}>{hero.years}</Text>
@@ -140,6 +144,7 @@ const styles = StyleSheet.create({
   tagline: { fontSize: 14, color: colors.text, marginTop: 4 },
   portraits: { gap: spacing.sm },
   portraitBox: { width: 130 },
+  headPhoto: { width: 96, height: 120, borderRadius: radius.md, backgroundColor: colors.surfaceAlt },
   portrait: { width: 130, height: 160, borderRadius: radius.md, backgroundColor: colors.surfaceAlt },
   caption: { fontSize: 11, color: colors.textMuted, marginTop: 4 },
   credit: { fontSize: 11, color: colors.textMuted, marginTop: spacing.sm },

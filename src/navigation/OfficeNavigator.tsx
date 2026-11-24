@@ -1,5 +1,6 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { OfficeTabParamList, StaffStackParamList } from './types';
 import { makeTabScreenOptions, type TabConfig } from './tabOptions';
@@ -66,10 +67,11 @@ const TAB_CONFIG: Record<keyof OfficeTabParamList, TabConfig> = {
 
 function OfficeTabs() {
   const s = useStrings(STRINGS);
+  const insets = useSafeAreaInsets();
   return (
     <Tab.Navigator
       initialRouteName="MaterialsTab"
-      screenOptions={makeTabScreenOptions(TAB_CONFIG, { showFriends: false, showMarket: false, showArt: false })}
+      screenOptions={makeTabScreenOptions(TAB_CONFIG, { showFriends: false, showMarket: false, showArt: false }, insets.bottom)}
     >
       <Tab.Screen name="MaterialsTab" component={MaterialRequestsScreen} options={{ title: s.materials }} />
       <Tab.Screen name="ProfileTab" component={ProfileScreen} options={{ title: s.profile }} />

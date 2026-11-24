@@ -8,7 +8,7 @@ import { GuideAvatar } from '../../components/GuideAvatar';
 import { HeroAvatar } from '../../components/HeroAvatar';
 import { useAuth } from '../../hooks/useAuth';
 import { ONLINE_COURSE_URL, erasFor } from '../../lib/artHistory';
-import { HEROES } from '../../lib/heroes';
+import { HEROES, heroPhoto } from '../../lib/heroes';
 import { FEATURES } from '../../lib/features';
 import { pick, useLanguage, useStrings } from '../../i18n';
 import { colors, radius, shadow, spacing } from '../../theme/colors';
@@ -109,8 +109,8 @@ export function ArtHistoryScreen() {
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.artists}>
         {HEROES.map((hero) => (
           <Pressable key={hero.id} style={styles.artist} onPress={() => navigation.navigate('ArtArtist', { heroId: hero.id })}>
-            {hero.portraits?.[0] ? (
-              <Image source={hero.portraits[0].image} style={styles.portrait} contentFit="cover" />
+            {heroPhoto(hero) ? (
+              <Image source={heroPhoto(hero)} style={styles.portrait} contentFit="cover" contentPosition="top" />
             ) : (
               <View style={styles.portraitFallback}>
                 <HeroAvatar hero={hero} stage={5} size={72} />
