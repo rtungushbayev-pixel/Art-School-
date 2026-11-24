@@ -21,6 +21,7 @@ const STRINGS = {
     works: 'Главные работы',
     fact: 'Знаешь ли ты?',
     heroes: 'Художники этой эпохи',
+    localArtists: 'Художники Казахстана',
     quiz: 'Проверь себя',
     right: 'Верно!',
     wrong: 'Не совсем.',
@@ -36,6 +37,7 @@ const STRINGS = {
     works: 'Басты туындылар',
     fact: 'Білесің бе?',
     heroes: 'Осы дәуірдің суретшілері',
+    localArtists: 'Қазақстан суретшілері',
     quiz: 'Өзіңді тексер',
     right: 'Дұрыс!',
     wrong: 'Онша емес.',
@@ -51,6 +53,7 @@ const STRINGS = {
     works: 'Key works',
     fact: 'Did you know?',
     heroes: 'Artists of this era',
+    localArtists: 'Artists of Kazakhstan',
     quiz: 'Test yourself',
     right: 'Correct!',
     wrong: 'Not quite.',
@@ -153,6 +156,21 @@ export function ArtEraScreen() {
               );
             })}
           </View>
+        </>
+      ) : null}
+
+      {era.localArtists?.length ? (
+        <>
+          <Text style={styles.section}>{s.localArtists}</Text>
+          {era.localArtists.map((a) => (
+            <View key={a.name} style={styles.work}>
+              <View style={styles.workBody}>
+                <Text style={styles.workTitle}>{a.name}</Text>
+                <Text style={styles.workMeta}>{a.years}</Text>
+                <Text style={styles.workNote}>{a.text}</Text>
+              </View>
+            </View>
+          ))}
         </>
       ) : null}
 

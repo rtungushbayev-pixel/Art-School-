@@ -1,5 +1,6 @@
 import React, { useLayoutEffect, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -8,7 +9,8 @@ import { Button } from '../../components/Button';
 import { HeroAvatar } from '../../components/HeroAvatar';
 import { useAuth } from '../../hooks/useAuth';
 import { useHero } from '../../hooks/useHero';
-import { HEROES, findHero, heroStory, saveHero, type HeroId } from '../../lib/heroes';
+import { HEROES, findHero, heroFinalArtUrl, heroStory, saveHero, type Hero, type HeroId } from '../../lib/heroes';
+import type { HeroStage } from '../../lib/heroArt';
 import { dismissHeroOnboarding } from '../../lib/heroOnboarding';
 import { errorText } from '../../lib/errors';
 import { useLanguage, useStrings } from '../../i18n';
@@ -19,7 +21,7 @@ const STRINGS = {
   ru: {
     title: 'Выбери своего героя',
     intro:
-      'Это великий художник, который будет расти вместе с тобой. Переходишь в новую группу — герой взрослеет и открывает новую главу своей истории. Участвуешь в конкурсах — герой становится сильнее и получает плащ творца, кристалл и силу магистра.',
+      'Здесь герои такими, какими они станут в конце пути, — великими мастерами. А начнёт твой герой ребёнком, как и ты. Переходишь в новую группу — он взрослеет и открывает новую главу своей истории. Участвуешь в конкурсах — становится сильнее и получает новые облики.',
     choose: (name: string) => `Выбрать: ${name}`,
     pickFirst: 'Нажми на героя, чтобы выбрать',
     later: 'Выберу позже',
@@ -28,7 +30,7 @@ const STRINGS = {
   kk: {
     title: 'Өз кейіпкеріңді таңда',
     intro:
-      'Бұл сенімен бірге өсетін ұлы суретші. Жаңа топқа ауыссаң — кейіпкер есейіп, өз тарихының жаңа тарауын ашады. Байқауларға қатыссаң — кейіпкер күшейіп, шебер шапанын, кристалды және магистр күшін алады.',
+      'Мұнда кейіпкерлер жолдың соңындағыдай — ұлы шеберлер. Ал сенің кейіпкерің сен сияқты баладан бастайды. Жаңа топқа ауыссаң — ол есейіп, өз тарихының жаңа тарауын ашады. Байқауларға қатыссаң — күшейіп, жаңа бейнелер алады.',
     choose: (name: string) => `Таңдау: ${name}`,
     pickFirst: 'Таңдау үшін кейіпкерді бас',
     later: 'Кейін таңдаймын',
@@ -37,7 +39,7 @@ const STRINGS = {
   en: {
     title: 'Choose your hero',
     intro:
-      'A great artist who will grow with you. Move up to a new group and your hero grows older and unlocks a new chapter of their story. Take part in competitions and your hero gets stronger: a creator’s cloak, a crystal and the power of a master.',
+      'Here the heroes are shown as they will be at the end of the road: great masters. Your hero starts as a child, just like you. Move up to a new group and your hero grows older and unlocks a new chapter of their story. Take part in competitions and your hero gets stronger and earns new looks.',
     choose: (name: string) => `Choose ${name}`,
     pickFirst: 'Tap a hero to choose',
     later: "I'll choose later",
@@ -94,7 +96,7 @@ export function HeroPickerScreen() {
               style={[styles.tile, active && styles.tileActive]}
               accessibilityState={{ selected: active }}
             >
-              <HeroAvatar hero={h} stage={stage} size={112} />
+              <MasterArt hero={h} stage={stage} />
               <Text style={styles.tileName} numberOfLines={2}>
                 {h.name[lang] ?? h.name.ru}
               </Text>
@@ -133,7 +135,26 @@ export function HeroPickerScreen() {
   );
 }
 
+// Герой на последнем этапе (10 уровень, обычный облик) из Storage.
+// Пока картинка не загрузилась или её нет — рисованный аватар.
+function MasterArt({ hero, stage }: { hero: Hero; stage: HeroStage }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return <HeroAvatar hero={hero} stage={stage} size={112} />;
+  return (
+    <Image
+      source={{ uri: heroFinalArtUrl(hero.id) }}
+      style={styles.art}
+      contentFit="contain"
+      transition={200}
+      cachePolicy="disk"
+      onError={() => setFailed(true)}
+      accessibilityIgnoresInvertColors
+    />
+  );
+}
+
 const styles = StyleSheet.create({
+  art: { width: '100%', aspectRatio: 3 / 4, borderRadius: radius.md, backgroundColor: '#F3EBDD' },
   intro: { color: colors.text, lineHeight: 21, marginBottom: spacing.md },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: spacing.md },
   tile: {

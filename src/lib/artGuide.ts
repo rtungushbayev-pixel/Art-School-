@@ -68,20 +68,68 @@ export async function askGuide(
 
 const SPEECH_LANG: Record<Lang, string> = { ru: 'ru-RU', kk: 'kk-KZ', en: 'en-US' };
 
+// Голос гида. Системный голос по умолчанию часто самый простой и
+// «роботный», поэтому выбираем лучший из установленных на телефоне:
+// улучшенного качества (iOS: Enhanced/Premium, Android: сетевые голоса Google).
+const voiceCache = new Map<Lang, Promise<string | undefined>>();
+
+function voiceScore(v: Speech.Voice): number {
+  const name = `${v.identifier} ${v.name}`.toLowerCase();
+  let score = 0;
+  if (v.quality === Speech.VoiceQuality.Enhanced) score += 10;
+  if (name.includes('premium')) score += 6;
+  if (name.includes('enhanced')) score += 4;
+  if (name.includes('network')) score += 3;
+  // Старые и «шуточные» голоса iOS звучат хуже всего.
+  if (name.includes('compact') || name.includes('eloquence') || name.includes('novelty')) score -= 10;
+  if (name.includes('local')) score -= 1;
+  return score;
+}
+
+function bestVoice(lang: Lang): Promise<string | undefined> {
+  let cached = voiceCache.get(lang);
+  if (!cached) {
+    const prefix = SPEECH_LANG[lang].slice(0, 2).toLowerCase();
+    cached = Speech.getAvailableVoicesAsync()
+      .then((voices) => {
+        const matching = voices.filter((v) => v.language?.toLowerCase().replace('_', '-').startsWith(prefix));
+        matching.sort((a, b) => voiceScore(b) - voiceScore(a));
+        return matching[0]?.identifier;
+      })
+      .catch(() => undefined);
+    voiceCache.set(lang, cached);
+  }
+  return cached;
+}
+
+// Номер последнего запроса: если за время поиска голоса нажали «Стоп»
+// или запустили другой рассказ, старый не начинаем.
+let speakToken = 0;
+
 export function speak(text: string, lang: Lang, handlers: { onStart?: () => void; onEnd?: () => void } = {}) {
   Speech.stop();
+  const token = ++speakToken;
   handlers.onStart?.();
-  Speech.speak(text, {
-    language: SPEECH_LANG[lang],
-    rate: 0.95,
-    pitch: 1.05,
-    onDone: handlers.onEnd,
-    onStopped: handlers.onEnd,
-    onError: handlers.onEnd,
+  bestVoice(lang).then((voice) => {
+    if (token !== speakToken) {
+      handlers.onEnd?.();
+      return;
+    }
+    Speech.speak(text, {
+      language: SPEECH_LANG[lang],
+      voice,
+      // Чуть медленнее обычного, естественной высоты: так говорит экскурсовод.
+      rate: 0.9,
+      pitch: 1.0,
+      onDone: handlers.onEnd,
+      onStopped: handlers.onEnd,
+      onError: handlers.onEnd,
+    });
   });
 }
 
 export function stopSpeaking() {
+  speakToken++;
   Speech.stop();
 }
 

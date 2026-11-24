@@ -5,6 +5,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Screen } from '../../components/Screen';
 import { HeroCard } from '../../components/HeroCard';
+import { ChildPrivacyCard } from '../../components/ChildPrivacyCard';
 import { useHero } from '../../hooks/useHero';
 import { Avatar } from '../../components/Avatar';
 import { Button } from '../../components/Button';
@@ -178,6 +179,13 @@ export function ChildDetailScreen({ route, navigation }: Props) {
       ) : null}
       {child && heroState.hero ? (
         <HeroCard state={heroState} onOpen={() => navigation.navigate('Hero', { userId: child.id })} />
+      ) : null}
+      {child ? (
+        <ChildPrivacyCard
+          childId={child.id}
+          visibility={child.posts_visibility ?? 'all'}
+          storiesFriendsOnly={!!child.stories_friends_only}
+        />
       ) : null}
 
       {FEATURES.payments ? (
