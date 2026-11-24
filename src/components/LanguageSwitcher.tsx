@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
   },
   rowCompact: { alignSelf: 'flex-end' },
   item: { flex: 1, alignItems: 'center', paddingVertical: spacing.sm, borderRadius: 999 },
-  itemCompact: { flex: 0, paddingHorizontal: spacing.sm + 2, paddingVertical: 6 },
+  itemCompact: { flexGrow: 0, flexShrink: 0, flexBasis: 'auto', paddingHorizontal: spacing.sm + 2, paddingVertical: 6 },
   itemActive: { backgroundColor: colors.primary },
   text: { fontWeight: '700', color: colors.textMuted },
   textCompact: { fontSize: 12 },

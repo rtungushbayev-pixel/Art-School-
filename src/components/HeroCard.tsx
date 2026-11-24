@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { HeroAvatar } from './HeroAvatar';
 import { HeroFigure } from './HeroFigure';
@@ -68,7 +69,20 @@ export function HeroCard({ state, isOwner, onOpen, onChoose }: HeroCardProps) {
 
   return (
     <Pressable onPress={onOpen} style={styles.card}>
-      <HeroFigure hero={hero} level={level} skin={skin} art={art} height={110} />
+      {art.get(`${level}_${skin}`) ? (
+        // Крупный план: голова и плечи героя, чтобы его было хорошо видно.
+        <View style={styles.portrait}>
+          <Image
+            source={{ uri: art.get(`${level}_${skin}`) }}
+            style={styles.portraitImage}
+            contentFit="contain"
+            transition={200}
+            accessibilityLabel={hero.name.ru}
+          />
+        </View>
+      ) : (
+        <HeroFigure hero={hero} level={level} skin={skin} art={art} height={110} />
+      )}
       <View style={styles.info}>
         <Text style={styles.kicker}>{isOwner ? s.myHero : s.hero}</Text>
         <Text style={styles.name} numberOfLines={1}>
@@ -108,6 +122,15 @@ const styles = StyleSheet.create({
   previewRow: { flexDirection: 'row' },
   preview: { borderRadius: 26, backgroundColor: colors.surface },
   previewOverlap: { marginLeft: -18 },
+  portrait: {
+    width: 100,
+    height: 124,
+    borderRadius: radius.md,
+    overflow: 'hidden',
+    backgroundColor: colors.surfaceAlt,
+  },
+  // Картинка в полный рост 3:4; показываем верхние ~60%, по центру.
+  portraitImage: { position: 'absolute', width: 156, height: 208, left: -28, top: 2 },
   info: { flex: 1 },
   kicker: { fontSize: 11, fontWeight: '700', color: colors.accent, textTransform: 'uppercase' },
   name: { fontSize: 18, fontWeight: '800', color: colors.text, marginTop: 1 },
