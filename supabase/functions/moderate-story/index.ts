@@ -98,16 +98,16 @@ Deno.serve(async (req) => {
     const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
     if (!apiKey) return json(200, { skipped: true, reason: 'no api key' });
 
-    // Отмечаем сразу и одним запросом: из параллельных вызовов проверку
-    // запустит только тот, кто первым поставил отметку.
-    const { data: claimed } = await admin
-      .from('stories')
-      .update({ ai_checked_at: new Date().toISOString() })
-      .eq('id', storyId)
-      .eq('status', 'pending')
-      .is('ai_checked_at', null)
-      .select('id');
-    if (!claimed || claimed.length === 0) return json(200, { skipped: true });
+    // Отмечаем сразу и под блокировкой: из параллельных вызовов проверку
+    // запустит только первый. Лимит вызовов ИИ общий с публикациями
+    // (20 в сутки), удаление и повторная выкладка его не обходят.
+    const { data: claim, error: claimError } = await admin.rpc('claim_story_moderation', {
+      p_user_id: auth.user.id,
+      p_story_id: storyId,
+      p_max_calls: 20,
+    });
+    if (claimError) throw claimError;
+    if (claim !== 'ok') return json(200, { skipped: true, reason: claim });
 
     let decision: 'approve' | 'reject' | 'review' = 'review';
     let reason = 'Не получилось проверить фото. Попробуйте выложить его ещё раз.';

@@ -84,7 +84,8 @@ export function ComposeAnnouncementScreen() {
   const [body, setBody] = useState('');
   // «Всем» отправляет только администратор.
   const isAdmin = isAdminRole(profile?.role);
-  const audiences = isAdmin ? AUDIENCES : AUDIENCES.filter((a) => a !== 'all');
+  // Всей школе и всем ученикам пишет только администратор (0062).
+  const audiences = isAdmin ? AUDIENCES : AUDIENCES.filter((a) => a === 'group' || a === 'staff');
   const [audience, setAudience] = useState<AnnouncementAudience>(isAdmin ? 'all' : 'group');
   const [groups, setGroups] = useState<Group[]>([]);
   const [groupId, setGroupId] = useState<string | null>(null);

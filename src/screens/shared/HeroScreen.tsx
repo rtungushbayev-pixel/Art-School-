@@ -262,7 +262,7 @@ export function HeroScreen() {
         }}
       />
 
-      <XpPanel xp={xp} />
+      <XpPanel xp={xp} showLessons={isOwner || xp.attended > 0} />
 
       <View style={styles.contests}>
         <Text style={styles.contestsTitle}>{s.contests}</Text>
@@ -352,7 +352,7 @@ const XP_STRINGS = {
 };
 
 // Опыт героя: звёзды, огонёк серии, рисунки дня и посещения.
-function XpPanel({ xp }: { xp: HeroXp }) {
+function XpPanel({ xp, showLessons }: { xp: HeroXp; showLessons: boolean }) {
   const s = useStrings(XP_STRINGS);
   const { stars, into } = xpStars(xp.xp);
   return (
@@ -369,7 +369,8 @@ function XpPanel({ xp }: { xp: HeroXp }) {
       </Text>
       <View style={styles.contestsRow}>
         <Stat value={xp.weeks} label={s.daily} />
-        <Stat value={xp.attended} label={s.lessons} />
+        {/* Посещаемость видят только ученик, родители и сотрудники (0062). */}
+        {showLessons ? <Stat value={xp.attended} label={s.lessons} /> : null}
         <Stat value={xp.streak} label={s.streak} />
       </View>
       <View style={styles.badges}>
