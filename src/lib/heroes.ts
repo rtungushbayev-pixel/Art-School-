@@ -45,6 +45,8 @@ export interface Hero {
   look: HeroLook;
   // Настоящие автопортреты разных лет, если они есть в общественном достоянии.
   portraits?: HeroPortrait[];
+  // Реалистичный портрет для списка «Великие художники» (если нет автопортретов).
+  avatar?: number;
 }
 
 export const HEROES: Hero[] = [
@@ -52,6 +54,8 @@ export const HEROES: Hero[] = [
     id: 'kasteyev',
     name: { ru: 'Абылхан Кастеев', kk: 'Әбілхан Қастеев', en: 'Abylkhan Kasteyev' },
     years: '1904–1973',
+    // Портрет из логотипа школы.
+    avatar: require('../../assets/heroes/kasteyev_avatar.jpg'),
     tagline: {
       ru: 'Первый профессиональный художник Казахстана',
       kk: 'Қазақстанның тұңғыш кәсіби суретшісі',
@@ -381,6 +385,11 @@ export const HEROES: Hero[] = [
 
 export function heroStory(id: HeroId, lang?: Lang): readonly string[] {
   return (lang === 'kk' ? HERO_STORIES_KK[id] : undefined) ?? HERO_STORIES[id];
+}
+
+// Настоящий портрет художника: отдельный аватар или первый автопортрет.
+export function heroPhoto(hero: Hero): number | undefined {
+  return hero.avatar ?? hero.portraits?.[0]?.image;
 }
 
 export function findHero(id: string | null | undefined): Hero | null {

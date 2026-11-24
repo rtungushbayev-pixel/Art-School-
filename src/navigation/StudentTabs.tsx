@@ -62,7 +62,7 @@ export function StudentTabs() {
     <Tab.Navigator initialRouteName="FeedTab" screenOptions={makeTabScreenOptions(TAB_CONFIG, { showFriends: true, showMarket: true })}>
       <Tab.Screen name="ScheduleTab" component={ScheduleScreen} options={{ title: s.schedule }} />
       <Tab.Screen name="FeedTab" component={FeedScreen} options={{ title: s.community }} />
-      {showScan ? <Tab.Screen name="ScanTab" component={CheckInScreen} options={{ title: s.scan }} /> : null}
+      {showScan ? <Tab.Screen name="ScanTab" component={CheckInScreen} options={{ title: s.scan, tabBarLabel: 'Scan-QR' }} /> : null}
       <Tab.Screen name="EventsTab" component={EventsScreen} options={{ title: s.eventsTitle, tabBarLabel: s.events }} />
       <Tab.Screen name="ProfileTab" component={ProfileScreen} options={{ title: s.profile }} />
     </Tab.Navigator>
