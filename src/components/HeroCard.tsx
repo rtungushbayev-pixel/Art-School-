@@ -70,7 +70,7 @@ export function HeroCard({ state, isOwner, onOpen, onChoose }: HeroCardProps) {
   return (
     <Pressable onPress={onOpen} style={styles.card}>
       {art.get(`${level}_${skin}`) ? (
-        // Крупный план: голова и плечи героя, чтобы его было хорошо видно.
+        // Герой в полный рост и крупно (без уменьшения по уровню), чтобы его было хорошо видно.
         <View style={styles.portrait}>
           <Image
             source={{ uri: art.get(`${level}_${skin}`) }}
@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
+    gap: spacing.sm,
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     borderWidth: 1,
@@ -122,15 +122,8 @@ const styles = StyleSheet.create({
   previewRow: { flexDirection: 'row' },
   preview: { borderRadius: 26, backgroundColor: colors.surface },
   previewOverlap: { marginLeft: -18 },
-  portrait: {
-    width: 100,
-    height: 124,
-    borderRadius: radius.md,
-    overflow: 'hidden',
-    backgroundColor: colors.surfaceAlt,
-  },
-  // Картинка в полный рост 3:4; показываем верхние ~60%, по центру.
-  portraitImage: { position: 'absolute', width: 156, height: 208, left: -28, top: 2 },
+  portrait: { width: 132, height: 176, alignItems: 'center', justifyContent: 'flex-end' },
+  portraitImage: { width: 132, height: 176 },
   info: { flex: 1 },
   kicker: { fontSize: 11, fontWeight: '700', color: colors.accent, textTransform: 'uppercase' },
   name: { fontSize: 18, fontWeight: '800', color: colors.text, marginTop: 1 },
