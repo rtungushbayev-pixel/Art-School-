@@ -104,17 +104,15 @@ function HeaderActions({ showFriends, showMarket, showArt = true }: HeaderAction
   );
 }
 
-// Комьюнити — главный раздел: стоит по центру, иконка крупнее и на круглой
-// полупрозрачной подложке.
+// Арт-двор — главный раздел: стоит по центру, иконка чуть крупнее остальных.
+// Без подложки: круг выходил за панель и выбивался из общего стиля.
 function FeedIcon({ focused }: { focused: boolean }) {
   return (
-    <View style={[styles.feedCircle, focused && styles.feedCircleFocused]}>
-      <Ionicons
-        name={focused ? 'color-palette' : 'color-palette-outline'}
-        size={30}
-        color={focused ? paint.coral : colors.textMuted}
-      />
-    </View>
+    <Ionicons
+      name={focused ? 'color-palette' : 'color-palette-outline'}
+      size={28}
+      color={focused ? paint.coral : colors.textMuted}
+    />
   );
 }
 
@@ -146,7 +144,7 @@ export function makeTabScreenOptions(
           />
         ),
       tabBarLabelStyle: { fontSize: 10 },
-      tabBarIconStyle: isFeed ? styles.feedIconSlot : { marginTop: 2 },
+      tabBarIconStyle: { marginTop: 2 },
     };
   };
 }
@@ -162,16 +160,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(124, 42, 59, 0.08)',
   },
-  feedIconSlot: { width: 56, height: 56, marginTop: -14 },
-  feedCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(228, 102, 79, 0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(228, 102, 79, 0.25)',
-  },
-  feedCircleFocused: { backgroundColor: 'rgba(228, 102, 79, 0.2)' },
 });
