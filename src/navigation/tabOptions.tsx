@@ -116,9 +116,15 @@ function FeedIcon({ focused }: { focused: boolean }) {
   );
 }
 
+// Высота нижней панели: значок + подпись целиком, плюс системная полоска
+// внизу экрана (bottomInset). Иначе подписи («Расписание», «Арт-двор»)
+// обрезаются снизу.
+const TAB_BAR_HEIGHT = 68;
+
 export function makeTabScreenOptions(
   configs: Record<string, TabConfig>,
-  actions: HeaderActionsProps
+  actions: HeaderActionsProps,
+  bottomInset = 0
 ) {
   return ({ route }: { route: { name: string } }): BottomTabNavigationOptions => {
     const config = configs[route.name];
@@ -143,8 +149,13 @@ export function makeTabScreenOptions(
             color={focused ? config.color : colors.textMuted}
           />
         ),
-      tabBarLabelStyle: { fontSize: 10 },
-      tabBarIconStyle: { marginTop: 2 },
+      tabBarStyle: {
+        height: TAB_BAR_HEIGHT + bottomInset,
+        paddingTop: 4,
+        paddingBottom: bottomInset + 6,
+      },
+      tabBarLabelStyle: { fontSize: 11, lineHeight: 14, marginTop: 2 },
+      tabBarIconStyle: { marginTop: 0 },
     };
   };
 }

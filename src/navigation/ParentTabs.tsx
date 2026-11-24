@@ -1,5 +1,6 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, paint } from '../theme/colors';
 import type { ParentTabParamList } from './types';
 import { makeTabScreenOptions, type TabConfig } from './tabOptions';
@@ -51,11 +52,12 @@ const TAB_CONFIG: Record<keyof ParentTabParamList, TabConfig> = {
 
 // У родителя нет продажи работ и друзей, поэтому вверху только «Сообщения».
 export function ParentTabs() {
+  const insets = useSafeAreaInsets();
   const s = useStrings(STRINGS);
   const { profile } = useAuth();
   const showScan = useQrCheckInAvailable(profile);
   return (
-    <Tab.Navigator initialRouteName="FeedTab" screenOptions={makeTabScreenOptions(TAB_CONFIG, { showFriends: false, showMarket: false })}>
+    <Tab.Navigator initialRouteName="FeedTab" screenOptions={makeTabScreenOptions(TAB_CONFIG, { showFriends: false, showMarket: false }, insets.bottom)}>
       <Tab.Screen name="ScheduleTab" component={ScheduleScreen} options={{ title: s.schedule }} />
       <Tab.Screen name="FeedTab" component={FeedScreen} options={{ title: s.community }} />
       {showScan ? <Tab.Screen name="ScanTab" component={CheckInScreen} options={{ title: s.scan }} /> : null}

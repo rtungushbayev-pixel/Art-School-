@@ -1,5 +1,6 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, paint } from '../theme/colors';
 import type { StudentTabParamList } from './types';
 import { makeTabScreenOptions, type TabConfig } from './tabOptions';
@@ -53,13 +54,14 @@ const TAB_CONFIG: Record<keyof StudentTabParamList, TabConfig> = {
 };
 
 export function StudentTabs() {
+  const insets = useSafeAreaInsets();
   const s = useStrings(STRINGS);
   const { profile } = useAuth();
   const showScan = useQrCheckInAvailable(profile);
   // Первый вход ученика: предлагаем выбрать героя.
   useHeroOnboarding(profile);
   return (
-    <Tab.Navigator initialRouteName="FeedTab" screenOptions={makeTabScreenOptions(TAB_CONFIG, { showFriends: true, showMarket: true })}>
+    <Tab.Navigator initialRouteName="FeedTab" screenOptions={makeTabScreenOptions(TAB_CONFIG, { showFriends: true, showMarket: true }, insets.bottom)}>
       <Tab.Screen name="ScheduleTab" component={ScheduleScreen} options={{ title: s.schedule }} />
       <Tab.Screen name="FeedTab" component={FeedScreen} options={{ title: s.community }} />
       {showScan ? <Tab.Screen name="ScanTab" component={CheckInScreen} options={{ title: s.scan }} /> : null}
