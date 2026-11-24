@@ -12,7 +12,7 @@ export const FEATURES = {
   parentChats: false,
   // Живое общение с ИИ-гидом в «Истории искусств» (функция ask-guide, Claude).
   // Пока выключено: стоит денег. Гид отвечает на заготовленные вопросы.
-  // Включить — true, опубликовать ask-guide, добавить ANTHROPIC_API_KEY
+  // Включить — true, опубликовать ask-guide, добавить ANTHROPIC_API_KEY и GUIDE_ENABLED=true
   // (и GUIDE_MODEL=claude-haiku-5-5), применить 0057 и дописать ИИ-гида
   // в политику конфиденциальности (src/lib/legal.ts).
   aiGuide: false,
