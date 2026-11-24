@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { Screen } from '../../components/Screen';
+import { HeroWorksGallery } from '../../components/HeroWorksGallery';
 import { HeroAvatar } from '../../components/HeroAvatar';
 import { findHero, heroStory } from '../../lib/heroes';
 import { speak, stopSpeaking } from '../../lib/artGuide';
@@ -106,6 +107,7 @@ export function ArtArtistScreen() {
         </>
       ) : null}
       {hero.id === 'kasteyev' ? <Text style={styles.note}>{s.kasteyev}</Text> : null}
+      <HeroWorksGallery heroId={hero.id} />
 
       <View style={styles.lifeHead}>
         <Text style={styles.section}>{s.life}</Text>

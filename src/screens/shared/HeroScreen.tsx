@@ -8,6 +8,7 @@ import { Screen } from '../../components/Screen';
 import { Button } from '../../components/Button';
 import { HeroFigure } from '../../components/HeroFigure';
 import { HeroPath } from '../../components/HeroPath';
+import { HeroWorksGallery } from '../../components/HeroWorksGallery';
 import { useAuth } from '../../hooks/useAuth';
 import { useHero } from '../../hooks/useHero';
 import { supabase } from '../../lib/supabase';
@@ -296,6 +297,8 @@ export function HeroScreen() {
           </Modal>
         </>
       ) : null}
+
+      <HeroWorksGallery heroId={hero.id} />
 
       {isOwner ? (
         <Pressable style={styles.change} onPress={() => navigation.navigate('HeroPicker')}>
