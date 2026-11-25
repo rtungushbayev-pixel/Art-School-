@@ -28,7 +28,8 @@ export type HeroId =
   | 'durer'
   | 'raphael'
   | 'sofonisba'
-  | 'repin';
+  | 'repin'
+  | 'chagall';
 
 // Настоящий автопортрет художника (общественное достояние, Wikimedia Commons).
 export interface HeroPortrait {
@@ -386,6 +387,26 @@ export const HEROES: Hero[] = [
       { image: require('../../assets/heroes/repin_3.jpg'), caption: 'Автопортрет, 1899 · 55 лет' },
       { image: require('../../assets/heroes/repin_4.jpg'), caption: 'Автопортрет, 1920 · 76 лет' },
     ],
+  },
+  {
+    id: 'chagall',
+    name: { ru: 'Марк Шагал', kk: 'Марк Шагал', en: 'Marc Chagall' },
+    years: '1887–1985',
+    tagline: {
+      ru: 'Поэт цвета: летающие влюблённые и синие города',
+      kk: 'Түс ақыны: ұшып жүрген ғашықтар мен көгілдір қалалар',
+      en: 'The poet of colour: flying lovers and blue towns',
+    },
+    look: {
+      skin: '#F1D3BC',
+      hair: '#4A3020',
+      hairMaster: '#B9B4B0',
+      hairStyle: 'curly',
+      outfit: '#3D5BA9',
+      collar: '#F4F0E8',
+      accent: '#E94F6A',
+      scene: 'stars',
+    },
   },
 ];
 

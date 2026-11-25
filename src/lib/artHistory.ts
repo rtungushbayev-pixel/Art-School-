@@ -509,7 +509,7 @@ export const ERAS: Era[] = [
         explain: 'Он называл свои картины «композициями», как музыкальные произведения.',
       },
     ],
-    heroes: ['serebryakova'],
+    heroes: ['serebryakova', 'chagall'],
   },
   {
     id: 'kazakhstan',
