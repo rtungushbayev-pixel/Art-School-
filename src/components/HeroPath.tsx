@@ -19,26 +19,26 @@ interface Props {
 const STRINGS = {
   ru: {
     title: 'Дорога мастера',
-    hint: 'Весь путь в школе: от первой группы до Арт-карьеры. Нажми на шаг, чтобы увидеть героя.',
+    hint: 'Весь путь в школе: от первой группы до Арт-карьеры. Нажми на шаг, чтобы увидеть своего художника.',
     here: 'Ты здесь',
     done: 'Пройдено',
-    age: (n: number) => `герой ${n} лет`,
+    age: (n: number) => `художнику ${n} лет`,
     finish: 'Дальше — университет, профессия и свои выставки.',
   },
   kk: {
     title: 'Шебер жолы',
-    hint: 'Мектептегі бүкіл жол: алғашқы топтан Арт-мансапқа дейін. Кейіпкерді көру үшін қадамды бас.',
+    hint: 'Мектептегі бүкіл жол: алғашқы топтан Арт-мансапқа дейін. Суретшіңді көру үшін қадамды бас.',
     here: 'Сен осындасың',
     done: 'Өтілді',
-    age: (n: number) => `кейіпкер ${n} жаста`,
+    age: (n: number) => `суретші ${n} жаста`,
     finish: 'Әрі қарай — университет, мамандық және өз көрмелерің.',
   },
   en: {
     title: 'The master’s road',
-    hint: 'Your whole path at school, from the first group to Art Career. Tap a step to see your hero.',
+    hint: 'Your whole path at school, from the first group to Art Career. Tap a step to see your artist.',
     here: 'You are here',
     done: 'Done',
-    age: (n: number) => `hero aged ${n}`,
+    age: (n: number) => `artist aged ${n}`,
     finish: 'Next: university, a profession and your own exhibitions.',
   },
 };

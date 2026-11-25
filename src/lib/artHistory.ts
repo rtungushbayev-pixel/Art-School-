@@ -509,7 +509,7 @@ export const ERAS: Era[] = [
         explain: 'Он называл свои картины «композициями», как музыкальные произведения.',
       },
     ],
-    heroes: ['serebryakova'],
+    heroes: ['serebryakova', 'chagall'],
   },
   {
     id: 'kazakhstan',
@@ -561,7 +561,7 @@ export const ERAS: Era[] = [
         explain: 'Курган Иссык находится недалеко от Алматы.',
       },
     ],
-    heroes: ['kasteyev'],
+    heroes: ['kasteyev', 'telzhanov', 'mambeev', 'ismailova', 'kenbaev'],
     localArtists: [
       {
         name: 'Николай Хлудов',
@@ -580,7 +580,7 @@ export const ERAS: Era[] = [
       },
       {
         name: 'Молдахмет Кенбаев',
-        years: '1925–2001',
+        years: '1925–1993',
         text: 'Певец казахской степи. Писал бескрайние просторы, табуны лошадей, кочевья и жизнь в ауле. По его картинам видно, как он любил родную природу.',
       },
       {

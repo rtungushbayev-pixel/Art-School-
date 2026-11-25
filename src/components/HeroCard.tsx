@@ -12,24 +12,24 @@ import { colors, radius, shadow, spacing } from '../theme/colors';
 
 const STRINGS = {
   ru: {
-    myHero: 'Мой герой',
-    hero: 'Герой',
+    myHero: 'Мой художник',
+    hero: 'Художник',
     level: (n: number, max: number) => `Уровень ${n} из ${max}`,
-    chooseTitle: 'Выбери своего героя',
+    chooseTitle: 'Выбери своего художника',
     chooseText: 'Великий художник будет расти вместе с тобой: от группы к группе и с каждым конкурсом.',
   },
   kk: {
-    myHero: 'Менің кейіпкерім',
-    hero: 'Кейіпкер',
+    myHero: 'Менің суретшім',
+    hero: 'Суретші',
     level: (n: number, max: number) => `${max} ішінен ${n}-деңгей`,
-    chooseTitle: 'Өз кейіпкеріңді таңда',
+    chooseTitle: 'Өз суретшіңді таңда',
     chooseText: 'Ұлы суретші сенімен бірге өседі: топтан топқа және әр байқау сайын.',
   },
   en: {
-    myHero: 'My hero',
-    hero: 'Hero',
+    myHero: 'My artist',
+    hero: 'Artist',
     level: (n: number, max: number) => `Level ${n} of ${max}`,
-    chooseTitle: 'Choose your hero',
+    chooseTitle: 'Choose your artist',
     chooseText: 'A great artist will grow with you: from group to group and with every competition.',
   },
 };

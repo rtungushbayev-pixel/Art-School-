@@ -28,7 +28,12 @@ export type HeroId =
   | 'durer'
   | 'raphael'
   | 'sofonisba'
-  | 'repin';
+  | 'repin'
+  | 'chagall'
+  | 'telzhanov'
+  | 'mambeev'
+  | 'ismailova'
+  | 'kenbaev';
 
 // Настоящий автопортрет художника (общественное достояние, Wikimedia Commons).
 export interface HeroPortrait {
@@ -386,6 +391,108 @@ export const HEROES: Hero[] = [
       { image: require('../../assets/heroes/repin_3.jpg'), caption: 'Автопортрет, 1899 · 55 лет' },
       { image: require('../../assets/heroes/repin_4.jpg'), caption: 'Автопортрет, 1920 · 76 лет' },
     ],
+  },
+  {
+    id: 'chagall',
+    name: { ru: 'Марк Шагал', kk: 'Марк Шагал', en: 'Marc Chagall' },
+    years: '1887–1985',
+    tagline: {
+      ru: 'Поэт цвета: летающие влюблённые и синие города',
+      kk: 'Түс ақыны: ұшып жүрген ғашықтар мен көгілдір қалалар',
+      en: 'The poet of colour: flying lovers and blue towns',
+    },
+    look: {
+      skin: '#F1D3BC',
+      hair: '#4A3020',
+      hairMaster: '#B9B4B0',
+      hairStyle: 'curly',
+      outfit: '#3D5BA9',
+      collar: '#F4F0E8',
+      accent: '#E94F6A',
+      scene: 'stars',
+    },
+  },
+  {
+    id: 'telzhanov',
+    name: { ru: 'Канафия Тельжанов', kk: 'Қанафия Тельжанов', en: 'Kanafiya Telzhanov' },
+    years: '1927–2013',
+    tagline: {
+      ru: 'Певец степного ветра и скачущих всадников',
+      kk: 'Дала желі мен шапқан салт аттылардың жыршысы',
+      en: 'The painter of steppe wind and galloping riders',
+    },
+    look: {
+      skin: '#D9A47E',
+      hair: '#1E1A18',
+      hairMaster: '#8E8B88',
+      hairStyle: 'short',
+      outfit: '#3A3F4A',
+      collar: '#EFE8DA',
+      accent: '#3E8FB0',
+      scene: 'fields',
+    },
+  },
+  {
+    id: 'mambeev',
+    name: { ru: 'Сабур Мамбеев', kk: 'Сабыр Мәмбеев', en: 'Sabur Mambeev' },
+    years: '1928–2017',
+    tagline: {
+      ru: 'Мастер тёплого света: юрты, горы и портреты',
+      kk: 'Жылы жарық шебері: киіз үй, тау және портреттер',
+      en: 'Master of warm light: yurts, mountains and portraits',
+    },
+    look: {
+      skin: '#CF9A72',
+      hair: '#1E1A18',
+      hairMaster: '#8E8B88',
+      hairStyle: 'short',
+      hat: { from: 1, style: 'tubeteika', color: '#6B3A2E' },
+      outfit: '#7A5A3C',
+      collar: '#F1E6D0',
+      accent: '#D9822B',
+      scene: 'mountains',
+    },
+  },
+  {
+    id: 'ismailova',
+    name: { ru: 'Гульфайрус Исмаилова', kk: 'Гүлфайрус Ысмайылова', en: 'Gulfairus Ismailova' },
+    years: '1929–2013',
+    tagline: {
+      ru: 'Художница театра и кино, автор «Казахского вальса»',
+      kk: 'Театр мен кино суретшісі, «Қазақ вальсінің» авторы',
+      en: 'Theatre and film artist, painter of the Kazakh Waltz',
+    },
+    look: {
+      skin: '#E2B490',
+      hair: '#141110',
+      hairMaster: '#8E8B88',
+      hairStyle: 'braid',
+      outfit: '#3B2A2A',
+      collar: '#D9B65C',
+      accent: '#B23A48',
+      scene: 'curtain',
+      extra: 'earring',
+    },
+  },
+  {
+    id: 'kenbaev',
+    name: { ru: 'Молдахмет Кенбаев', kk: 'Молдахмет Кенбаев', en: 'Moldakhmet Kenbaev' },
+    years: '1925–1993',
+    tagline: {
+      ru: 'Мастер торжествующего цвета: кони и степь',
+      kk: 'Салтанатты түс шебері: жылқы мен дала',
+      en: 'Master of triumphant colour: horses and the steppe',
+    },
+    look: {
+      skin: '#C98F66',
+      hair: '#1E1A18',
+      hairMaster: '#8E8B88',
+      hairStyle: 'short',
+      outfit: '#5A4A3A',
+      collar: '#EDE3CF',
+      accent: '#E0A030',
+      scene: 'fields',
+    },
   },
 ];
 

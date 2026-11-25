@@ -29,16 +29,16 @@ import type { StudentStackParamList } from '../../navigation/types';
 
 const STRINGS = {
   ru: {
-    title: 'Выбери своего героя',
+    title: 'Выбери своего художника',
     intro:
-      'Здесь герои такими, какими они станут в конце пути, — великими мастерами. А начнёт твой герой ребёнком, как и ты. Переходишь в новую группу — он взрослеет и открывает новую главу своей истории. Участвуешь в конкурсах — становится сильнее и получает новые облики.',
+      'Здесь художники такими, какими они станут в конце пути, — великими мастерами. А начнёт твой художник ребёнком, как и ты. Переходишь в новую группу — он взрослеет и открывает новую главу своей истории. Участвуешь в конкурсах — становится сильнее и получает новые облики.',
     choose: (name: string) => `Выбрать: ${name}`,
-    pickFirst: 'Нажми на героя, чтобы выбрать',
+    pickFirst: 'Нажми на художника, чтобы выбрать',
     later: 'Выберу позже',
-    failed: 'Не удалось сохранить героя',
-    changesLeft: (n: number, max: number) => `Сменить героя можно ${max} раза в год. В этом году осталось: ${n}.`,
-    noChanges: 'В этом году героя больше сменить нельзя. Новые смены появятся 1 января.',
-    confirmTitle: 'Сменить героя?',
+    failed: 'Не удалось сохранить художника',
+    changesLeft: (n: number, max: number) => `Сменить художника можно ${max} раза в год. В этом году осталось: ${n}.`,
+    noChanges: 'В этом году художника больше сменить нельзя. Новые смены появятся 1 января.',
+    confirmTitle: 'Сменить художника?',
     confirmText: (n: number) =>
       `После смены останется ${n} ${n === 1 ? 'смена' : 'смены'} в этом году. Опыт, звёзды и огонёк сохранятся.`,
     confirmLast: 'Это последняя смена в этом году. Опыт, звёзды и огонёк сохранятся.',
@@ -46,32 +46,32 @@ const STRINGS = {
     cancel: 'Отмена',
   },
   kk: {
-    title: 'Өз кейіпкеріңді таңда',
+    title: 'Өз суретшіңді таңда',
     intro:
-      'Мұнда кейіпкерлер жолдың соңындағыдай — ұлы шеберлер. Ал сенің кейіпкерің сен сияқты баладан бастайды. Жаңа топқа ауыссаң — ол есейіп, өз тарихының жаңа тарауын ашады. Байқауларға қатыссаң — күшейіп, жаңа бейнелер алады.',
+      'Мұнда суретшілер жолдың соңындағыдай — ұлы шеберлер. Ал сенің суретшің сен сияқты баладан бастайды. Жаңа топқа ауыссаң — ол есейіп, өз тарихының жаңа тарауын ашады. Байқауларға қатыссаң — күшейіп, жаңа бейнелер алады.',
     choose: (name: string) => `Таңдау: ${name}`,
-    pickFirst: 'Таңдау үшін кейіпкерді бас',
+    pickFirst: 'Таңдау үшін суретшіні бас',
     later: 'Кейін таңдаймын',
-    failed: 'Кейіпкерді сақтау мүмкін болмады',
-    changesLeft: (n: number, max: number) => `Кейіпкерді жылына ${max} рет ауыстыруға болады. Биыл қалғаны: ${n}.`,
-    noChanges: 'Биыл кейіпкерді бұдан артық ауыстыруға болмайды. Жаңа мүмкіндік 1 қаңтарда ашылады.',
-    confirmTitle: 'Кейіпкерді ауыстыру керек пе?',
+    failed: 'Суретшіні сақтау мүмкін болмады',
+    changesLeft: (n: number, max: number) => `Суретшіні жылына ${max} рет ауыстыруға болады. Биыл қалғаны: ${n}.`,
+    noChanges: 'Биыл суретшіні бұдан артық ауыстыруға болмайды. Жаңа мүмкіндік 1 қаңтарда ашылады.',
+    confirmTitle: 'Суретшіні ауыстыру керек пе?',
     confirmText: (n: number) => `Ауыстырғаннан кейін биыл ${n} мүмкіндік қалады. Тәжірибе, жұлдыздар және от сақталады.`,
     confirmLast: 'Бұл биылғы соңғы ауыстыру. Тәжірибе, жұлдыздар және от сақталады.',
     confirm: 'Ауыстыру',
     cancel: 'Бас тарту',
   },
   en: {
-    title: 'Choose your hero',
+    title: 'Choose your artist',
     intro:
-      'Here the heroes are shown as they will be at the end of the road: great masters. Your hero starts as a child, just like you. Move up to a new group and your hero grows older and unlocks a new chapter of their story. Take part in competitions and your hero gets stronger and earns new looks.',
+      'Here the artists are shown as they will be at the end of the road: great masters. Your artist starts as a child, just like you. Move up to a new group and your artist grows older and unlocks a new chapter of their story. Take part in competitions and your artist gets stronger and earns new looks.',
     choose: (name: string) => `Choose ${name}`,
-    pickFirst: 'Tap a hero to choose',
+    pickFirst: 'Tap an artist to choose',
     later: "I'll choose later",
-    failed: 'Could not save your hero',
-    changesLeft: (n: number, max: number) => `You can change your hero ${max} times a year. Left this year: ${n}.`,
-    noChanges: 'You can’t change your hero again this year. New changes open on January 1.',
-    confirmTitle: 'Change your hero?',
+    failed: 'Could not save your artist',
+    changesLeft: (n: number, max: number) => `You can change your artist ${max} times a year. Left this year: ${n}.`,
+    noChanges: 'You can’t change your artist again this year. New changes open on January 1.',
+    confirmTitle: 'Change your artist?',
     confirmText: (n: number) => `After this you will have ${n} change${n === 1 ? '' : 's'} left this year. XP, stars and streak are kept.`,
     confirmLast: 'This is your last change this year. XP, stars and streak are kept.',
     confirm: 'Change',
@@ -111,7 +111,9 @@ export function HeroPickerScreen() {
       await refreshProfile();
       navigation.goBack();
     } catch (e) {
-      Alert.alert(s.failed, errorText(e));
+      // Лимит смен проверяет сервер (0061); его текст — со старым словом «герой».
+      const limit = (e as { code?: string } | null)?.code === '42501';
+      Alert.alert(s.failed, limit ? s.noChanges : errorText(e));
     } finally {
       setSaving(false);
     }

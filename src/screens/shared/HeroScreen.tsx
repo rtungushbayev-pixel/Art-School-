@@ -48,7 +48,7 @@ const STRINGS = {
   ru: {
     level: (n: number) => `${n} уровень`,
     levelOf: (n: number, max: number) => `Уровень ${n} из ${max}`,
-    lockedLevel: (group: string) => `Откроется: ${group}. Герой растёт, когда школа переводит тебя в следующую группу или на следующий курс.`,
+    lockedLevel: (group: string) => `Откроется: ${group}. Твой художник растёт, когда школа переводит тебя в следующую группу или на следующий курс.`,
     skins: 'Скины',
     skinsHint: 'Новые скины открываются за конкурсы и выставки школы.',
     wearing: 'Надето',
@@ -60,13 +60,13 @@ const STRINGS = {
     top: 'Гран-при и 1 мест',
     portraits: 'Настоящие автопортреты',
     portraitsHint: 'Так художник выглядел в разные годы. Картины — общественное достояние (Wikimedia Commons).',
-    change: 'Сменить героя',
-    notChosen: 'Герой ещё не выбран',
+    change: 'Сменить художника',
+    notChosen: 'Художник ещё не выбран',
   },
   kk: {
     level: (n: number) => `${n}-деңгей`,
     levelOf: (n: number, max: number) => `${max} ішінен ${n}-деңгей`,
-    lockedLevel: (group: string) => `Ашылады: ${group}. Мектеп сені келесі топқа немесе курсқа ауыстырғанда кейіпкер өседі.`,
+    lockedLevel: (group: string) => `Ашылады: ${group}. Мектеп сені келесі топқа немесе курсқа ауыстырғанда суретшің өседі.`,
     skins: 'Скиндер',
     skinsHint: 'Жаңа скиндер мектептің байқаулары мен көрмелері үшін ашылады.',
     wearing: 'Киілген',
@@ -78,13 +78,13 @@ const STRINGS = {
     top: 'Гран-при және 1 орын',
     portraits: 'Нағыз автопортреттер',
     portraitsHint: 'Суретші әр жылдары осындай болған. Суреттер — қоғамдық игілік (Wikimedia Commons).',
-    change: 'Кейіпкерді ауыстыру',
-    notChosen: 'Кейіпкер әлі таңдалмаған',
+    change: 'Суретшіні ауыстыру',
+    notChosen: 'Суретші әлі таңдалмаған',
   },
   en: {
     level: (n: number) => `Level ${n}`,
     levelOf: (n: number, max: number) => `Level ${n} of ${max}`,
-    lockedLevel: (group: string) => `Unlocks in: ${group}. Your hero grows when the school moves you to the next group or course.`,
+    lockedLevel: (group: string) => `Unlocks in: ${group}. Your artist grows when the school moves you to the next group or course.`,
     skins: 'Skins',
     skinsHint: 'New skins unlock for school competitions and exhibitions.',
     wearing: 'Wearing',
@@ -96,8 +96,8 @@ const STRINGS = {
     top: 'Grand Prix and 1st places',
     portraits: 'Real self-portraits',
     portraitsHint: 'How the artist looked over the years. The paintings are in the public domain (Wikimedia Commons).',
-    change: 'Change hero',
-    notChosen: 'No hero chosen yet',
+    change: 'Change artist',
+    notChosen: 'No artist chosen yet',
   },
 };
 
@@ -317,7 +317,7 @@ export function HeroScreen() {
 
 const XP_STRINGS = {
   ru: {
-    title: 'Опыт героя',
+    title: 'Опыт художника',
     stars: (n: number) => `${n} ★`,
     toNext: (left: number) => `${left} опыта до следующей звезды`,
     daily: 'рисунков недели',
@@ -328,7 +328,7 @@ const XP_STRINGS = {
     badge30: `12 недель подряд · +${XP_STREAK_12}`,
   },
   kk: {
-    title: 'Кейіпкер тәжірибесі',
+    title: 'Суретші тәжірибесі',
     stars: (n: number) => `${n} ★`,
     toNext: (left: number) => `Келесі жұлдызға дейін ${left} тәжірибе`,
     daily: 'апта суреті',
@@ -339,7 +339,7 @@ const XP_STRINGS = {
     badge30: `12 апта қатарынан · +${XP_STREAK_12}`,
   },
   en: {
-    title: 'Hero XP',
+    title: 'Artist XP',
     stars: (n: number) => `${n} ★`,
     toNext: (left: number) => `${left} XP to the next star`,
     daily: 'weekly drawings',
