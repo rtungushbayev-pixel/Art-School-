@@ -41,7 +41,7 @@ const STRINGS = {
     dailyKicker: 'Рисунок недели',
     dailyDone: 'Рисунок недели готов!',
     dailyReward: (xp: number, streak: number) =>
-      `Твой герой получил +${xp} опыта.${streak > 1 ? ` Огонёк горит ${streak} нед. подряд!` : ' В понедельник будет новая тема.'}`,
+      `Твой художник получил +${xp} опыта.${streak > 1 ? ` Огонёк горит ${streak} нед. подряд!` : ' В понедельник будет новая тема.'}`,
   },
   kk: {
     photoTitle: 'Жұмыстың фотосы',
@@ -64,7 +64,7 @@ const STRINGS = {
     dailyKicker: 'Апта суреті',
     dailyDone: 'Апта суреті дайын!',
     dailyReward: (xp: number, streak: number) =>
-      `Кейіпкерің +${xp} тәжірибе алды.${streak > 1 ? ` Отың ${streak} апта қатарынан жанып тұр!` : ' Дүйсенбіде жаңа тақырып болады.'}`,
+      `Суретшің +${xp} тәжірибе алды.${streak > 1 ? ` Отың ${streak} апта қатарынан жанып тұр!` : ' Дүйсенбіде жаңа тақырып болады.'}`,
   },
   en: {
     photoTitle: 'Artwork photo',
@@ -87,7 +87,7 @@ const STRINGS = {
     dailyKicker: 'Drawing of the week',
     dailyDone: 'Drawing of the week is done!',
     dailyReward: (xp: number, streak: number) =>
-      `Your hero got +${xp} XP.${streak > 1 ? ` Your streak is ${streak} weeks in a row!` : ' A new theme comes on Monday.'}`,
+      `Your artist got +${xp} XP.${streak > 1 ? ` Your streak is ${streak} weeks in a row!` : ' A new theme comes on Monday.'}`,
   },
 };
 

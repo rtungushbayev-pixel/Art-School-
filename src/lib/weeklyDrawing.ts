@@ -39,7 +39,7 @@ const THEMES: Theme[] = [
   { ru: 'Транспорт', kk: 'Көлік', en: 'Transport', hint: { ru: 'Автобус, метро, велосипед или самолёт', kk: 'Автобус, метро, велосипед не ұшақ', en: 'Bus, metro, bike or plane' } },
   { ru: 'Птица', kk: 'Құс', en: 'A bird', hint: { ru: 'Воробей за окном или беркут в горах', kk: 'Терезедегі торғай не таудағы бүркіт', en: 'A sparrow outside or an eagle in the mountains' } },
   { ru: 'Музыка', kk: 'Музыка', en: 'Music', hint: { ru: 'Домбра, пианино или просто настроение песни', kk: 'Домбыра, пианино не әннің көңіл күйі', en: 'A dombra, a piano or just the mood of a song' } },
-  { ru: 'Мой герой', kk: 'Менің кейіпкерім', en: 'My hero', hint: { ru: 'Нарисуй своего героя из приложения по-своему', kk: 'Қосымшадағы кейіпкеріңді өзіңше сал', en: 'Draw your app hero in your own way' } },
+  { ru: 'Мой художник', kk: 'Менің суретшім', en: 'My artist', hint: { ru: 'Нарисуй своего художника из приложения по-своему', kk: 'Қосымшадағы суретшіңді өзіңше сал', en: 'Draw your artist from the app in your own way' } },
   { ru: 'Утро', kk: 'Таң', en: 'Morning', hint: { ru: 'Как начинается твой день?', kk: 'Күнің қалай басталады?', en: 'How does your day begin?' } },
   { ru: 'Узор', kk: 'Ою-өрнек', en: 'An ornament', hint: { ru: 'Казахский орнамент: қошқар мүйіз, волна, звезда', kk: 'Қазақ оюы: қошқар мүйіз, толқын, жұлдыз', en: 'A Kazakh ornament: ram’s horn, wave, star' } },
   { ru: 'Под водой', kk: 'Су астында', en: 'Underwater', hint: { ru: 'Рыбы, кораллы, затонувший корабль', kk: 'Балықтар, маржандар, батқан кеме', en: 'Fish, corals, a sunken ship' } },
@@ -57,7 +57,7 @@ const THEMES: Theme[] = [
   { ru: 'Ключи', kk: 'Кілттер', en: 'Keys', hint: { ru: 'Маленький предмет — большие детали', kk: 'Кішкентай зат — үлкен бөлшектер', en: 'A small object, big details' } },
   { ru: 'Улица у дома', kk: 'Үй жанындағы көше', en: 'The street by my home', hint: { ru: 'Дома, деревья, люди', kk: 'Үйлер, ағаштар, адамдар', en: 'Houses, trees, people' } },
   { ru: 'Насекомое', kk: 'Жәндік', en: 'An insect', hint: { ru: 'Бабочка, жук или божья коровка крупным планом', kk: 'Көбелек, қоңыз не қызыл қоңыз ірі планда', en: 'A butterfly, beetle or ladybird close up' } },
-  { ru: 'Как у великого художника', kk: 'Ұлы суретші сияқты', en: 'Like a great artist', hint: { ru: 'Повтори стиль своего героя: мазки, цвет, свет', kk: 'Кейіпкеріңнің стилін қайтала: жағыс, түс, жарық', en: 'Copy your hero’s style: strokes, colour, light' } },
+  { ru: 'Как у великого художника', kk: 'Ұлы суретші сияқты', en: 'Like a great artist', hint: { ru: 'Повтори стиль своего художника: мазки, цвет, свет', kk: 'Суретшіңнің стилін қайтала: жағыс, түс, жарық', en: 'Copy your artist’s style: strokes, colour, light' } },
 ];
 
 // Сегодняшняя дата по Алматы (UTC+5), как на сервере (school_today в 0060).
