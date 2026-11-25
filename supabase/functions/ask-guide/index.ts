@@ -55,6 +55,10 @@ const HEROES: Record<string, string> = {
   sofonisba: 'Софонисба Ангиссола',
   repin: 'Илья Репин',
   chagall: 'Марк Шагал',
+  telzhanov: 'Канафия Тельжанов',
+  mambeev: 'Сабур Мамбеев',
+  ismailova: 'Гульфайрус Исмаилова',
+  kenbaev: 'Молдахмет Кенбаев',
 };
 
 const LANGS: Record<string, string> = {
